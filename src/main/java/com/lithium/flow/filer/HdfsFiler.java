@@ -1,0 +1,166 @@
+/*
+ * Copyright 2015 Lithium Technologies, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.lithium.flow.filer;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.lithium.flow.io.DataIo;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.AccessControlException;
+
+import com.google.common.collect.Lists;
+
+/**
+ * @author Matt Ayres
+ */
+public class HdfsFiler implements Filer {
+	private final FileSystem fileSystem;
+
+	public HdfsFiler(@Nonnull Configuration conf) throws IOException {
+		this(FileSystem.get(checkNotNull(conf)));
+	}
+
+	public HdfsFiler(@Nonnull FileSystem fileSystem) {
+		this.fileSystem = checkNotNull(fileSystem);
+	}
+
+	@Override
+	@Nonnull
+	public URI getUri() {
+		return fileSystem.getUri();
+	}
+
+	@Override
+	@Nonnull
+	public List<Record> listRecords(@Nonnull String path) throws IOException {
+		List<Record> records = Lists.newArrayList();
+
+		Path hdfsPath = new Path(path);
+		if (fileSystem.exists(hdfsPath)) {
+			try {
+				for (FileStatus status : fileSystem.listStatus(hdfsPath)) {
+					records.add(getRecordForStatus(status, path));
+				}
+			} catch (AccessControlException e) {
+				// permission denied, fall through to return the empty list
+			}
+		}
+
+		return records;
+	}
+
+	@Nonnull
+	@Override
+	public Record getRecord(@Nonnull String path) throws IOException {
+		Path filePath = new Path(path);
+		try {
+			FileStatus status = fileSystem.getFileStatus(filePath);
+			if (status != null) {
+				File file = new File(path);
+				return getRecordForStatus(status, file.getParent() == null ? "" : file.getParent());
+			}
+		} catch (FileNotFoundException e) {
+			// catch this here to avoid calling fileSystem.exists() that does the same thing
+		}
+		return new Record(getUri(), filePath.getParent().toString(), filePath.getName(), 0, -1, false);
+	}
+
+	private Record getRecordForStatus(@Nonnull FileStatus status, @Nonnull String parent) {
+		String name = status.getPath().getName();
+		long time = status.getModificationTime();
+		long size = status.getLen();
+		boolean directory = status.isDirectory();
+		return new Record(getUri(), parent, name, time, size, directory);
+	}
+
+	@Override
+	@Nonnull
+	public InputStream readFile(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+
+		return fileSystem.open(new Path(path));
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream writeFile(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+
+		return fileSystem.create(new Path(path), true);
+	}
+
+	@Override
+	@Nonnull
+	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
+		throw new UnsupportedOperationException("openFile not implemented yet");
+	}
+
+	@Override
+	public void setFileTime(@Nonnull String path, long time) throws IOException {
+		checkNotNull(path);
+
+		FileStatus status = fileSystem.getFileStatus(new Path(path));
+		if (status != null) {
+			fileSystem.setTimes(new Path(path), time, status.getAccessTime());
+		}
+	}
+
+	@Override
+	public void deleteFile(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+
+		fileSystem.delete(new Path(path), false);
+	}
+
+	@Override
+	public void createDirs(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+
+		if (!fileSystem.mkdirs(new Path(path))) {
+			throw new IOException("failed to create dirs: " + path);
+		}
+	}
+
+	@Override
+	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) throws IOException {
+		checkNotNull(oldPath);
+		checkNotNull(newPath);
+
+		if (!fileSystem.rename(new Path(oldPath), new Path(newPath))) {
+			throw new IOException("failed to rename: " + oldPath + " to " + newPath);
+		}
+	}
+
+	@Override
+	public void close() throws IOException {
+		fileSystem.close();
+	}
+}

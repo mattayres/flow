@@ -1,0 +1,138 @@
+/*
+ * Copyright 2015 Lithium Technologies, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.lithium.flow.db;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.lithium.flow.util.CheckedBiConsumer;
+import com.lithium.flow.util.CheckedConsumer;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+/**
+ * @author Matt Ayres
+ */
+public abstract class AbstractSchema implements Schema {
+	@Override
+	@Nullable
+	public String selectString(@Nonnull String query, Object... parameters) throws SQLException {
+		AtomicReference<String> value = new AtomicReference<>();
+		queryRows(query, rs -> value.set(rs.getString(1)), parameters);
+		return value.get();
+	}
+
+	@Override
+	public int selectInt(@Nonnull String query, Object... parameters) throws SQLException {
+		AtomicInteger value = new AtomicInteger();
+		queryRows(query, rs -> value.set(rs.getInt(1)), parameters);
+		return value.get();
+	}
+
+	@Override
+	public long selectLong(@Nonnull String query, Object... parameters) throws SQLException {
+		AtomicLong value = new AtomicLong();
+		queryRows(query, rs -> value.set(rs.getInt(1)), parameters);
+		return value.get();
+	}
+
+	@Override
+	@Nonnull
+	public <T> List<T> queryList(@Nonnull String query,
+			@Nonnull CheckedBiConsumer<ResultSet, List<T>, SQLException> consumer,
+			Object... parameters) throws SQLException {
+		checkNotNull(query);
+		checkNotNull(consumer);
+		List<T> list = Lists.newArrayList();
+		queryRows(query, rs -> consumer.accept(rs, list), parameters);
+		return list;
+	}
+
+	@Override
+	@Nonnull
+	public <T> Set<T> querySet(@Nonnull String query,
+			@Nonnull CheckedBiConsumer<ResultSet, Set<T>, SQLException> consumer,
+			Object... parameters) throws SQLException {
+		checkNotNull(query);
+		checkNotNull(consumer);
+		Set<T> set = Sets.newHashSet();
+		queryRows(query, rs -> consumer.accept(rs, set), parameters);
+		return set;
+	}
+
+	@Override
+	@Nonnull
+	public <K, V> Map<K, V> queryMap(@Nonnull String query,
+			@Nonnull CheckedBiConsumer<ResultSet, Map<K, V>, SQLException> consumer,
+			Object... parameters) throws SQLException {
+		checkNotNull(query);
+		checkNotNull(consumer);
+		Map<K, V> map = Maps.newHashMap();
+		queryRows(query, rs -> consumer.accept(rs, map), parameters);
+		return map;
+	}
+
+	@Override
+	public void queryRows(@Nonnull String query,
+			@Nonnull CheckedConsumer<ResultSet, SQLException> consumer, Object... parameters)
+			throws SQLException {
+		checkNotNull(query);
+		checkNotNull(consumer);
+		try (Connection con = getConnection()) {
+			try (PreparedStatement ps = con.prepareStatement(query)) {
+				int i = 1;
+				for (Object parameter : parameters) {
+					ps.setObject(i++, parameter);
+				}
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						consumer.accept(rs);
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public void update(@Nonnull String query, Object... parameters) throws SQLException {
+		checkNotNull(query);
+		try (Connection con = getConnection()) {
+			try (PreparedStatement ps = con.prepareStatement(query)) {
+				int i = 1;
+				for (Object parameter : parameters) {
+					ps.setObject(i++, parameter);
+				}
+				ps.executeUpdate();
+			}
+		}
+	}
+}
