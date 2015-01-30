@@ -29,6 +29,12 @@
 		</pluginManagement>
 	</build>
 
+	<scm>
+		<developerConnection>scm:git:git@github.com:lithiumtech/flow.git</developerConnection>
+		<url>https://github.com/lithiumtech/flow</url>
+		<tag>HEAD</tag>
+	</scm>
+
 	<dependencies>
 		<!-- runtime required -->
 		<dependency>
