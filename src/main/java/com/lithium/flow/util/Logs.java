@@ -78,7 +78,7 @@ public class Logs {
 
 	/**
 	 * Return logger for calling class. Intended for static use as a class member field:
-	 * <p/>
+	 * <p>
 	 * <code>private static final Logger log = Logs.getLogger();</code>
 	 */
 	@Nonnull
