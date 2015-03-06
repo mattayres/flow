@@ -37,11 +37,12 @@ public class Caches {
 	}
 
 	@Nonnull
+	@SuppressWarnings("unchecked")
 	public static <K, V> LoadingCache<K, V> build(@Nonnull CheckedFunction<K, V, Exception> function,
-			@Nonnull UnaryOperator<CacheBuilder<Object, Object>> builder) {
+			@Nonnull UnaryOperator<CacheBuilder<K, V>> operator) {
 		checkNotNull(function);
-		checkNotNull(builder);
-		return builder.apply(CacheBuilder.newBuilder()).build(loader(function));
+		checkNotNull(operator);
+		return operator.apply((CacheBuilder<K, V>) CacheBuilder.newBuilder()).build(loader(function));
 	}
 
 	@Nonnull
