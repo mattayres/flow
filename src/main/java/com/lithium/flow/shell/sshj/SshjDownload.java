@@ -29,6 +29,7 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import net.schmizz.sshj.sftp.SFTPClient;
@@ -76,6 +77,8 @@ public class SshjDownload implements LocalDestFile, Runnable {
 			sftp.get(path, this);
 		} catch (IOException e) {
 			log.warn("download failed: {}", path, e);
+			IOUtils.closeQuietly(pipeIn);
+			IOUtils.closeQuietly(pipeOut);
 		} finally {
 			latch.countDown();
 		}
