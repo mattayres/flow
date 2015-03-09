@@ -22,6 +22,7 @@ import com.lithium.flow.util.HashEncoder;
 import com.lithium.flow.util.HashFunctions;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -80,6 +81,8 @@ public interface Filer extends Closeable {
 
 
 	default void copy(@Nonnull String srcPath, @Nonnull Filer destFiler, @Nonnull String destPath) throws IOException {
+		destFiler.createDirs(new File(destPath).getParent());
+
 		try (InputStream in = readFile(srcPath)) {
 			OutputStream out = destFiler.writeFile(destPath);
 			IOUtils.copy(in, out);
