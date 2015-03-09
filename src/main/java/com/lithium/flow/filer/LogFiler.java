@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 /**
  * @author Matt Ayres
  */
-public class LogFiler implements Filer {
+public class LogFiler extends DecoratedFiler {
 	private static final Logger log = Logs.getLogger();
 
 	private final Filer delegate;
@@ -47,6 +47,7 @@ public class LogFiler implements Filer {
 	}
 
 	public LogFiler(@Nonnull Filer delegate, boolean enter, boolean exit) {
+		super(delegate, false);
 		this.delegate = checkNotNull(delegate);
 		this.enter = enter;
 		this.exit = exit;
@@ -108,6 +109,21 @@ public class LogFiler implements Filer {
 		} finally {
 			if (exit) {
 				log.info("exit: findRecords(\"{}\", {})", path, threads);
+			}
+		}
+	}
+
+	@Override
+	@Nonnull
+	public String getHash(@Nonnull String path, @Nonnull String hash, @Nonnull String base) throws IOException {
+		if (enter) {
+			log.info("enter: getHash(\"{}\", \"{}\", \"{}\")", path, hash, base);
+		}
+		try {
+			return super.getHash(path, hash, base);
+		} finally {
+			if (exit) {
+				log.info("exit: getHash(\"{}\", \"{}\", \"{}\")", path, hash, base);
 			}
 		}
 	}

@@ -39,7 +39,7 @@ import com.google.common.collect.Lists;
 /**
  * @author Matt Ayres
  */
-public class StatsFiler implements Filer {
+public class StatsFiler extends DecoratedFiler {
 	private static final Logger log = Logs.getLogger();
 
 	private final Filer delegate;
@@ -48,6 +48,7 @@ public class StatsFiler implements Filer {
 	private final Stat listRecordsStat = new Stat("listRecords");
 	private final Stat getRecordStat = new Stat("getRecord");
 	private final Stat findRecordsStat = new Stat("findRecords");
+	private final Stat getHashFileStat = new Stat("getHash");
 	private final Stat readFileStat = new Stat("readFile");
 	private final Stat writeFileStat = new Stat("writeFile");
 	private final Stat openFileStat = new Stat("openFile");
@@ -63,6 +64,7 @@ public class StatsFiler implements Filer {
 	}
 
 	public StatsFiler(@Nonnull Filer delegate, int dumpInterval) {
+		super(delegate, false);
 		this.delegate = checkNotNull(delegate);
 		if (dumpInterval > 0) {
 			new LoopThread(dumpInterval, this::dumpStats);
@@ -108,6 +110,17 @@ public class StatsFiler implements Filer {
 		Token token = findRecordsStat.start();
 		try {
 			return delegate.findRecords(path, threads);
+		} finally {
+			token.finish();
+		}
+	}
+
+	@Override
+	@Nonnull
+	public String getHash(@Nonnull String path, @Nonnull String hash, @Nonnull String base) throws IOException {
+		Token token = getHashFileStat.start();
+		try {
+			return super.getHash(path, hash, base);
 		} finally {
 			token.finish();
 		}
