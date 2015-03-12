@@ -27,13 +27,13 @@ public class PrintUtils {
 	@Nonnull
 	public static String bytes(@Nonnull Number bytes) {
 		checkNotNull(bytes);
-		return format(bytes, 1024, "kmgtpe", "b");
+		return format(bytes, 1024, "KMGTPE", "B");
 	}
 
 	@Nonnull
 	public static String count(@Nonnull Number count) {
 		checkNotNull(count);
-		return format(count, 1000, "kmbtq", "");
+		return format(count, 1000, "KMBTQ", "");
 	}
 
 	@Nonnull
