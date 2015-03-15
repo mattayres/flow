@@ -18,6 +18,7 @@ package com.lithium.flow.shell.cache;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.config.Config;
 import com.lithium.flow.filer.DecoratedFiler;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.shell.Exec;
@@ -40,10 +41,11 @@ public class DisposableShell implements Shell {
 	private final Recycler<Tunneling, Tunnel> tunnels;
 	private final Recycler<Shell, Filer> filers;
 
-	public DisposableShell(@Nonnull Reusable<Shell> reusable) {
+	public DisposableShell(@Nonnull Config config, @Nonnull Reusable<Shell> reusable) {
+		checkNotNull(config);
 		this.reusable = checkNotNull(reusable);
-		tunnels = new Recycler<>(tunneling -> reusable.get().tunnel(tunneling));
-		filers = new Recycler<>(shell -> reusable.get().getFiler());
+		tunnels = new Recycler<>(config, tunneling -> reusable.get().tunnel(tunneling));
+		filers = new Recycler<>(config, shell -> reusable.get().getFiler());
 	}
 
 	@Override

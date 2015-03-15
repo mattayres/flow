@@ -35,14 +35,15 @@ import javax.annotation.Nonnull;
  */
 public class CachedShore implements Shore {
 	private final Shore delegate;
+	private final Config config;
 	private final Access access;
 	private final Recycler<Login, Shell> shells;
 
 	public CachedShore(@Nonnull Shore delegate, @Nonnull Config config, @Nonnull Access access) {
 		this.delegate = checkNotNull(delegate);
-		checkNotNull(config);
+		this.config = checkNotNull(config);
 		this.access = checkNotNull(access);
-		shells = new Recycler<>(login -> new PooledShell(config, delegate, login));
+		shells = new Recycler<>(config, login -> new PooledShell(config, delegate, login));
 	}
 
 	@Override
@@ -56,7 +57,7 @@ public class CachedShore implements Shore {
 	@Nonnull
 	public Shell getShell(@Nonnull Login login) throws IOException {
 		Reusable<Shell> reusableShell = shells.get(login);
-		return new DisposableShell(reusableShell);
+		return new DisposableShell(config, reusableShell);
 	}
 
 	@Override
