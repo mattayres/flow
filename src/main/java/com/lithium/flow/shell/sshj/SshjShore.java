@@ -23,10 +23,11 @@ import com.lithium.flow.access.Login;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.shell.Shore;
+import com.lithium.flow.shell.util.DecoratedShell;
 import com.lithium.flow.util.Caches;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,7 +36,7 @@ import javax.annotation.Nonnull;
 import org.apache.commons.io.IOUtils;
 
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
@@ -43,7 +44,7 @@ import com.google.common.collect.Lists;
 public class SshjShore implements Shore {
 	private final Config config;
 	private final Access access;
-	private final List<Shell> shells = Lists.newCopyOnWriteArrayList();
+	private final Set<Shell> shells = Sets.newCopyOnWriteArraySet();
 	private final LoadingCache<String, Lock> locks = Caches.build(key -> new ReentrantLock());
 
 	public SshjShore(@Nonnull Config config, @Nonnull Access access) {
@@ -70,7 +71,13 @@ public class SshjShore implements Shore {
 		try {
 			Shell shell = new SshjShell(client, login);
 			shells.add(shell);
-			return shell;
+			return new DecoratedShell(shell) {
+				@Override
+				public void close() throws IOException {
+					shells.remove(shell);
+					super.close();
+				}
+			};
 		} finally {
 			lock.unlock();
 		}
