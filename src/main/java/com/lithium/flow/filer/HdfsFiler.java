@@ -43,6 +43,7 @@ import com.google.common.collect.Lists;
  */
 public class HdfsFiler implements Filer {
 	private final FileSystem fileSystem;
+	private final boolean overwrite;
 
 	public HdfsFiler(@Nonnull Configuration conf) throws IOException {
 		this(FileSystem.get(checkNotNull(conf)));
@@ -50,6 +51,7 @@ public class HdfsFiler implements Filer {
 
 	public HdfsFiler(@Nonnull FileSystem fileSystem) {
 		this.fileSystem = checkNotNull(fileSystem);
+		overwrite = fileSystem.getConf().getBoolean("overwrite", true);
 	}
 
 	@Override
@@ -114,7 +116,7 @@ public class HdfsFiler implements Filer {
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
 		checkNotNull(path);
 
-		return fileSystem.create(new Path(path), true);
+		return fileSystem.create(new Path(path), overwrite);
 	}
 
 	@Override
