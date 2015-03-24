@@ -77,10 +77,10 @@ public class SshjDownload implements LocalDestFile, Runnable {
 			sftp.get(path, this);
 		} catch (IOException e) {
 			log.warn("download failed: {}", path, e);
-			IOUtils.closeQuietly(pipeIn);
-			IOUtils.closeQuietly(pipeOut);
 		} finally {
 			latch.countDown();
+			IOUtils.closeQuietly(pipeIn);
+			IOUtils.closeQuietly(pipeOut);
 		}
 	}
 
