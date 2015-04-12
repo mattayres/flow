@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.util.Caches;
+import com.lithium.flow.util.CheckedFunction;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,9 +48,9 @@ public class CachedFiler extends DecoratedFiler {
 		int concurrency = config.getInt("cache.concurrency", 4);
 		long expireTime = config.getTime("cache.expireTime", "1m");
 
-		dirCache = Caches.build(delegate::listRecords,
+		dirCache = Caches.build((CheckedFunction<String, List<Record>, Exception>) delegate::listRecords,
 				b -> b.softValues().concurrencyLevel(concurrency).expireAfterWrite(expireTime, TimeUnit.MILLISECONDS));
-		fileCache = Caches.build(delegate::getRecord,
+		fileCache = Caches.build((CheckedFunction<String, Record, Exception>) delegate::getRecord,
 				b -> b.softValues().concurrencyLevel(concurrency).expireAfterWrite(expireTime, TimeUnit.MILLISECONDS));
 	}
 

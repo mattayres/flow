@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Repo;
 import com.lithium.flow.util.Caches;
+import com.lithium.flow.util.CheckedFunction;
 
 import java.io.IOException;
 import java.util.List;
@@ -47,7 +48,8 @@ public class CachedRepo implements Repo {
 		checkNotNull(unit);
 
 		namesCache = Caches.build(key -> delegate.getNames(), b -> b.expireAfterAccess(duration, unit));
-		configCache = Caches.build(delegate::getConfig, b -> b.expireAfterWrite(duration, unit));
+		configCache = Caches.build((CheckedFunction<String, Config, Exception>) delegate::getConfig,
+				b -> b.expireAfterWrite(duration, unit));
 	}
 
 	@Override
