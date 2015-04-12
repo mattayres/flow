@@ -31,7 +31,7 @@ public class HashFilerChain implements Chain<Filer> {
 	private final Config config;
 
 	public HashFilerChain(@Nonnull Config config) {
-		this.config = checkNotNull(config);
+		this.config = checkNotNull(config).prefix("hash");
 	}
 
 	@Override

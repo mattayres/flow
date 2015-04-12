@@ -25,6 +25,7 @@ import com.lithium.flow.util.JedisPooler;
 import com.lithium.flow.util.JedisUtils;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.annotation.Nonnull;
 
@@ -35,24 +36,46 @@ import redis.clients.jedis.Jedis;
  */
 public class RedisHashFiler extends DecoratedFiler {
 	private final JedisPooler pooler;
+	private final String prefix;
+	private final int expire;
 
 	public RedisHashFiler(@Nonnull Filer delegate, @Nonnull Config config) {
 		super(checkNotNull(delegate));
 		checkNotNull(config);
-		pooler = JedisUtils.buildPooler(config.prefix("hash"));
+		pooler = JedisUtils.buildPooler(config);
+		prefix = config.getString("prefix", "");
+		expire = config.getString("expire", "-1").equals("-1") ? -1 : (int) (config.getTime("expire") / 1000);
 	}
 
 	@Override
 	@Nonnull
 	public String getHash(@Nonnull String path, @Nonnull String hash, @Nonnull String base) throws IOException {
+		String key = prefix + path;
+
 		try (Jedis jedis = pooler.getResource()) {
-			String value = jedis.hget(path, hash);
+			String value = jedis.hget(key, hash);
 			if (value == null) {
-				value = super.getHash(path, hash, base);
-				jedis.hset(path, hash, value);
+				value = super.getHash(key, hash, base);
+				jedis.hset(key, hash, value);
+				if (expire > -1) {
+					jedis.expire(key, expire);
+				}
 			}
 			return value;
 		}
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream writeFile(@Nonnull String path) throws IOException {
+		pooler.accept(j -> j.del(path));
+		return super.writeFile(path);
+	}
+
+	@Override
+	public void deleteFile(@Nonnull String path) throws IOException {
+		pooler.accept(j -> j.del(path));
+		super.deleteFile(path);
 	}
 
 	@Override
