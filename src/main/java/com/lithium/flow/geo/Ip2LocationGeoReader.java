@@ -58,12 +58,15 @@ public class Ip2LocationGeoReader implements GeoReader {
 			long end = Long.parseLong(line[1]);
 			String countryCode = fixUnknown(interner.intern(line[2].toLowerCase()));
 			String countryName = fixUnknown(interner.intern(WordUtils.capitalizeFully(line[3])));
-			String city = interner.intern(WordUtils.capitalizeFully(line[5]));
 			String region = interner.intern(WordUtils.capitalizeFully(line[4]));
-			String postal = "unknown";
+			String city = interner.intern(WordUtils.capitalizeFully(line[5]));
 			double latitude = Double.parseDouble(line[6]);
 			double longitude = Double.parseDouble(line[7]);
-			GeoDetail detail = new GeoDetail(city, region, postal, countryCode, countryName, latitude, longitude);
+			String postal = line.length <= 8 ? "unknown" : fixUnknown(interner.intern(line[8]));
+			String timeZone = line.length <= 9 ? "unknown" : fixUnknown(interner.intern(line[9]));
+
+			GeoDetail detail = new GeoDetail(city, region, postal, countryCode, countryName,
+					latitude, longitude, timeZone);
 			GeoBlock block = new GeoBlock(start, end, detail);
 			blocks.add(block);
 		}

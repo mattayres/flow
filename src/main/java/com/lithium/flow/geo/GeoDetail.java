@@ -30,7 +30,8 @@ import com.javadocmd.simplelatlng.LatLng;
  * @author Matt Ayres
  */
 public class GeoDetail {
-	private static final GeoDetail UNKNOWN = new GeoDetail("unknown", "unknown", "unknown", "unknown", "unknown", 0, 0);
+	private static final GeoDetail UNKNOWN = new GeoDetail(
+			"unknown", "unknown", "unknown", "unknown", "unknown", 0, 0, "unknown");
 
 	private final String city;
 	private final String region;
@@ -39,9 +40,10 @@ public class GeoDetail {
 	private final String countryName;
 	private final double latitude;
 	private final double longitude;
+	private final String timeZone;
 
 	public GeoDetail(@Nonnull String city, @Nonnull String region, @Nonnull String postal, @Nonnull String countryCode,
-			@Nonnull String countryName, double latitude, double longitude) {
+			@Nonnull String countryName, double latitude, double longitude, @Nonnull String timeZone) {
 		this.city = checkNotNull(city);
 		this.region = checkNotNull(region);
 		this.postal = checkNotNull(postal);
@@ -49,6 +51,7 @@ public class GeoDetail {
 		this.countryName = checkNotNull(countryName);
 		this.latitude = latitude;
 		this.longitude = longitude;
+		this.timeZone = checkNotNull(timeZone);
 	}
 
 	@Nonnull
@@ -87,6 +90,11 @@ public class GeoDetail {
 
 	public double getLongitude() {
 		return longitude;
+	}
+
+	@Nonnull
+	public String getTimeZone() {
+		return timeZone;
 	}
 
 	@Nonnull

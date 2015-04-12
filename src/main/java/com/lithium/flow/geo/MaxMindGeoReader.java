@@ -99,8 +99,10 @@ public class MaxMindGeoReader implements GeoReader {
 			String postal = fix(line[4]);
 			double latitude = Double.parseDouble(line[5]);
 			double longitude = Double.parseDouble(line[6]);
+			String timeZone = "unknown";
 
-			GeoDetail geoDetail = new GeoDetail(city, region, postal, countryCode, countryName, latitude, longitude);
+			GeoDetail geoDetail = new GeoDetail(city, region, postal, countryCode, countryName,
+					latitude, longitude, timeZone);
 			locations.put(id, geoDetail);
 		}
 		return locations;
