@@ -59,12 +59,13 @@ public class FilteredRepo extends DecoratedRepo {
 		}
 
 		configNames = Lists.newArrayList(configNames);
-		configNames.removeAll(config.getList("configs.skip", Configs.emptyList()));
 
 		if (config.containsKey("configs.matcher")) {
 			StringMatcher matcher = StringMatchers.fromConfig(config, "configs.matcher");
 			configNames = configNames.stream().filter(matcher).collect(toList());
 		}
+
+		configNames.removeAll(config.getList("configs.skip", Configs.emptyList()));
 
 		int limit = config.getInt("configs.limit", -1);
 		if (limit > -1 && limit < configNames.size()) {
