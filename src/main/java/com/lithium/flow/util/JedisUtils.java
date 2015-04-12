@@ -26,18 +26,28 @@ import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
 
 /**
  * @author Matt Ayres
  */
 public class JedisUtils {
+	/**
+	 * @deprecated use {@link #buildPool(Config)} instead.
+	 */
+	@Deprecated
 	@Nonnull
 	public static ThreadLocal<Jedis> buildTL(@Nonnull Config config) {
 		checkNotNull(config);
 		return ThreadLocal.withInitial(() -> build(config));
 	}
 
+	/**
+	 * @deprecated use {@link #buildPool(Config)} instead.
+	 */
+	@Deprecated
 	@Nonnull
 	public static ThreadLocal<Jedis> buildTL(@Nonnull Config config, @Nonnull Consumer<Jedis> consumer) {
 		checkNotNull(config);
@@ -49,6 +59,27 @@ public class JedisUtils {
 	}
 
 	@Nonnull
+	public static JedisPool buildPool(@Nonnull Config config) {
+		return buildPooler(config);
+	}
+
+	@Nonnull
+	public static JedisPooler buildPooler(@Nonnull Config config) {
+		checkNotNull(config);
+
+		String host = config.getString("redis.host", "localhost");
+		int port = config.getInt("redis.port", Protocol.DEFAULT_PORT);
+		int timeout = (int) config.getTime("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT));
+
+		JedisPoolConfig poolConfig = new JedisPoolConfig();
+		poolConfig.setMinIdle(config.getInt("redis.minIdle", poolConfig.getMinIdle()));
+		poolConfig.setMaxIdle(config.getInt("redis.maxIdle", poolConfig.getMaxIdle()));
+		poolConfig.setMaxTotal(config.getInt("redis.maxTotal", poolConfig.getMaxTotal()));
+
+		return new JedisPooler(poolConfig, host, port, timeout);
+	}
+
+	@Nonnull
 	public static Jedis build(@Nonnull Config config) {
 		checkNotNull(config);
 		String host = config.getString("redis.host", "localhost");
@@ -57,6 +88,10 @@ public class JedisUtils {
 		return new Jedis(host, port, timeout);
 	}
 
+	/**
+	 * @deprecated use {@link JedisPooler} from {@link #buildPooler(Config)} instead.
+	 */
+	@Deprecated
 	public static void parallel(@Nonnull Config config, @Nonnull String pattern,
 			@Nonnull BiConsumer<Jedis, String> consumer) {
 		checkNotNull(config);

@@ -31,18 +31,19 @@ import javax.annotation.Nonnull;
 import javax.crypto.spec.SecretKeySpec;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 
 /**
  * @author Matt Ayres
  */
 public class RedisKeySource implements KeySource {
-	private final ThreadLocal<Jedis> jedisTL;
+	private final JedisPool jedisPool;
 	private final String redisKey;
 	private final boolean generate;
 
 	public RedisKeySource(@Nonnull Config config) {
 		checkNotNull(config);
-		jedisTL = JedisUtils.buildTL(config.prefix("key"));
+		jedisPool = JedisUtils.buildPool(config.prefix("key"));
 		redisKey = config.getString("key.redis.key");
 		generate = config.getBoolean("key.generate", true);
 	}
@@ -51,17 +52,18 @@ public class RedisKeySource implements KeySource {
 	@Nonnull
 	public List<Key> getKeys(@Nonnull String name) {
 		checkNotNull(name);
-		Jedis jedis = jedisTL.get();
-		String hexKey = jedis.hget(redisKey, name);
-		if (hexKey == null) {
-			if (generate) {
-				jedis.hsetnx(redisKey, name, keyGen());
-				hexKey = jedis.hget(redisKey, name);
-			} else {
-				throw new IllegalArgumentException("no key for name: " + name);
+		try (Jedis jedis = jedisPool.getResource()) {
+			String hexKey = jedis.hget(redisKey, name);
+			if (hexKey == null) {
+				if (generate) {
+					jedis.hsetnx(redisKey, name, keyGen());
+					hexKey = jedis.hget(redisKey, name);
+				} else {
+					throw new IllegalArgumentException("no key for name: " + name);
+				}
 			}
+			return asList(new SecretKeySpec(base16().decode(hexKey), "AES"));
 		}
-		return asList(new SecretKeySpec(base16().decode(hexKey), "AES"));
 	}
 
 	@Nonnull
