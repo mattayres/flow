@@ -35,6 +35,6 @@ public class RegexStringMatcher implements StringMatcher {
 
 	@Override
 	public boolean matches(@Nullable String input) {
-		return input != null && pattern.matcher(input).matches();
+		return input != null && pattern.matcher(input).find();
 	}
 }
