@@ -108,7 +108,7 @@ public abstract class AbstractSchema implements Schema {
 		checkNotNull(query);
 		checkNotNull(consumer);
 		try (Connection con = getConnection()) {
-			try (PreparedStatement ps = con.prepareStatement(query)) {
+			try (PreparedStatement ps = readQuery(con, query)) {
 				int i = 1;
 				for (Object parameter : parameters) {
 					ps.setObject(i++, parameter);
@@ -120,6 +120,11 @@ public abstract class AbstractSchema implements Schema {
 				}
 			}
 		}
+	}
+
+	@Nonnull
+	protected PreparedStatement readQuery(@Nonnull Connection con, @Nonnull String query) throws SQLException {
+		return con.prepareStatement(query);
 	}
 
 	@Override

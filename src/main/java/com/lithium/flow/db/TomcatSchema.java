@@ -17,12 +17,15 @@
 package com.lithium.flow.db;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.util.Logs;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import javax.annotation.Nonnull;
@@ -38,6 +41,7 @@ public class TomcatSchema extends AbstractSchema {
 	private static final Logger log = Logs.getLogger();
 
 	private final DataSource dataSource;
+	private final boolean streaming;
 
 	public TomcatSchema(@Nonnull Config config) {
 		checkNotNull(config);
@@ -58,12 +62,24 @@ public class TomcatSchema extends AbstractSchema {
 		poolProps.setTestOnBorrow(config.getBoolean("sql.pool.testOnBorrow", true));
 		poolProps.setDefaultReadOnly(config.getBoolean("sql.pool.defaultReadOnly", true));
 		dataSource = new DataSource(poolProps);
+		streaming = config.getBoolean("sql.streaming", false);
 	}
 
 	@Override
 	@Nonnull
 	public Connection getConnection() throws SQLException {
 		return dataSource.getConnection();
+	}
+
+	@Nonnull
+	protected PreparedStatement readQuery(@Nonnull Connection con, @Nonnull String query) throws SQLException {
+		if (streaming) {
+			PreparedStatement ps = con.prepareStatement(query, TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+			ps.setFetchSize(Integer.MIN_VALUE);
+			return ps;
+		} else {
+			return super.readQuery(con, query);
+		}
 	}
 
 	@Override
