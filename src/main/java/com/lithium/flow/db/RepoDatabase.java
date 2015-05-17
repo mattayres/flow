@@ -23,8 +23,6 @@ import com.lithium.flow.config.Repo;
 import com.lithium.flow.util.Caches;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
@@ -43,13 +41,6 @@ public class RepoDatabase implements Database {
 		checkNotNull(repo);
 		checkNotNull(function);
 		schemas = Caches.build(name -> function.apply(repo.getConfig(name)));
-	}
-
-	@Override
-	@Nonnull
-	public Connection getConnection(@Nonnull String name) throws SQLException {
-		checkNotNull(name);
-		return schemas.getUnchecked(name).getConnection();
 	}
 
 	@Override

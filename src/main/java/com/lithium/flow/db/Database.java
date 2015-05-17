@@ -30,5 +30,7 @@ public interface Database extends Closeable {
 	Schema getSchema(@Nonnull String name);
 
 	@Nonnull
-	Connection getConnection(@Nonnull String name) throws SQLException;
+	default Connection getConnection(@Nonnull String name) throws SQLException {
+		return getSchema(name).getConnection();
+	}
 }
