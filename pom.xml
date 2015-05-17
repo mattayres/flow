@@ -257,5 +257,11 @@
 			<version>2.2.5</version>
 			<optional>true</optional>
 		</dependency>
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+			<version>1.5.2</version>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 </project>
