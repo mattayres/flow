@@ -59,9 +59,9 @@ public interface Schema extends Closeable {
 			@Nonnull CheckedBiConsumer<ResultSet, Map<K, V>, SQLException> consumer,
 			Object... parameters) throws SQLException;
 
-	void queryRows(@Nonnull String query,
-			@Nonnull CheckedConsumer<ResultSet, SQLException> consumer,
-			Object... parameters) throws SQLException;
+	<E extends Exception> void queryRows(@Nonnull String query,
+			@Nonnull CheckedConsumer<ResultSet, E> consumer,
+			Object... parameters) throws SQLException, E;
 
 	void update(@Nonnull String query, Object... parameters) throws SQLException;
 }

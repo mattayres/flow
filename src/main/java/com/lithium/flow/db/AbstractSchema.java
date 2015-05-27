@@ -102,9 +102,9 @@ public abstract class AbstractSchema implements Schema {
 	}
 
 	@Override
-	public void queryRows(@Nonnull String query,
-			@Nonnull CheckedConsumer<ResultSet, SQLException> consumer, Object... parameters)
-			throws SQLException {
+	public <E extends Exception> void queryRows(@Nonnull String query,
+			@Nonnull CheckedConsumer<ResultSet, E> consumer, Object... parameters)
+			throws SQLException, E {
 		checkNotNull(query);
 		checkNotNull(consumer);
 		try (Connection con = getConnection()) {
