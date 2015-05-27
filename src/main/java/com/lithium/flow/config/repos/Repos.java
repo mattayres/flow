@@ -35,7 +35,7 @@ import com.lithium.flow.svn.LoginSvnProvider;
 import com.lithium.flow.svn.PoolSvnProvider;
 import com.lithium.flow.svn.SvnFiler;
 import com.lithium.flow.svn.SvnProvider;
-import com.lithium.flow.util.LogExecutorService;
+import com.lithium.flow.util.Threader;
 
 import java.io.IOException;
 import java.net.URI;
@@ -107,13 +107,13 @@ public class Repos {
 		}
 
 		if (config.getBoolean("configs.preload", false)) {
-			LogExecutorService service = new LogExecutorService(config.getInt("configs.threads", 8));
+			Threader threader = new Threader(config.getInt("configs.threads", 8));
 			Repo finalRepo = repo;
 			for (String configName : repo.getNames()) {
-				service.execute(configName, () -> finalRepo.getConfig(configName));
+				threader.execute(configName, () -> finalRepo.getConfig(configName));
 			}
 			if (config.getBoolean("configs.preload.block", true)) {
-				service.finish();
+				threader.finish();
 			}
 		}
 

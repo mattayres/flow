@@ -18,7 +18,7 @@ package com.lithium.flow.filer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.util.LogExecutorService;
+import com.lithium.flow.util.Threader;
 
 import java.util.Spliterator;
 import java.util.concurrent.BlockingQueue;
@@ -35,18 +35,18 @@ import javax.annotation.Nonnull;
  */
 public class RecordFinder implements Spliterator<Record> {
 	private final Filer filer;
-	private final LogExecutorService service;
+	private final Threader threader;
 	private final BlockingQueue<Record> queue = new LinkedBlockingQueue<>();
 
 	private RecordFinder(@Nonnull Filer filer, @Nonnull String path, int threads) {
 		this.filer = checkNotNull(filer);
-		service = new LogExecutorService(threads);
+		threader = new Threader(threads);
 		findRecords(path);
 	}
 
 	private void findRecords(@Nonnull String path) {
 		checkNotNull(path);
-		service.execute(path, () -> {
+		threader.execute(path, () -> {
 			for (Record record : filer.listRecords(path)) {
 				if (record.isDir()) {
 					queue.add(record);
@@ -60,7 +60,7 @@ public class RecordFinder implements Spliterator<Record> {
 
 	@Override
 	public boolean tryAdvance(Consumer<? super Record> action) {
-		while (service.hasWork() || queue.size() > 0) {
+		while (threader.hasWork() || queue.size() > 0) {
 			try {
 				Record record = queue.poll(10, TimeUnit.MILLISECONDS);
 				if (record != null) {
@@ -71,7 +71,7 @@ public class RecordFinder implements Spliterator<Record> {
 				break;
 			}
 		}
-		service.shutdown();
+		threader.shutdown();
 		return false;
 	}
 

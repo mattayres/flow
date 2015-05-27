@@ -18,7 +18,7 @@ package com.lithium.flow.config.repos;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Repo;
-import com.lithium.flow.util.LogExecutorService;
+import com.lithium.flow.util.Threader;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,9 +42,9 @@ public class ParallelRepo extends DecoratedRepo {
 	@Nonnull
 	public List<Config> getConfigs() throws IOException {
 		List<Config> configs = Lists.newCopyOnWriteArrayList();
-		LogExecutorService service = new LogExecutorService(threads);
-		getNames().forEach(name -> service.execute(name, () -> configs.add(getConfig(name))));
-		service.finish();
+		Threader threader = new Threader(threads);
+		getNames().forEach(name -> threader.execute(name, () -> configs.add(getConfig(name))));
+		threader.finish();
 		return configs;
 	}
 }
