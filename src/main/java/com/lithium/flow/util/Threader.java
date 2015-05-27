@@ -40,7 +40,7 @@ public class Threader {
 	private static final Logger log = Logs.getLogger();
 
 	private final ListeningExecutorService service;
-	private final AtomicInteger queued = new AtomicInteger();
+	private final AtomicInteger remaining = new AtomicInteger();
 
 	public Threader() {
 		this(-1);
@@ -63,19 +63,19 @@ public class Threader {
 		checkNotNull(name);
 		checkNotNull(callable);
 
-		queued.incrementAndGet();
+		remaining.incrementAndGet();
 		ListenableFuture<T> future = service.submit(callable);
 
 		Futures.addCallback(future, new FutureCallback<T>() {
 			@Override
 			public void onSuccess(T object) {
-				queued.decrementAndGet();
+				remaining.decrementAndGet();
 				log.debug("execution finished: {}", name);
 			}
 
 			@Override
 			public void onFailure(@Nonnull Throwable throwable) {
-				queued.decrementAndGet();
+				remaining.decrementAndGet();
 				log.warn("execution failed: {}", name, throwable);
 			}
 		});
@@ -83,12 +83,8 @@ public class Threader {
 		return future;
 	}
 
-	public void shutdown() {
-		service.shutdown();
-	}
-
 	public void finish() {
-		while (queued.get() > 0) {
+		while (remaining.get() > 0) {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
@@ -98,7 +94,7 @@ public class Threader {
 		service.shutdown();
 	}
 
-	public boolean hasWork() {
-		return queued.get() > 0;
+	public int getRemaining() {
+		return remaining.get();
 	}
 }

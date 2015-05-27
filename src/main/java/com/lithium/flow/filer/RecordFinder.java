@@ -60,7 +60,7 @@ public class RecordFinder implements Spliterator<Record> {
 
 	@Override
 	public boolean tryAdvance(Consumer<? super Record> action) {
-		while (threader.hasWork() || queue.size() > 0) {
+		while (threader.getRemaining() > 0 || queue.size() > 0) {
 			try {
 				Record record = queue.poll(10, TimeUnit.MILLISECONDS);
 				if (record != null) {
@@ -71,7 +71,7 @@ public class RecordFinder implements Spliterator<Record> {
 				break;
 			}
 		}
-		threader.shutdown();
+		threader.finish();
 		return false;
 	}
 
