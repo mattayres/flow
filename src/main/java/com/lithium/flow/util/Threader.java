@@ -97,4 +97,9 @@ public class Threader {
 	public int getRemaining() {
 		return remaining.get();
 	}
+
+	@Nonnull
+	public <T> Needle<T> needle() {
+		return new Needle<>(this);
+	}
 }
