@@ -34,9 +34,12 @@ import org.apache.hadoop.fs.Path;
  */
 public class HdfsConfiguration extends Configuration {
 	public HdfsConfiguration(@Nonnull Locator locator) {
-		checkNotNull(locator);
+		this(checkNotNull(locator).getInstance(Config.class));
+	}
 
-		Config config = locator.getInstance(Config.class);
+	public HdfsConfiguration(@Nonnull Config config) {
+		checkNotNull(config);
+
 		set("fs.defaultFS", config.getString("url"));
 
 		for (String key : config.getPrefixKeys("hdfs")) {
