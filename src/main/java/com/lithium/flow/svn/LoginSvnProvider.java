@@ -53,6 +53,7 @@ public class LoginSvnProvider implements SvnProvider {
 	@Override
 	@Nonnull
 	public SVNRepository getRepository() throws IOException {
+		@SuppressWarnings("deprecation")
 		ISVNAuthenticationManager authManager = login.getKeyPath() == null
 				? new BasicAuthenticationManager(login.getUser(), login.getPass(false))
 				: new BasicAuthenticationManager(login.getUser(), new File(login.getKeyPath()),
