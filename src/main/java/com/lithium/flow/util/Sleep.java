@@ -60,18 +60,18 @@ public class Sleep {
 	}
 
 	public static boolean until(@Nonnull Check check) {
-		return until(100, check);
+		return until(10, check);
 	}
 
 	public static boolean until(long interval, @Nonnull Check check) {
-		while (!Thread.interrupted()) {
-			if (!softly(interval)) {
-				return false;
-			}
+		do {
 			if (check.test()) {
 				return true;
 			}
-		}
+			if (!softly(interval)) {
+				return false;
+			}
+		} while (!Thread.interrupted());
 		return false;
 	}
 
