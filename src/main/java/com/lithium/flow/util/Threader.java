@@ -84,14 +84,14 @@ public class Threader {
 	}
 
 	public void finish() {
-		while (remaining.get() > 0) {
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
+		finish(-1);
+	}
+
+	public boolean finish(long timeout) {
+		long endTime = timeout == -1 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
+		Sleep.until(() -> remaining.get() == 0 || System.currentTimeMillis() > endTime);
 		service.shutdown();
+		return remaining.get() == 0;
 	}
 
 	public int getRemaining() {
