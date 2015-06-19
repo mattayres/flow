@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.compress.Coder;
 import com.lithium.flow.compress.Coders;
+import com.lithium.flow.compress.ParallelCoder;
 import com.lithium.flow.config.Config;
 
 import java.io.IOException;
@@ -48,7 +49,11 @@ public final class CompressStreamer implements Streamer {
 
 	@Nonnull
 	private static Coder getCoder(@Nonnull Config config) {
-		return Coders.getCoder(config.getString("compress.type", ""));
+		Coder coder = Coders.getCoder(config.getString("compress.type", ""));
+		if (config.getBoolean("compress.parallel", false)) {
+			coder = new ParallelCoder(coder);
+		}
+		return coder;
 	}
 
 	@Override
