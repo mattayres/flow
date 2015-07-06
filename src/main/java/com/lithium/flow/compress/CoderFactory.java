@@ -18,7 +18,6 @@ package com.lithium.flow.compress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.util.CheckedSupplier;
 import com.lithium.flow.util.Lazy;
 
 import java.util.List;
@@ -58,7 +57,7 @@ public class CoderFactory {
 		private Spec(@Nonnull String extension, @Nonnull Class<? extends Coder> clazz) {
 			this.extension = checkNotNull(extension);
 			checkNotNull(clazz);
-			coder = new Lazy<>((CheckedSupplier<Coder, Exception>) clazz::newInstance);
+			coder = new Lazy<>(clazz::newInstance);
 		}
 
 		private boolean matches(@Nonnull String path) {
