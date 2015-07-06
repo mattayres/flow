@@ -19,11 +19,13 @@ package com.lithium.flow.filer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
+import com.lithium.flow.io.DecoratedOutputStream;
 import com.lithium.flow.util.Caches;
 import com.lithium.flow.util.CheckedFunction;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -98,5 +100,19 @@ public class CachedFiler extends DecoratedFiler {
 			super.createDirs(path);
 			dirCache.invalidate(path);
 		}
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream writeFile(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+		return new DecoratedOutputStream(super.writeFile(path)) {
+			@Override
+			public void close() throws IOException {
+				super.close();
+				dirCache.invalidate(new File(path).getParent());
+				fileCache.invalidate(path);
+			}
+		};
 	}
 }
