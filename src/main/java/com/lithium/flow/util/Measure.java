@@ -116,11 +116,13 @@ public class Measure {
 			return 0;
 		}
 
-		long total = 0;
+		double total = 0;
+		double count = 0;
 		for (int i = startBin; i < Math.min(endBin, bins.length - 1); i++) {
 			total += bins[i];
+			count++;
 		}
-		return (double) total / (endBin - startBin);
+		return total / count;
 	}
 
 	private int getBin(long time) {
