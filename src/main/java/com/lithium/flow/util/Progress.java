@@ -40,6 +40,11 @@ public class Progress {
 	private boolean stopped;
 
 	@Nonnull
+	public Measure measure(@Nonnull String name) {
+		return measure(name, n -> String.valueOf(n.longValue()));
+	}
+
+	@Nonnull
 	public Measure counter(@Nonnull String name) {
 		return measure(name, PrintUtils::count);
 	}
@@ -89,9 +94,14 @@ public class Progress {
 	}
 
 	public synchronized void log(long avgInterval) {
+		long elapsed = System.currentTimeMillis() - startTime;
+		if (!stopped && elapsed < 1000) {
+			return;
+		}
+
 		StringBuilder sb = new StringBuilder();
 		if (startTime > 0) {
-			sb.append(time(System.currentTimeMillis() - startTime));
+			sb.append(time(elapsed));
 		}
 
 		if (stopped) {
