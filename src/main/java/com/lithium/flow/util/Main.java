@@ -21,9 +21,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.ConfigLoader;
 import com.lithium.flow.config.Configs;
+import com.lithium.flow.config.loaders.ClasspathConfigLoader;
 import com.lithium.flow.config.loaders.FileConfigLoader;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,16 +75,7 @@ public class Main {
 	public static void run(@Nullable Class<?> clazz, @Nonnull Callback callback) {
 		checkNotNull(callback);
 		try {
-			Config config;
-			if (System.getProperty("local.config") != null) {
-				config = Configs.local();
-			} else if (clazz != null) {
-				String path = "/" + clazz.getSimpleName() + ".config";
-				ConfigLoader loader = new FileConfigLoader(new File(".").getAbsolutePath());
-				config = Configs.newBuilder().addLoader(loader).allowFileNotFound(true).include(path).build();
-			} else {
-				config = Configs.empty();
-			}
+			Config config = config(clazz);
 
 			Map<String, String> map = new HashMap<>();
 			for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
@@ -96,6 +90,63 @@ public class Main {
 			log.error("failed to start", e);
 			System.exit(1);
 		}
+	}
+
+	@Nonnull
+	public static Config config() throws IOException {
+		return config(null);
+	}
+
+	@Nonnull
+	private static Config config(@Nullable Class<?> clazz) throws IOException {
+		String path = System.getProperty("config");
+		if (path != null) {
+			return configFromFile(path);
+		}
+
+		// legacy support
+		path = System.getProperty("local.config");
+		if (path != null) {
+			return configFromFile(path);
+		}
+
+		// attempt to find 'local.config' file
+		File file = new File("local.config");
+		if (file.exists()) {
+			return configFromFile(file.getAbsolutePath());
+		}
+
+		// use class resource if possible
+		if (clazz != null) {
+			ConfigLoader loader = new ClasspathConfigLoader();
+			path = "/" + clazz.getSimpleName() + ".config";
+			try (InputStream in = loader.getInputStream(path)) {
+				if (in != null) {
+					log.info("using config resource: {}", path);
+					return Configs.newBuilder().addLoader(loader).include(path).build();
+				}
+			}
+		}
+
+		log.info("using empty config");
+		return Configs.empty();
+	}
+
+	@Nonnull
+	private static Config configFromFile(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+
+		File file = new File(path);
+		if (!file.exists()) {
+			throw new IOException("config file not found: " + path);
+		}
+
+		log.info("using config file: {}", path);
+
+		// this loader allows for includes relative to the local.config parent path
+		ConfigLoader loader = new FileConfigLoader(file.getParent());
+
+		return Configs.newBuilder().addLoader(loader).include(path).build();
 	}
 
 	public static interface Callback {

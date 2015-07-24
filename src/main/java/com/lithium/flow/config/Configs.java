@@ -16,9 +16,8 @@
 
 package com.lithium.flow.config;
 
-import com.lithium.flow.config.loaders.FileConfigLoader;
+import com.lithium.flow.util.Main;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -54,34 +53,10 @@ public class Configs {
 		return new BaseConfigBuilder(defaults);
 	}
 
-	/**
-	 * Constructs a {@link Config} based on path of 'local.config' system property. If the system property is not set
-	 * then an attempt to load a 'local.config' file in the current directory is made. The config file will be able to
-	 * make includes relative to its parent path.
-	 *
-	 * @return {@link Config}
-	 * @throws java.io.IOException if the 'local.config' path doesn't exist or the system property is not set
-	 */
+	@Deprecated
 	@Nonnull
 	public static Config local() throws IOException {
-		String path = System.getProperty("local.config");
-		if (path == null) {
-			if (new File("local.config").exists()) {
-				path = "local.config";
-			} else {
-				throw new IOException("system property not set: local.config");
-			}
-		}
-
-		File file = new File(path);
-		if (!file.exists()) {
-			throw new IOException("local.config file does not exist: " + path);
-		}
-
-		// this loader allows for includes relative to the local.config parent path
-		ConfigLoader loader = new FileConfigLoader(file.getParent());
-
-		return newBuilder().addLoader(loader).include(path).build();
+		return Main.config();
 	}
 
 	/**
