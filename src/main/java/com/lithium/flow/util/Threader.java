@@ -41,6 +41,7 @@ public class Threader {
 
 	private final ListeningExecutorService service;
 	private final AtomicInteger remaining = new AtomicInteger();
+	private int retries = 0;
 
 	public Threader() {
 		this(-1);
@@ -54,12 +55,27 @@ public class Threader {
 		this.service = MoreExecutors.listeningDecorator(checkNotNull(service));
 	}
 
+	public int getRetries() {
+		return retries;
+	}
+
+	@Nonnull
+	public Threader setRetries(int retries) {
+		this.retries = retries;
+		return this;
+	}
+
 	public void execute(@Nonnull String name, @Nonnull Executable executable) {
 		submit(name, executable);
 	}
 
 	@Nonnull
 	public <T> ListenableFuture<T> submit(@Nonnull String name, @Nonnull Callable<T> callable) {
+		return submit(name, callable, retries);
+	}
+
+	@Nonnull
+	private <T> ListenableFuture<T> submit(@Nonnull String name, @Nonnull Callable<T> callable, int retriesLeft) {
 		checkNotNull(name);
 		checkNotNull(callable);
 
@@ -76,7 +92,11 @@ public class Threader {
 			@Override
 			public void onFailure(@Nonnull Throwable throwable) {
 				remaining.decrementAndGet();
-				log.warn("execution failed: {}", name, throwable);
+				log.warn("execution failed: {} ({} retries left)", name, retriesLeft, throwable);
+
+				if (retriesLeft > 0) {
+					submit(name, callable, retriesLeft - 1);
+				}
 			}
 		});
 
