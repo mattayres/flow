@@ -52,16 +52,16 @@ public class SvnFiler implements Filer {
 	}
 
 	private final SvnProvider svnProvider;
-	private final boolean search;
+	private final long revision;
 	private final URI uri;
 
 	public SvnFiler(@Nonnull SvnProvider svnProvider) throws SVNException, URISyntaxException {
-		this(svnProvider, false);
+		this(svnProvider, -1);
 	}
 
-	public SvnFiler(@Nonnull SvnProvider svnProvider, boolean search) {
+	public SvnFiler(@Nonnull SvnProvider svnProvider, long revision) {
 		this.svnProvider = checkNotNull(svnProvider);
-		this.search = search;
+		this.revision = revision;
 		uri = URI.create(svnProvider.getLocation().getURIEncodedPath());
 	}
 
@@ -76,13 +76,7 @@ public class SvnFiler implements Filer {
 	public Record getRecord(@Nonnull String path) throws IOException {
 		SVNRepository repository = svnProvider.getRepository();
 		try {
-			SVNDirEntry entry = repository.info(path, -1);
-			if (search && entry == null) {
-				long revision = binarySearch(repository, path);
-				if (revision > 0) {
-					entry = repository.info(path, revision);
-				}
-			}
+			SVNDirEntry entry = repository.info(path, revision);
 			File file = new File(path);
 			String parent = file.getParent() != null ? file.getParent() : "";
 			if (entry != null) {
@@ -110,7 +104,7 @@ public class SvnFiler implements Filer {
 		if (getRecord(path).exists()) {
 			SVNRepository repository = svnProvider.getRepository();
 			try {
-				repository.getDir(path, -1, new SVNProperties(), entry -> records.add(getRecord(entry, path)));
+				repository.getDir(path, revision, new SVNProperties(), entry -> records.add(getRecord(entry, path)));
 			} catch (SVNException e) {
 				throw new IOException("failed to get file records: " + path, e);
 			} finally {
@@ -126,13 +120,6 @@ public class SvnFiler implements Filer {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		SVNRepository repository = svnProvider.getRepository();
 		try {
-			long revision = -1;
-			if (search) {
-				SVNDirEntry entry = repository.info(path, -1);
-				if (entry == null) {
-					revision = binarySearch(repository, path);
-				}
-			}
 			repository.getFile(path, revision, new SVNProperties(), out);
 		} catch (SVNException e) {
 			throw new IOException("failed to read file: " + path, e);
@@ -177,24 +164,5 @@ public class SvnFiler implements Filer {
 	@Override
 	public void close() {
 		svnProvider.close();
-	}
-
-	private long binarySearch(@Nonnull SVNRepository repository, @Nonnull String path) throws SVNException {
-		long first = 0;
-		long last = repository.getLatestRevision();
-		boolean found = false;
-
-		while (last - first > 1) {
-			long rev = first + (last - first) / 2;
-			boolean hit = repository.info(path, rev) != null;
-			found |= hit;
-			if (hit || !found) {
-				first = rev;
-			} else {
-				last = rev;
-			}
-		}
-
-		return first;
 	}
 }

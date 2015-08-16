@@ -133,8 +133,7 @@ public class Repos {
 			SvnProvider svnProvider = new LoginSvnProvider(url, login);
 			svnProvider = new PoolSvnProvider(svnProvider, config);
 
-			boolean search = config.getList("configs.search", Configs.emptyList()).contains(url);
-			Filer filer = new SvnFiler(svnProvider, search);
+			Filer filer = new SvnFiler(svnProvider, config.getLong("configs.revision", -1));
 			filer = new CachedFiler(filer, config.prefix("configs"));
 			filer = new CachedReadFiler(filer);
 			if (config.containsKey("configs.exclude")) {
