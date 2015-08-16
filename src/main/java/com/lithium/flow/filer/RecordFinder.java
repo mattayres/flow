@@ -36,10 +36,11 @@ import javax.annotation.Nonnull;
 public class RecordFinder implements Spliterator<Record> {
 	private final Filer filer;
 	private final Threader threader;
-	private final BlockingQueue<Record> queue = new LinkedBlockingQueue<>();
+	private final BlockingQueue<Record> queue;
 
-	private RecordFinder(@Nonnull Filer filer, @Nonnull String path, int threads) {
+	private RecordFinder(@Nonnull Filer filer, @Nonnull String path, int threads, int capacity) {
 		this.filer = checkNotNull(filer);
+		queue = new LinkedBlockingQueue<>(capacity);
 		threader = new Threader(threads);
 		findRecords(path);
 	}
@@ -92,6 +93,11 @@ public class RecordFinder implements Spliterator<Record> {
 
 	@Nonnull
 	public static Stream<Record> stream(@Nonnull Filer filer, @Nonnull String path, int threads) {
-		return StreamSupport.stream(new RecordFinder(filer, path, threads), false);
+		return stream(filer, path, threads, 100000);
+	}
+
+	@Nonnull
+	public static Stream<Record> stream(@Nonnull Filer filer, @Nonnull String path, int threads, int capacity) {
+		return StreamSupport.stream(new RecordFinder(filer, path, threads, capacity), false);
 	}
 }
