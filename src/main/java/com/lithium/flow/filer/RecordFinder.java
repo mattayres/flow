@@ -18,8 +18,11 @@ package com.lithium.flow.filer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.util.Logs;
+import com.lithium.flow.util.Sleep;
 import com.lithium.flow.util.Threader;
 
+import java.io.IOException;
 import java.util.Spliterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -30,16 +33,22 @@ import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
 
+import org.slf4j.Logger;
+
 /**
  * @author Matt Ayres
  */
 public class RecordFinder implements Spliterator<Record> {
+	private static final Logger log = Logs.getLogger();
+
 	private final Filer filer;
+	private final int threads;
 	private final Threader threader;
 	private final BlockingQueue<Record> queue;
 
 	private RecordFinder(@Nonnull Filer filer, @Nonnull String path, int threads, int capacity) {
 		this.filer = checkNotNull(filer);
+		this.threads = threads;
 		queue = new LinkedBlockingQueue<>(capacity);
 		threader = new Threader(threads);
 		findRecords(path);
@@ -47,16 +56,25 @@ public class RecordFinder implements Spliterator<Record> {
 
 	private void findRecords(@Nonnull String path) {
 		checkNotNull(path);
-		threader.execute(path, () -> {
-			for (Record record : filer.listRecords(path)) {
-				if (record.isDir()) {
-					queue.add(record);
-					findRecords(record.getPath());
-				} else {
-					queue.add(record);
+
+		Runnable runnable = () -> {
+			try {
+				for (Record record : filer.listRecords(path)) {
+					Sleep.until(() -> queue.offer(record));
+					if (record.isDir()) {
+						findRecords(record.getPath());
+					}
 				}
+			} catch (IOException e) {
+				log.warn("failed to find records: " + path, e);
 			}
-		});
+		};
+
+		if (threader.getRemaining() < threads) {
+			threader.execute(path, runnable::run);
+		} else {
+			runnable.run();
+		}
 	}
 
 	@Override
