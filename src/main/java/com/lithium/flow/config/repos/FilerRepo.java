@@ -28,12 +28,14 @@ import com.lithium.flow.filer.Record;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
@@ -82,6 +84,8 @@ public class FilerRepo implements Repo {
 	@Override
 	@Nonnull
 	public Config getConfig(@Nonnull String name) throws IOException {
+		Set<String> fullPaths = Sets.newHashSet();
+
 		String fullPath = null;
 		Record record = null;
 
@@ -90,6 +94,7 @@ public class FilerRepo implements Repo {
 			if (paths.size() > 0) {
 				for (String path : paths) {
 					fullPath = path + "/" + name + extension;
+					fullPaths.add(fullPath);
 					record = filer.getRecord(fullPath);
 					if (record.exists()) {
 						break find;
@@ -97,6 +102,7 @@ public class FilerRepo implements Repo {
 				}
 			} else {
 				fullPath = name + extension;
+				fullPaths.add(fullPath);
 				record = filer.getRecord(fullPath);
 				if (record.exists()) {
 					break;
@@ -105,7 +111,7 @@ public class FilerRepo implements Repo {
 		}
 
 		if (record == null || !record.exists()) {
-			throw new FileNotFoundException("no config entry: " + fullPath);
+			throw new FileNotFoundException("no config entry: " + fullPaths);
 		}
 
 		ConfigBuilder builder = supplier.get();
