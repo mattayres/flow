@@ -44,7 +44,9 @@ public class Sshj extends SSHClient {
 		getConnection().setMaxPacketSize(config.getInt("shell.maxPacketSize", getConnection().getMaxPacketSize()));
 		getConnection().setWindowSize(config.getLong("shell.windowSize", getConnection().getWindowSize()));
 
-		getTransport().setTimeoutMs((int) config.getTime("shell.timeout", "10s"));
+		long defaultTimeout = config.getTime("shell.timeout", "10s");
+		getConnection().setTimeoutMs((int) config.getTime("shell.timeout.connection", String.valueOf(defaultTimeout)));
+		getTransport().setTimeoutMs((int) config.getTime("shell.timeout.transport", String.valueOf(defaultTimeout)));
 
 		if (config.getBoolean("shell.compress", true)) {
 			useCompression();
