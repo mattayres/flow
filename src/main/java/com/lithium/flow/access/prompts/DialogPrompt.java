@@ -24,6 +24,7 @@ import com.lithium.flow.util.Sleep;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Label;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
@@ -31,9 +32,12 @@ import java.awt.event.WindowEvent;
 import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.Nonnull;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPasswordField;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.text.JTextComponent;
 
 /**
  * @author Matt Ayres
@@ -47,9 +51,24 @@ public class DialogPrompt implements Prompt {
 
 	@Override
 	@Nonnull
-	public String prompt(@Nonnull String name, @Nonnull String message, boolean mask, boolean retry) {
-		Label promptLabel = new Label(message);
-		JTextField promptField = mask ? new JPasswordField(20) : new JTextField(20);
+	public String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type, boolean retry) {
+		Label label = new Label(message);
+		JButton button = new JButton("Submit");
+		JTextComponent text;
+		switch (type) {
+			default:
+			case PLAIN:
+				text = new JTextField(20);
+				break;
+			case MASKED:
+				text = new JPasswordField(20);
+				break;
+			case BLOCK:
+				text = new JTextArea(40, 80);
+				text.setFont(new Font("monospaced", Font.PLAIN, 12));
+				break;
+		}
+
 
 		JDialog dialog = new JDialog();
 		dialog.setTitle(title);
@@ -62,8 +81,9 @@ public class DialogPrompt implements Prompt {
 
 		Container content = dialog.getContentPane();
 		content.setLayout(new FlowLayout());
-		content.add(promptLabel);
-		content.add(promptField);
+		content.add(label);
+		content.add(text);
+		content.add(button);
 		dialog.pack();
 
 		Dimension screen = dialog.getToolkit().getScreenSize();
@@ -72,13 +92,16 @@ public class DialogPrompt implements Prompt {
 		dialog.setVisible(true);
 
 		CountDownLatch latch = new CountDownLatch(1);
-		promptField.addActionListener(event -> latch.countDown());
-		promptField.requestFocus();
+		button.addActionListener(event -> latch.countDown());
+		if (text instanceof JTextField) {
+			((JTextField) text).addActionListener(event -> latch.countDown());
+		}
+		text.requestFocus();
 
 		Sleep.softly(latch::await);
 
 		dialog.dispose();
 
-		return promptField.getText();
+		return text.getText();
 	}
 }

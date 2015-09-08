@@ -39,14 +39,14 @@ public class MemoryPrompt implements Prompt {
 
 	@Override
 	@Nonnull
-	public String prompt(@Nonnull String name, @Nonnull String message, boolean mask, boolean retry) {
+	public String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type, boolean retry) {
 		if (retry) {
 			map.remove(name);
 		}
 
 		String pass = map.get(name);
 		if (pass == null) {
-			pass = delegate.prompt(name, message, mask, retry);
+			pass = delegate.prompt(name, message, type, retry);
 			map.put(name, pass);
 		}
 		return pass;

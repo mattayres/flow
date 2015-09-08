@@ -44,7 +44,7 @@ public class PromptKeySource implements KeySource {
 	@Nonnull
 	public List<Key> getKeys(@Nonnull String name) {
 		checkNotNull(name);
-		String hexKey = prompt.prompt(promptName, promptName + " key: ", true, false);
+		String hexKey = prompt.prompt(promptName, promptName + " key: ", Prompt.Type.MASKED, false);
 		return asList(new SecretKeySpec(base16().decode(hexKey), "AES"));
 	}
 }

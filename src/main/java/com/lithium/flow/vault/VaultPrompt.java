@@ -36,15 +36,15 @@ public class VaultPrompt implements Prompt {
 
 	@Override
 	@Nonnull
-	public String prompt(@Nonnull String name, @Nonnull String message, boolean mask, boolean retry) {
+	public String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type, boolean retry) {
 		checkNotNull(name);
 		checkNotNull(message);
 
 		switch (vault.getState()) {
 			case NEW:
 				while (true) {
-					String password1 = delegate.prompt("master1", "Choose your master password: ", true, true);
-					String password2 = delegate.prompt("master2", "Retype your master password: ", true, true);
+					String password1 = delegate.prompt("master1", "Choose your master password: ", Type.MASKED, true);
+					String password2 = delegate.prompt("master2", "Retype your master password: ", Type.MASKED, true);
 					if (password1.equals(password2)) {
 						vault.setup(password1);
 						break;
@@ -55,7 +55,7 @@ public class VaultPrompt implements Prompt {
 			case LOCKED:
 				String password;
 				do {
-					password = delegate.prompt("master", "Enter your master password: ", true, true);
+					password = delegate.prompt("master", "Enter your master password: ", Type.MASKED, true);
 				} while (!vault.unlock(password));
 				break;
 
@@ -77,7 +77,7 @@ public class VaultPrompt implements Prompt {
 			}
 		}
 		if (secret == null) {
-			secret = delegate.prompt(name, message, mask, retry);
+			secret = delegate.prompt(name, message, type, retry);
 			vault.putValue(name, secret);
 		}
 

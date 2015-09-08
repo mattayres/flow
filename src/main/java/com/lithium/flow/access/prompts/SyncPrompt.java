@@ -34,7 +34,7 @@ public class SyncPrompt implements Prompt {
 
 	@Override
 	@Nonnull
-	public synchronized String prompt(@Nonnull String name, @Nonnull String message, boolean mask, boolean retry) {
-		return delegate.prompt(name, message, mask, retry);
+	public synchronized String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type, boolean retry) {
+		return delegate.prompt(name, message, type, retry);
 	}
 }

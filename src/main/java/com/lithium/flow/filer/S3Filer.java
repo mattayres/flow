@@ -19,6 +19,7 @@ package com.lithium.flow.filer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.access.Access;
+import com.lithium.flow.access.Prompt;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.io.DataIo;
 import com.lithium.flow.util.Lazy;
@@ -77,7 +78,7 @@ public class S3Filer implements Filer {
 		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
 
 		String key = config.getString("key");
-		String secret = access.getPrompt().prompt(bucket, bucket + " secret: ", true, false);
+		String secret = access.getPrompt().prompt(bucket, bucket + " secret: ", Prompt.Type.MASKED, false);
 
 		s3 = new AmazonS3Client(new BasicAWSCredentials(key, secret));
 	}

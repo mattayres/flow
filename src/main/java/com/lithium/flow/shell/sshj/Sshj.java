@@ -67,7 +67,7 @@ public class Sshj extends SSHClient {
 				String fingerprint = SecurityUtils.getFingerprint(key);
 				String name = "fingerprint[" + fingerprint + "]@" + host;
 				String message = "Enter yes/no to verify fingerprint " + fingerprint + " for " + host + ": ";
-				return prompt.prompt(name, message, false, false).equals("yes");
+				return prompt.prompt(name, message, Prompt.Type.PLAIN, false).equals("yes");
 			});
 		}
 

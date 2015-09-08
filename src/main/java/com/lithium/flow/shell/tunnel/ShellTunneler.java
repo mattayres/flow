@@ -17,6 +17,7 @@
 package com.lithium.flow.shell.tunnel;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.lithium.flow.access.Prompt.Type.MASKED;
 
 import com.lithium.flow.access.Access;
 import com.lithium.flow.access.Login;
@@ -94,7 +95,7 @@ public class ShellTunneler implements Tunneler {
 			}
 
 			String message = login.getKeyPath() != null ? login.getKeyPath() : thisLogin.getDisplayString();
-			Function<Boolean, String> pass = retry -> access.getPrompt().prompt(message, message, true, retry);
+			Function<Boolean, String> pass = retry -> access.getPrompt().prompt(message, message, MASKED, retry);
 			login = login.toBuilder().setPass(pass).build();
 
 			tunnel = shore.getShell(login).tunnel(0, nextLogin.getHost(), nextLogin.getPortOrDefault(22));

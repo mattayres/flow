@@ -82,7 +82,7 @@ public class ShellAccess implements Access {
 			name = login.getDisplayString();
 			message = "Enter password for " + name + ": ";
 		}
-		pass = retry -> prompt.prompt(name, message, true, retry);
+		pass = retry -> prompt.prompt(name, message, Prompt.Type.MASKED, retry);
 
 		return login.toBuilder().setPass(pass).build();
 	}
