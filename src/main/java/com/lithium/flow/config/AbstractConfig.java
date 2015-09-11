@@ -140,11 +140,11 @@ public abstract class AbstractConfig implements Config {
 	@Override
 	@Nonnull
 	public final List<String> getList(@Nonnull String key) {
-		if (containsKey(key)) {
-			return getList(key, Configs.emptyList());
-		} else {
+		List<String> list = getList(key, Configs.emptyList());
+		if (list.isEmpty()) {
 			throw new IllegalConfigException(key);
 		}
+		return list;
 	}
 
 	@Override
@@ -167,8 +167,9 @@ public abstract class AbstractConfig implements Config {
 		checkNotNull(def);
 		checkNotNull(splitter);
 
-		if (containsKey(key)) {
-			Iterable<String> split = splitter.split(getString(key));
+		String value = getString(key, null);
+		if (value != null) {
+			Iterable<String> split = splitter.split(value);
 			return Lists.newArrayList(split).stream().filter(item -> item.length() > 0).collect(toList());
 		} else {
 			return Lists.newArrayList(def);
