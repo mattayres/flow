@@ -77,6 +77,15 @@ public class LoopThread extends Thread {
 
 			if (interval > 0) {
 				nextTime += interval;
+
+				long time = System.currentTimeMillis();
+				if (time > nextTime) {
+					while (time > nextTime) {
+						nextTime += interval;
+					}
+					nextTime -= interval;
+				}
+
 				if (!Sleep.until(nextTime)) {
 					break;
 				}
