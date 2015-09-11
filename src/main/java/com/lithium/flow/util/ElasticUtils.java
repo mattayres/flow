@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.NodeBuilder;
 import org.slf4j.Logger;
@@ -44,9 +45,16 @@ public class ElasticUtils {
 		if (config.getBoolean("elastic.node", false)) {
 			return NodeBuilder.nodeBuilder().client(true).clusterName(name).node().client();
 		} else {
+			ImmutableSettings.Builder settings = settingsBuilder();
+			settings.put("cluster.name", name);
+
+			config.keySet().stream()
+					.filter(key -> key.startsWith("elastic:"))
+					.forEach(key -> settings.put(key.replaceFirst("^elastic:", ""), config.getString(key)));
+
 			List<String> hosts = config.getList("elastic.hosts", Splitter.on(' '));
 			int port = config.getInt("elastic.port", 9300);
-			TransportClient client = new TransportClient(settingsBuilder().put("cluster.name", name).build());
+			TransportClient client = new TransportClient(settings.build());
 			for (String host : HostUtils.expand(hosts)) {
 				log.debug("adding host: {}", host);
 				client.addTransportAddress(new InetSocketTransportAddress(host, port));
