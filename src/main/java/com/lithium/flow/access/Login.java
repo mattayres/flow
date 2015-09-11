@@ -35,14 +35,21 @@ public class Login {
 	private final int port;
 	private final String keyPath;
 	private final transient Function<Boolean, String> pass;
+	private final transient Function<Boolean, String> key;
 
 	public Login(@Nonnull String user, @Nonnull String host, int port, @Nullable String keyPath,
 			@Nonnull Function<Boolean, String> pass) {
+		this(user, host, port, keyPath, pass, retry -> null);
+	}
+
+	public Login(@Nonnull String user, @Nonnull String host, int port, @Nullable String keyPath,
+			@Nonnull Function<Boolean, String> pass, @Nonnull Function<Boolean, String> key) {
 		this.user = checkNotNull(user);
 		this.host = checkNotNull(host);
 		this.port = port;
 		this.keyPath = keyPath;
 		this.pass = checkNotNull(pass);
+		this.key = checkNotNull(key);
 	}
 
 	@Nonnull
@@ -68,9 +75,14 @@ public class Login {
 		return keyPath;
 	}
 
-	@Nonnull
+	@Nullable
 	public String getPass(boolean retry) {
 		return pass.apply(retry);
+	}
+
+	@Nullable
+	public String getKey(boolean retry) {
+		return key.apply(retry);
 	}
 
 	@Nonnull
@@ -101,7 +113,7 @@ public class Login {
 
 	@Nonnull
 	public Builder toBuilder() {
-		return new Builder().setUser(user).setHost(host).setPort(port).setPass(pass).setKeyPath(keyPath);
+		return new Builder().setUser(user).setHost(host).setPort(port).setKeyPath(keyPath).setPass(pass).setKey(key);
 	}
 
 	public static Builder builder() {
@@ -114,6 +126,7 @@ public class Login {
 		private int port;
 		private String keyPath;
 		private Function<Boolean, String> pass;
+		private Function<Boolean, String> key;
 
 		@Nonnull
 		public Builder setUser(@Nonnull String user) {
@@ -146,8 +159,14 @@ public class Login {
 		}
 
 		@Nonnull
+		public Builder setKey(@Nonnull Function<Boolean, String> key) {
+			this.key = checkNotNull(key);
+			return this;
+		}
+
+		@Nonnull
 		public Login build() {
-			return new Login(user, host, port, keyPath, pass);
+			return new Login(user, host, port, keyPath, pass, key);
 		}
 	}
 }

@@ -34,6 +34,8 @@ import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 
 import net.schmizz.sshj.userauth.UserAuthException;
+import net.schmizz.sshj.userauth.password.PasswordFinder;
+import net.schmizz.sshj.userauth.password.Resource;
 
 /**
  * @author Matt Ayres
@@ -54,11 +56,26 @@ public class SshjShell implements Shell {
 		ssh.connect(login.getHost(), login.getPortOrDefault(22));
 
 		for (int i = 0; i <= ssh.getRetries(); i++) {
+			boolean retry = i > 0;
+			String pass = login.getPass(retry);
 			try {
-				if (login.getKeyPath() != null) {
-					ssh.authPublickey(login.getUser(), ssh.loadKeys(login.getKeyPath(), login.getPass(i > 0)));
+				String key = login.getKey(retry);
+				if (key != null) {
+					ssh.authPublickey(login.getUser(), ssh.loadKeys(key, null, new PasswordFinder() {
+						@Override
+						public char[] reqPassword(@Nonnull Resource<?> resource) {
+							return pass != null ? pass.toCharArray() : null;
+						}
+
+						@Override
+						public boolean shouldRetry(@Nonnull Resource<?> resource) {
+							return false;
+						}
+					}));
+				} else if (login.getKeyPath() != null) {
+					ssh.authPublickey(login.getUser(), ssh.loadKeys(login.getKeyPath(), pass != null ? pass : ""));
 				} else {
-					ssh.authPassword(login.getUser(), login.getPass(i > 0));
+					ssh.authPassword(login.getUser(), pass != null ? pass : "");
 				}
 				break;
 			} catch (UserAuthException e) {

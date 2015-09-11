@@ -29,6 +29,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
@@ -52,12 +54,23 @@ public class LoginSvnProvider implements SvnProvider {
 
 	@Override
 	@Nonnull
+	@SuppressWarnings("deprecation")
 	public SVNRepository getRepository() throws IOException {
-		@SuppressWarnings("deprecation")
-		ISVNAuthenticationManager authManager = login.getKeyPath() == null
-				? new BasicAuthenticationManager(login.getUser(), login.getPass(false))
-				: new BasicAuthenticationManager(login.getUser(), new File(login.getKeyPath()),
-				login.getPass(false), login.getPortOrDefault(22));
+		String key = login.getKey(false);
+		String pass = login.getPass(false);
+
+		ISVNAuthenticationManager authManager;
+		if (key != null) {
+			authManager = BasicAuthenticationManager.newInstance(new SVNAuthentication[] {
+					SVNSSHAuthentication.newInstance(login.getUser(), key.toCharArray(),
+							pass != null ? pass.toCharArray() : null, login.getPortOrDefault(22), false, null, false)
+			});
+		} else if (login.getKeyPath() != null) {
+			authManager = new BasicAuthenticationManager(login.getUser(), new File(login.getKeyPath()),
+					pass, login.getPortOrDefault(22));
+		} else {
+			authManager = new BasicAuthenticationManager(login.getUser(), pass);
+		}
 
 		try {
 			SVNRepository repository = SVNRepositoryFactory.create(url);

@@ -68,22 +68,28 @@ public class ShellAccess implements Access {
 
 		user = config.getMatch("shell.users", host).orElse(user);
 
-		String key = config.getMatch("shell.keys", host).orElse(null);
+		String keyPath = config.getMatch("shell.keys", host).orElse(null);
 
 		Function<Boolean, String> pass = retry -> null;
-		Login login = Login.builder().setUser(user).setHost(host).setPort(port).setKeyPath(key).setPass(pass).build();
+		Function<Boolean, String> key = retry -> null;
 
-		String name;
-		String message;
-		if (key != null) {
-			name = key;
-			message = "Enter passphrase for " + name + ": ";
+		Login login = Login.builder().setUser(user).setHost(host).setPort(port)
+				.setKeyPath(keyPath).setPass(pass).setKey(key).build();
+
+		if ("".equals(keyPath)) {
+			pass = prompt("pass:" + login.getDisplayString(), "Enter passphrase for {name}: ", Prompt.Type.MASKED);
+			key = prompt("key:" + login.getDisplayString(), "Enter private key for {name}: ", Prompt.Type.BLOCK);
+		} else if (keyPath != null) {
+			pass = prompt(keyPath, "Enter passphrase for {name}: ", Prompt.Type.MASKED);
 		} else {
-			name = login.getDisplayString();
-			message = "Enter password for " + name + ": ";
+			pass = prompt(login.getDisplayString(), "Enter password for {name}: ", Prompt.Type.MASKED);
 		}
-		pass = retry -> prompt.prompt(name, message, Prompt.Type.MASKED, retry);
 
-		return login.toBuilder().setPass(pass).build();
+		return login.toBuilder().setPass(pass).setKey(key).build();
+	}
+
+	@Nonnull
+	private Function<Boolean, String> prompt(@Nonnull String name, @Nonnull String message, @Nonnull Prompt.Type type) {
+		return retry -> prompt.prompt(name, message.replace("{name}", name), type, retry);
 	}
 }
