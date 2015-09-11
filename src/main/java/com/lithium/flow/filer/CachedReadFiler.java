@@ -73,4 +73,10 @@ public class CachedReadFiler extends DecoratedFiler {
 			}
 		}
 	}
+
+	@Override
+	public void close() throws IOException {
+		cache.invalidateAll();
+		super.close();
+	}
 }

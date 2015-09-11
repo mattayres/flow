@@ -114,4 +114,11 @@ public class CachedFiler extends DecoratedFiler {
 			}
 		};
 	}
+
+	@Override
+	public void close() throws IOException {
+		dirCache.invalidateAll();
+		fileCache.invalidateAll();
+		super.close();
+	}
 }
