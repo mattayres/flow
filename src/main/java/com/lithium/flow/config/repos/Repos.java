@@ -35,7 +35,7 @@ import com.lithium.flow.svn.LoginSvnProvider;
 import com.lithium.flow.svn.PoolSvnProvider;
 import com.lithium.flow.svn.SvnFiler;
 import com.lithium.flow.svn.SvnProvider;
-import com.lithium.flow.util.Threader;
+import com.lithium.flow.util.Checker;
 
 import java.io.IOException;
 import java.net.URI;
@@ -71,16 +71,19 @@ public class Repos {
 	@Nonnull
 	public static Repo buildRepo(@Nonnull Config config, @Nonnull Access access,
 			@Nonnull BiFunction<Config, Access, UnaryOperator<Config>> function) throws IOException {
-		return buildRepo(config, access, function, repo -> repo, Configs::newBuilder);
+		return buildRepo(config, access, function, repo -> repo, Configs::newBuilder, () -> true);
 	}
 
 	@Nonnull
 	public static Repo buildRepo(@Nonnull Config config, @Nonnull Access access,
 			@Nonnull BiFunction<Config, Access, UnaryOperator<Config>> function,
-			@Nonnull UnaryOperator<Repo> operator, @Nonnull Supplier<ConfigBuilder> supplier) throws IOException {
+			@Nonnull UnaryOperator<Repo> operator, @Nonnull Supplier<ConfigBuilder> supplier,
+			@Nonnull Checker checker) throws IOException {
 		checkNotNull(config);
 		checkNotNull(access);
 		checkNotNull(function);
+		checkNotNull(supplier);
+		checkNotNull(checker);
 
 		List<Filer> filers = Lists.newArrayList();
 		for (String url : config.getList("configs.url")) {
@@ -101,20 +104,9 @@ public class Repos {
 			if (scheduleRandom > 0) {
 				scheduleOffset += Math.abs(new Random().nextLong()) % scheduleRandom;
 			}
-			repo = new ScheduledRepo(repo, scheduleInterval, scheduleOffset);
+			repo = new ScheduledRepo(repo, scheduleInterval, scheduleOffset, checker);
 		} else if (cacheTime > 0) {
 			repo = new CachedRepo(repo, cacheTime);
-		}
-
-		if (config.getBoolean("configs.preload", false)) {
-			Threader threader = new Threader(config.getInt("configs.threads", 8));
-			Repo finalRepo = repo;
-			for (String configName : repo.getNames()) {
-				threader.execute(configName, () -> finalRepo.getConfig(configName));
-			}
-			if (config.getBoolean("configs.preload.block", true)) {
-				threader.finish();
-			}
 		}
 
 		return repo;

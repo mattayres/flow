@@ -46,7 +46,7 @@ public class CachedRepo implements Repo {
 		checkNotNull(delegate);
 		checkNotNull(unit);
 
-		namesCache = Caches.build(key -> delegate.getNames(), b -> b.expireAfterAccess(duration, unit));
+		namesCache = Caches.build(key -> delegate.getNames(), b -> b.expireAfterWrite(duration, unit));
 		configCache = Caches.build(delegate::getConfig, b -> b.expireAfterWrite(duration, unit));
 	}
 

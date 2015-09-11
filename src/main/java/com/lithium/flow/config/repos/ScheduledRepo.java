@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toMap;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Repo;
+import com.lithium.flow.util.Checker;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.LoopThread;
 import com.lithium.flow.util.Sleep;
@@ -30,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
@@ -49,14 +51,20 @@ public class ScheduledRepo implements Repo {
 	private volatile Map<String, Config> configMap;
 
 	public ScheduledRepo(@Nonnull Repo delegate, long interval, long offset) {
+		this(delegate, interval, offset, () -> true);
+	}
+
+	public ScheduledRepo(@Nonnull Repo delegate, long interval, long offset, @Nonnull Checker checker) {
 		this.delegate = checkNotNull(delegate);
 
 		thread = new LoopThread(interval, offset, true, () -> {
-			try {
-				configMap = delegate.streamConfigs().collect(toMap(Config::getName, config -> config));
-				latch.countDown();
-			} catch (IOException e) {
-				log.warn("failed to read configs", e);
+			if (configMap == null || checker.check()) {
+				try {
+					configMap = delegate.streamConfigs().collect(toMap(Config::getName, config -> config));
+					latch.countDown();
+				} catch (IOException e) {
+					log.warn("failed to read configs", e);
+				}
 			}
 		});
 	}
@@ -82,6 +90,12 @@ public class ScheduledRepo implements Repo {
 	@Nonnull
 	public List<Config> getConfigs() throws IOException {
 		return Lists.newArrayList(getConfigMap().values());
+	}
+
+	@Nonnull
+	@Override
+	public Stream<Config> streamConfigs() throws IOException {
+		return getConfigMap().values().stream();
 	}
 
 	@Nonnull

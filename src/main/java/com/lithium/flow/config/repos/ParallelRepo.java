@@ -16,12 +16,17 @@
 
 package com.lithium.flow.config.repos;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Repo;
+import com.lithium.flow.util.Measure;
+import com.lithium.flow.util.Progress;
 import com.lithium.flow.util.Threader;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
@@ -31,20 +36,47 @@ import com.google.common.collect.Lists;
  * @author Matt Ayres
  */
 public class ParallelRepo extends DecoratedRepo {
-	private final int threads;
+	private final Config config;
 
 	public ParallelRepo(@Nonnull Repo delegate, @Nonnull Config config) {
 		super(delegate);
-		threads = config.getInt("threads", Runtime.getRuntime().availableProcessors() / 2);
+		this.config = checkNotNull(config);
 	}
 
 	@Override
 	@Nonnull
 	public List<Config> getConfigs() throws IOException {
+		int threads = config.getInt("threads", Runtime.getRuntime().availableProcessors() / 2);
+		int retries = config.getInt("retries", 0);
+
 		List<Config> configs = Lists.newCopyOnWriteArrayList();
-		Threader threader = new Threader(threads);
-		getNames().forEach(name -> threader.execute(name, () -> configs.add(getConfig(name))));
+		Threader threader = new Threader(threads).setRetries(retries);
+		Progress progress = new Progress();
+		Measure names = progress.counter("names").useForEta();
+
+		if (config.getBoolean("progress", false)) {
+			progress.start(config.getTime("progress.logTime", "5s"), config.getTime("progress.avgTime", "15s"));
+		}
+
+		getNames().forEach(name -> {
+			names.incTodo();
+			threader.execute(name, () -> {
+				configs.add(getConfig(name));
+				names.incDone();
+			});
+		});
+
 		threader.finish();
+		if (config.getBoolean("progress", false)) {
+			progress.finish();
+		}
+
 		return configs;
+	}
+
+	@Override
+	@Nonnull
+	public Stream<Config> streamConfigs() throws IOException {
+		return getConfigs().stream();
 	}
 }
