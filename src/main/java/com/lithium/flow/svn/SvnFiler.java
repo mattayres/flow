@@ -92,9 +92,11 @@ public class SvnFiler implements Filer {
 		}
 	}
 
-	private Record getRecord(SVNDirEntry entry, String parent) {
-		return new Record(getUri(), parent, entry.getName(), entry.getDate().getTime(),
-				entry.getSize(), SVNNodeKind.DIR.equals(entry.getKind()));
+	@Nonnull
+	private Record getRecord(@Nonnull SVNDirEntry entry, @Nonnull String parent) {
+		boolean dir = SVNNodeKind.DIR.equals(entry.getKind());
+		long size = dir ? 0 : entry.getSize();
+		return new Record(getUri(), parent, entry.getName(), entry.getDate().getTime(), size, dir);
 	}
 
 	@Override
