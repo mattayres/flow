@@ -18,9 +18,10 @@ package com.lithium.flow.store;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,7 +33,7 @@ public class MemoryStore implements Store {
 	private final Map<String, String> map;
 
 	public MemoryStore() {
-		this(new ConcurrentHashMap<>());
+		this(Collections.synchronizedMap(new LinkedHashMap<>()));
 	}
 
 	public MemoryStore(@Nonnull Map<String, String> map) {
