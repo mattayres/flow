@@ -23,6 +23,7 @@ import com.lithium.flow.access.Login;
 import com.lithium.flow.access.Prompt;
 import com.lithium.flow.config.Config;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.function.Function;
 
@@ -76,11 +77,13 @@ public class ShellAccess implements Access {
 		Login login = Login.builder().setUser(user).setHost(host).setPort(port)
 				.setKeyPath(keyPath).setPass(pass).setKey(key).build();
 
-		if ("".equals(keyPath)) {
-			pass = prompt("pass:" + login.getDisplayString(), "Enter passphrase for {name}: ", Prompt.Type.MASKED);
-			key = prompt("key:" + login.getDisplayString(), "Enter private key for {name}: ", Prompt.Type.BLOCK);
-		} else if (keyPath != null) {
-			pass = prompt(keyPath, "Enter passphrase for {name}: ", Prompt.Type.MASKED);
+		if (keyPath != null && !keyPath.isEmpty()) {
+			if (new File(keyPath).exists()) {
+				pass = prompt(keyPath, "Enter passphrase for {name}: ", Prompt.Type.MASKED);
+			} else {
+				pass = prompt("pass[" + keyPath + "]", "Enter passphrase for {name}: ", Prompt.Type.MASKED);
+				key = prompt("key[" + keyPath + "]", "Enter private key for {name}: ", Prompt.Type.BLOCK);
+			}
 		} else {
 			pass = prompt(login.getDisplayString(), "Enter password for {name}: ", Prompt.Type.MASKED);
 		}

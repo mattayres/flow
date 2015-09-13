@@ -137,7 +137,8 @@ public interface Config {
 		for (String item : getList(key, Configs.emptyList())) {
 			Iterator<String> it = Splitter.on(':').split(item).iterator();
 			if (regex.matches(it.next()) && it.hasNext()) {
-				return Optional.of(it.next());
+				String result = it.next();
+				return result.isEmpty() ? Optional.empty() : Optional.of(result);
 			}
 		}
 		return Optional.empty();
