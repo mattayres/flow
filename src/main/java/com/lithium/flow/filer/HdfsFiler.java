@@ -19,6 +19,7 @@ package com.lithium.flow.filer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.io.DataIo;
+import com.lithium.flow.io.DecoratedOutputStream;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,6 +32,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -44,6 +46,8 @@ import com.google.common.collect.Lists;
 public class HdfsFiler implements Filer {
 	private final FileSystem fileSystem;
 	private final boolean overwrite;
+	private final boolean hflush;
+	private final boolean hsync;
 
 	public HdfsFiler(@Nonnull Configuration conf) throws IOException {
 		this(FileSystem.get(checkNotNull(conf)));
@@ -52,6 +56,8 @@ public class HdfsFiler implements Filer {
 	public HdfsFiler(@Nonnull FileSystem fileSystem) {
 		this.fileSystem = checkNotNull(fileSystem);
 		overwrite = fileSystem.getConf().getBoolean("overwrite", true);
+		hflush = fileSystem.getConf().getBoolean("hflush", false);
+		hsync = fileSystem.getConf().getBoolean("hsync", true);
 	}
 
 	@Override
@@ -116,7 +122,31 @@ public class HdfsFiler implements Filer {
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
 		checkNotNull(path);
 
-		return fileSystem.create(new Path(path), overwrite);
+		FSDataOutputStream fsOut = fileSystem.create(new Path(path), overwrite);
+		return new DecoratedOutputStream(fsOut) {
+			@Override
+			public void flush() throws IOException {
+				try {
+					if (hflush) {
+						fsOut.hflush();
+					}
+					if (hsync) {
+						fsOut.hsync();
+					}
+				} finally {
+					out.flush();
+				}
+			}
+
+			@Override
+			public void close() throws IOException {
+				try {
+					flush();
+				} finally {
+					out.close();
+				}
+			}
+		};
 	}
 
 	@Override
