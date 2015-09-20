@@ -37,4 +37,10 @@ public class NoCoder implements Coder {
 	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
 		return out;
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return "";
+	}
 }

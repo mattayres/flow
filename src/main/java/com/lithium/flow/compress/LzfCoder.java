@@ -40,4 +40,10 @@ public class LzfCoder implements Coder {
 	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
 		return new LZFOutputStream(out);
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".lzf";
+	}
 }

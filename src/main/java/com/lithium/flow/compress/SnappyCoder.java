@@ -40,4 +40,10 @@ public class SnappyCoder implements Coder {
 	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
 		return option == -1 ? new SnappyOutputStream(out) : new SnappyOutputStream(out, option);
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".snappy";
+	}
 }

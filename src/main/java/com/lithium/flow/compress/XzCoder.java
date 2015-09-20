@@ -59,4 +59,10 @@ public class XzCoder implements Coder {
 		}
 		return new XZOutputStream(out, options);
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".xz";
+	}
 }

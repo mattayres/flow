@@ -45,4 +45,10 @@ public class GzipCoder implements Coder {
 			}
 		};
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".gz";
+	}
 }

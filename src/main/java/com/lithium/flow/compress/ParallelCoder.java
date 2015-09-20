@@ -139,4 +139,10 @@ public class ParallelCoder implements Coder {
 			}
 		};
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return delegate.getExtension();
+	}
 }

@@ -40,4 +40,10 @@ public class Lz4Coder implements Coder {
 	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
 		return option == -1 ? new LZ4BlockOutputStream(out) : new LZ4BlockOutputStream(out, option);
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".lz4";
+	}
 }

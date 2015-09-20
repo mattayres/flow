@@ -52,4 +52,10 @@ public class LzoCoder implements Coder {
 		codec.setConf(conf);
 		return codec.createOutputStream(out);
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".lzo_deflate";
+	}
 }

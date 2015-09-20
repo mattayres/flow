@@ -40,4 +40,10 @@ public class Bzip2Coder implements Coder {
 	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
 		return option == -1 ? new BZip2CompressorOutputStream(out) : new BZip2CompressorOutputStream(out, option);
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".bz2";
+	}
 }

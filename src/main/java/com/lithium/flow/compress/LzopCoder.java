@@ -41,4 +41,10 @@ public class LzopCoder implements Coder {
 	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
 		return new LzopOutputStream(out, LzoCompressor.CompressionStrategy.LZO1X_1, option);
 	}
+
+	@Override
+	@Nonnull
+	public String getExtension() {
+		return ".lzo";
+	}
 }

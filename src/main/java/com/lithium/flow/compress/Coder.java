@@ -36,4 +36,7 @@ public interface Coder {
 
 	@Nonnull
 	OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException;
+
+	@Nonnull
+	String getExtension();
 }
