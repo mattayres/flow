@@ -35,7 +35,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 
 /**
- * Decorates an instance of {@link Filer} to cache file reads.
+ * Decorates an instance of {@link Filer} to cache file reads in memory.
+ * Cached entries are only invalidated when the file time changes.
  *
  * @author Matt Ayres
  */
@@ -59,8 +60,12 @@ public class CachedReadFiler extends DecoratedFiler {
 		checkNotNull(path);
 
 		Pair<Long, byte[]> pair = cache.getIfPresent(path);
-		if (pair != null && pair.getLeft().equals(super.getRecord(path).getTime())) {
-			return new ByteArrayInputStream(pair.getRight());
+		if (pair != null) {
+			if (pair.getLeft().equals(super.getRecord(path).getTime())) {
+				return new ByteArrayInputStream(pair.getRight());
+			} else {
+				cache.invalidate(path);
+			}
 		}
 
 		try {
