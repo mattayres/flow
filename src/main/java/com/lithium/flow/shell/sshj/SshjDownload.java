@@ -79,7 +79,6 @@ public class SshjDownload implements LocalDestFile, Runnable {
 			log.warn("download failed: {}", path, e);
 		} finally {
 			latch.countDown();
-			IOUtils.closeQuietly(pipeIn);
 			IOUtils.closeQuietly(pipeOut);
 		}
 	}
