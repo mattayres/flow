@@ -86,7 +86,7 @@ public class SvnFiler implements Filer {
 						Record.NO_EXIST_SIZE, false);
 			}
 		} catch (SVNException e) {
-			throw new IOException("failed to get file record: " + path, e);
+			throw new IOException("failed to get file record: " + getFullPath(path), e);
 		} finally {
 			svnProvider.releaseRepository(repository);
 		}
@@ -108,7 +108,7 @@ public class SvnFiler implements Filer {
 			try {
 				repository.getDir(path, revision, new SVNProperties(), entry -> records.add(getRecord(entry, path)));
 			} catch (SVNException e) {
-				throw new IOException("failed to get file records: " + path, e);
+				throw new IOException("failed to get file records: " + getFullPath(path), e);
 			} finally {
 				svnProvider.releaseRepository(repository);
 			}
@@ -124,11 +124,16 @@ public class SvnFiler implements Filer {
 		try {
 			repository.getFile(path, revision, new SVNProperties(), out);
 		} catch (SVNException e) {
-			throw new IOException("failed to read file: " + path, e);
+			throw new IOException("failed to read file: " + getFullPath(path), e);
 		} finally {
 			svnProvider.releaseRepository(repository);
 		}
 		return new ByteArrayInputStream(out.toByteArray());
+	}
+
+	@Nonnull
+	private String getFullPath(@Nonnull String path) {
+		return svnProvider.getLocation() + "/" + path;
 	}
 
 	@Override
