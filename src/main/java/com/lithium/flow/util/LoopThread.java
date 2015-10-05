@@ -37,6 +37,8 @@ public class LoopThread extends Thread {
 	private final Executable executable;
 	private final Consumer<Exception> onException;
 	private long nextTime;
+	private volatile boolean doFinish;
+	private volatile boolean finished;
 
 	public LoopThread(@Nonnull Executable executable) {
 		this(0, executable);
@@ -68,7 +70,7 @@ public class LoopThread extends Thread {
 
 	@Override
 	public void run() {
-		while (!interrupted()) {
+		while (!interrupted() && !doFinish) {
 			try {
 				executable.call();
 			} catch (Exception e) {
@@ -91,6 +93,13 @@ public class LoopThread extends Thread {
 				}
 			}
 		}
+
+		finished = true;
+	}
+
+	public void finish() {
+		doFinish = true;
+		Sleep.until(() -> finished);
 	}
 
 	@Nonnull
