@@ -21,6 +21,7 @@ import com.lithium.flow.config.Config;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+import java.util.concurrent.Semaphore;
 
 import javax.annotation.Nonnull;
 
@@ -46,12 +47,19 @@ public class CronMain {
 				? TimeZone.getTimeZone(config.getString("run.tz"))
 				: TimeZone.getDefault();
 
+		boolean overlap = config.getBoolean("run.overlap", false);
+		Semaphore semaphore = new Semaphore(overlap ? Integer.MAX_VALUE : 1);
+
 		Runnable runnable = () -> {
-			try {
-				Main.run(config.getString("run.class"));
-				logNextRun();
-			} catch (Exception e) {
-				log.warn("cron run failed", e);
+			if (semaphore.tryAcquire()) {
+				try {
+					Main.run(config.getString("run.class"));
+					logNextRun();
+				} catch (Exception e) {
+					log.warn("cron run failed", e);
+				} finally {
+					semaphore.release();
+				}
 			}
 		};
 
