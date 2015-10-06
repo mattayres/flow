@@ -45,6 +45,15 @@ import com.google.common.collect.Sets;
 public abstract class AbstractSchema implements Schema {
 	@Override
 	@Nullable
+	@SuppressWarnings("unchecked")
+	public <T> T select(@Nonnull String query, Object... parameters) throws SQLException {
+		AtomicReference<Object> value = new AtomicReference<>();
+		queryRows(query, rs -> value.set(rs.getObject(1)), parameters);
+		return (T) value.get();
+	}
+
+	@Override
+	@Nullable
 	public String selectString(@Nonnull String query, Object... parameters) throws SQLException {
 		AtomicReference<String> value = new AtomicReference<>();
 		queryRows(query, rs -> value.set(rs.getString(1)), parameters);
@@ -128,7 +137,7 @@ public abstract class AbstractSchema implements Schema {
 	}
 
 	@Override
-	public void update(@Nonnull String query, Object... parameters) throws SQLException {
+	public int update(@Nonnull String query, Object... parameters) throws SQLException {
 		checkNotNull(query);
 		try (Connection con = getConnection()) {
 			try (PreparedStatement ps = con.prepareStatement(query)) {
@@ -136,7 +145,7 @@ public abstract class AbstractSchema implements Schema {
 				for (Object parameter : parameters) {
 					ps.setObject(i++, parameter);
 				}
-				ps.executeUpdate();
+				return ps.executeUpdate();
 			}
 		}
 	}

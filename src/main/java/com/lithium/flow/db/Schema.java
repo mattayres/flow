@@ -38,6 +38,9 @@ public interface Schema extends Closeable {
 	Connection getConnection() throws SQLException;
 
 	@Nullable
+	<T> T select(@Nonnull String query, Object... parameters) throws SQLException;
+
+	@Nullable
 	String selectString(@Nonnull String query, Object... parameters) throws SQLException;
 
 	int selectInt(@Nonnull String query, Object... parameters) throws SQLException;
@@ -63,5 +66,5 @@ public interface Schema extends Closeable {
 			@Nonnull CheckedConsumer<ResultSet, E> consumer,
 			Object... parameters) throws SQLException, E;
 
-	void update(@Nonnull String query, Object... parameters) throws SQLException;
+	int update(@Nonnull String query, Object... parameters) throws SQLException;
 }
