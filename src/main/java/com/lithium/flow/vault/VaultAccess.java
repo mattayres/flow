@@ -17,11 +17,11 @@
 package com.lithium.flow.vault;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.lithium.flow.util.Exceptions.unchecked;
 
 import com.lithium.flow.access.Access;
 import com.lithium.flow.access.Login;
 import com.lithium.flow.access.Prompt;
+import com.lithium.flow.util.Unchecked;
 import com.lithium.flow.util.UncheckedException;
 
 import java.io.IOException;
@@ -51,9 +51,9 @@ public class VaultAccess implements Access {
 	public Login getLogin(@Nonnull String spec) throws IOException {
 		checkNotNull(spec);
 		try {
-			return vault.getKeys().stream().map(s -> unchecked(() -> delegate.getLogin(s)))
+			return vault.getKeys().stream().map(s -> Unchecked.get(() -> delegate.getLogin(s)))
 					.filter(login -> spec.matches(login.getHost()))
-					.findFirst().orElseGet(() -> unchecked(() -> delegate.getLogin(spec)))
+					.findFirst().orElseGet(() -> Unchecked.get(() -> delegate.getLogin(spec)))
 					.toBuilder().setHost(spec).build();
 		} catch (UncheckedException e) {
 			throw e.unwrap(IOException.class);

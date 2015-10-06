@@ -59,6 +59,6 @@ public class Needle<T> {
 
 	@Nonnull
 	public List<T> finish() {
-		return Exceptions.unchecked(() -> Futures.successfulAsList(futures).get());
+		return Unchecked.get(() -> Futures.successfulAsList(futures).get());
 	}
 }

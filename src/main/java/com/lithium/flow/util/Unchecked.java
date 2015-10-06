@@ -16,22 +16,27 @@
 
 package com.lithium.flow.util;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import javax.annotation.Nonnull;
 
 /**
  * @author Matt Ayres
- * @deprecated Use {@link Unchecked} instead.
  */
-@Deprecated
-public class Exceptions {
-	/**
-	 * @deprecated use {@link Unchecked#get(CheckedSupplier)} instead.
-	 */
-	@Nonnull
-	@Deprecated
-	public static <T> T unchecked(@Nonnull CheckedSupplier<T, Exception> supplier) {
+public class Unchecked {
+	public static <T> T get(@Nonnull CheckedSupplier<T, Exception> supplier) {
+		checkNotNull(supplier);
 		try {
 			return supplier.get();
+		} catch (Exception e) {
+			throw new UncheckedException(e);
+		}
+	}
+
+	public static void run(@Nonnull CheckedRunnable<Exception> runnable) {
+		checkNotNull(runnable);
+		try {
+			runnable.run();
 		} catch (Exception e) {
 			throw new UncheckedException(e);
 		}

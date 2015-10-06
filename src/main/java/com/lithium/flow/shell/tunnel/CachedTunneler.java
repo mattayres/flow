@@ -17,11 +17,11 @@
 package com.lithium.flow.shell.tunnel;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.lithium.flow.util.Exceptions.unchecked;
 
 import com.lithium.flow.shell.Tunnel;
 import com.lithium.flow.shell.Tunneler;
 import com.lithium.flow.util.Caches;
+import com.lithium.flow.util.Unchecked;
 import com.lithium.flow.util.UncheckedException;
 
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class CachedTunneler implements Tunneler {
 	@Nonnull
 	public Tunnel getTunnel(@Nonnull String host, int port, @Nullable String through) throws IOException {
 		try {
-			return unchecked(() -> tunnels.get(Triple.of(host, port, through)));
+			return Unchecked.get(() -> tunnels.get(Triple.of(host, port, through)));
 		} catch (UncheckedException e) {
 			throw e.unwrap(IOException.class);
 		}
