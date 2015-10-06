@@ -17,8 +17,8 @@
 package com.lithium.flow.util;
 
 /**
- * @author Matt Ayres
- */
-public interface CheckedSupplier<T, E extends Exception> {
-	T get() throws E;
+* @author Matt Ayres
+*/
+public interface CheckedRunnable<E extends Exception> {
+	void run() throws E;
 }

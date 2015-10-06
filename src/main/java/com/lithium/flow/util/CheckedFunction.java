@@ -22,6 +22,5 @@ import javax.annotation.Nonnull;
  * @author Matt Ayres
  */
 public interface CheckedFunction<K, V, E extends Exception> {
-	@Nonnull
 	V apply(@Nonnull K key) throws E;
 }
