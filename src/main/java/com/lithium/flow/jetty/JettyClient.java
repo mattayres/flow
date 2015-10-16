@@ -22,6 +22,7 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.util.ConfigObjectPool;
 import com.lithium.flow.util.HostUtils;
 import com.lithium.flow.util.Logs;
+import com.lithium.flow.util.Unchecked;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -29,8 +30,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
@@ -45,7 +45,6 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.Maps;
 
 /**
  * @author Matt Ayres
@@ -54,22 +53,24 @@ import com.google.common.collect.Maps;
 public class JettyClient extends BasePoolableObjectFactory<Session> implements Closeable {
 	private static final Logger log = Logs.getLogger();
 
-	private final Map<Session, Token<?>> tokens = Maps.newConcurrentMap();
-	private final ExecutorService service = Executors.newCachedThreadPool();
+	private final Map<Session, Token<?>> tokens = new ConcurrentHashMap<>();
 	private final AtomicInteger pos = new AtomicInteger();
 	private final Config config;
 	private final WebSocketClient client;
 	private final ObjectPool<Session> pool;
+	private final long timeout;
 
-	public JettyClient(@Nonnull Config config) throws Exception {
+	public JettyClient(@Nonnull Config config) {
 		this.config = checkNotNull(config);
 
-		client = new WebSocketClient(service);
+		client = new WebSocketClient();
 		client.getPolicy().setMaxTextMessageSize(config.getInt("maxTextMessageSize", 1024 * 1024));
 		client.getPolicy().setIdleTimeout(config.getTime("idleTimeout", "1h"));
-		client.start();
+		Unchecked.run(client::start);
 
 		pool = new ConfigObjectPool<>(this, config);
+
+		timeout = config.getTime("timeout", "15s");
 	}
 
 	@Override
@@ -99,35 +100,31 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 	}
 
 	@Nonnull
+	public String call(@Nonnull String text) throws IOException {
+		return call(text, input -> input);
+	}
+
+	@Nonnull
 	public <T> T call(@Nonnull String text, @Nonnull Decoder<T> decoder) throws IOException {
 		checkNotNull(text);
 		checkNotNull(decoder);
 
-		Session session;
+		Session session = Unchecked.get(pool::borrowObject);
 		try {
-			session = pool.borrowObject();
-		} catch (Exception e) {
-			throw new IOException("failed to get session from pool", e);
+			Token<T> token = new Token<>(decoder);
+			tokens.put(session, token);
+			session.getRemote().sendStringByFuture(text);
+			return token.get(timeout);
+		} finally {
+			Unchecked.run(() -> pool.returnObject(session));
 		}
-
-		Token<T> token = new Token<>(decoder);
-		tokens.put(session, token);
-		session.getRemote().sendStringByFuture(text);
-		return token.get(config.getTime("timeout", "15s"));
 	}
 
 	@OnWebSocketMessage
-	public void onInput(Session session, String input) {
+	public void onInput(@Nonnull Session session, @Nonnull String input) {
 		log.debug("input: {}", input);
 
 		Token<?> token = tokens.remove(session);
-
-		try {
-			pool.returnObject(session);
-		} catch (Exception e) {
-			log.warn("failed to return session to pool", e);
-		}
-
 		if (token == null) {
 			log.warn("no token for input: {}", input);
 			return;
@@ -146,7 +143,6 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 
 	@Override
 	public void close() {
-		service.shutdown();
 		try {
 			client.stop();
 		} catch (Exception e) {
