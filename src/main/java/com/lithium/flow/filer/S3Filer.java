@@ -77,10 +77,16 @@ public class S3Filer implements Filer {
 		tempDir = new File(config.getString("s3.tempDir", System.getProperty("java.io.tmpdir")));
 		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
 
-		String key = config.getString("key");
-		String secret = access.getPrompt().prompt(bucket, bucket + " secret: ", Prompt.Type.MASKED, false);
-
-		s3 = new AmazonS3Client(new BasicAWSCredentials(key, secret));
+		String key = config.getString("aws.key", null);
+		if (key != null) {
+			String secret = config.getString("aws.secret", null);
+			if (secret == null) {
+				secret = access.getPrompt().prompt(key + ".secret", key + ".secret: ", Prompt.Type.MASKED, false);
+			}
+			s3 = new AmazonS3Client(new BasicAWSCredentials(key, secret));
+		} else {
+			s3 = new AmazonS3Client();
+		}
 	}
 
 	@Override

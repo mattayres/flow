@@ -58,6 +58,7 @@ public class Filers {
 				.addScheme("rmi", ClientRemoteFiler.class)
 				.addScheme("ssh", ShellFiler.class)
 				.addScheme("sftp", ShellFiler.class)
+				.addScheme("s3", S3Filer.class)
 				.addStreamer("buffered", BufferedStreamer.class)
 				.addStreamer("compress", CompressStreamer.class)
 				.addStreamer("crypt", CryptStreamer.class)
