@@ -37,6 +37,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.ObjectPool;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
@@ -63,7 +64,7 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 	public JettyClient(@Nonnull Config config) {
 		this.config = checkNotNull(config);
 
-		client = new WebSocketClient();
+		client = new WebSocketClient(new SslContextFactory());
 		client.getPolicy().setMaxTextMessageSize(config.getInt("maxTextMessageSize", 1024 * 1024));
 		client.getPolicy().setIdleTimeout(config.getTime("idleTimeout", "1h"));
 		Unchecked.run(client::start);
