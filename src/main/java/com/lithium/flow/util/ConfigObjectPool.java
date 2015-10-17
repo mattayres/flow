@@ -39,7 +39,7 @@ public class ConfigObjectPool<T> extends GenericObjectPool<T> {
 		poolConfig.maxActive = config.getInt("pool.maxActive", Runtime.getRuntime().availableProcessors());
 		poolConfig.maxIdle = config.getInt("pool.maxIdle", -1);
 		poolConfig.minIdle = config.getInt("pool.minIdle", 0);
-		poolConfig.testOnBorrow = config.getBoolean("pool.testOnBorrow", false);
+		poolConfig.testOnBorrow = config.getBoolean("pool.testOnBorrow", true);
 		poolConfig.testOnReturn = config.getBoolean("pool.testOnReturn", false);
 		poolConfig.timeBetweenEvictionRunsMillis = config.getTime("pool.timeBetweenEvictionRunsMillis", "-1");
 		poolConfig.minEvictableIdleTimeMillis = config.getTime("pool.minEvictableIdleTimeMillis", "30m");
