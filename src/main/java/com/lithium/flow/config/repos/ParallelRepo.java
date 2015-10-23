@@ -57,18 +57,20 @@ public class ParallelRepo extends DecoratedRepo {
 		if (config.getBoolean("progress", false)) {
 			progress.start(config.getTime("progress.logTime", "5s"), config.getTime("progress.avgTime", "15s"));
 		}
-
-		getNames().forEach(name -> {
-			names.incTodo();
-			threader.execute(name, () -> {
-				configs.add(getConfig(name));
-				names.incDone();
+		try {
+			getNames().forEach(name -> {
+				names.incTodo();
+				threader.execute(name, () -> {
+					configs.add(getConfig(name));
+					names.incDone();
+				});
 			});
-		});
 
-		threader.finish();
-		if (config.getBoolean("progress", false)) {
-			progress.finish();
+			threader.finish();
+		} finally {
+			if (config.getBoolean("progress", false)) {
+				progress.finish();
+			}
 		}
 
 		return configs;
