@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Record;
 import com.lithium.flow.io.DataIo;
+import com.lithium.flow.util.Unchecked;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,6 +73,10 @@ public class SshjFiler implements Filer {
 
 	@Nonnull
 	private Record getRecord(@Nonnull RemoteResourceInfo info) {
+		if (info.getAttributes().getType() == FileMode.Type.SYMKLINK) {
+			return Unchecked.get(() -> getRecord(info.getPath()));
+		}
+
 		long time = info.getAttributes().getMtime() * 1000;
 		long size = info.getAttributes().getSize();
 		return new Record(uri, info.getParent(), info.getName(), time, size, info.isDirectory());
