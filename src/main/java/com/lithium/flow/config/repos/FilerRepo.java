@@ -34,6 +34,8 @@ import java.util.function.UnaryOperator;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.io.IOUtils;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -127,5 +129,6 @@ public class FilerRepo implements Repo {
 
 	@Override
 	public void close() throws IOException {
+		filers.forEach(IOUtils::closeQuietly);
 	}
 }
