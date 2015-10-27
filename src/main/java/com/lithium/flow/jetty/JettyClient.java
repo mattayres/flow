@@ -111,14 +111,11 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 		checkNotNull(decoder);
 
 		Session session = Unchecked.get(pool::borrowObject);
-		try {
-			Token<T> token = new Token<>(decoder);
-			tokens.put(session, token);
-			session.getRemote().sendStringByFuture(text);
-			return token.get(timeout);
-		} finally {
-			Unchecked.run(() -> pool.returnObject(session));
-		}
+
+		Token<T> token = new Token<>(decoder);
+		tokens.put(session, token);
+		session.getRemote().sendStringByFuture(text);
+		return token.get(timeout);
 	}
 
 	@OnWebSocketMessage
@@ -126,6 +123,9 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 		log.debug("input: {}", input);
 
 		Token<?> token = tokens.remove(session);
+
+		Unchecked.run(() -> pool.returnObject(session));
+
 		if (token == null) {
 			log.warn("no token for input: {}", input);
 			return;
