@@ -19,25 +19,27 @@ package com.lithium.flow.svn;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
-import com.lithium.flow.util.ConfigObjectPool;
+import com.lithium.flow.util.ConfigObjectPool2;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * @author Matt Ayres
  */
-public class PoolSvnProvider extends BasePoolableObjectFactory<SVNRepository> implements SvnProvider {
+public class PoolSvnProvider extends BasePooledObjectFactory<SVNRepository> implements SvnProvider {
 	private final SvnProvider delegate;
 	private final ObjectPool<SVNRepository> pool;
 
 	public PoolSvnProvider(@Nonnull SvnProvider delegate, @Nonnull Config config) {
 		this.delegate = checkNotNull(delegate);
-		pool = new ConfigObjectPool<>(this, checkNotNull(config).prefix("svn"));
+		pool = new ConfigObjectPool2<>(this, checkNotNull(config).prefix("svn"));
 	}
 
 	@Override
@@ -66,12 +68,18 @@ public class PoolSvnProvider extends BasePoolableObjectFactory<SVNRepository> im
 	}
 
 	@Override
-	public SVNRepository makeObject() throws Exception {
+	public SVNRepository create() throws Exception {
 		return delegate.getRepository();
 	}
 
 	@Override
-	public void destroyObject(@Nonnull SVNRepository repository) throws Exception {
+	public PooledObject<SVNRepository> wrap(@Nonnull SVNRepository repository) {
+		return new DefaultPooledObject<>(repository);
+	}
+
+	@Override
+	public void destroyObject(@Nonnull PooledObject<SVNRepository> pooled) throws Exception {
+		SVNRepository repository = pooled.getObject();
 		delegate.releaseRepository(repository);
 	}
 

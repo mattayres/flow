@@ -27,12 +27,15 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 
 /**
  * @author Matt Ayres
+ * @deprecated Use {@link ConfigObjectPool2} instead.
  */
+@Deprecated
 public class ConfigObjectPool<T> extends GenericObjectPool<T> {
 	public ConfigObjectPool(@Nonnull PoolableObjectFactory<T> factory, @Nonnull com.lithium.flow.config.Config config) {
 		super(checkNotNull(factory), buildConfig(checkNotNull(config)));
 	}
 
+	@Nonnull
 	private static Config buildConfig(@Nonnull com.lithium.flow.config.Config config) {
 		Config poolConfig = new Config();
 		poolConfig.lifo = config.getBoolean("pool.lifo", true);

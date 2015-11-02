@@ -19,7 +19,7 @@ package com.lithium.flow.jetty;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
-import com.lithium.flow.util.ConfigObjectPool;
+import com.lithium.flow.util.ConfigObjectPool2;
 import com.lithium.flow.util.HostUtils;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Unchecked;
@@ -34,8 +34,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.apache.commons.pool.ObjectPool;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -50,7 +52,7 @@ import com.google.common.base.Splitter;
  * @author Matt Ayres
  */
 @WebSocket
-public class JettyClient extends BasePoolableObjectFactory<Session> implements Closeable {
+public class JettyClient extends BasePooledObjectFactory<Session> implements Closeable {
 	private static final Logger log = Logs.getLogger();
 
 	private final Map<Session, Token<?>> tokens = new ConcurrentHashMap<>();
@@ -68,27 +70,33 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 		client.getPolicy().setIdleTimeout(config.getTime("idleTimeout", "1h"));
 		Unchecked.run(client::start);
 
-		pool = new ConfigObjectPool<>(this, config);
+		pool = new ConfigObjectPool2<>(this, config);
 
 		urls = HostUtils.expand(config.getList("url", Splitter.on(' ')));
 		timeout = config.getTime("timeout", "15s");
 	}
 
 	@Override
-	@Nonnull
-	public Session makeObject() throws Exception {
+	public Session create() throws Exception {
 		String url = urls.get(pos.getAndIncrement() % urls.size());
 		log.debug("connecting: {}", url);
 		return client.connect(this, new URI(url), new ClientUpgradeRequest()).get();
 	}
 
 	@Override
-	public void destroyObject(@Nonnull Session session) throws Exception {
+	public PooledObject<Session> wrap(@Nonnull Session session) {
+		return new DefaultPooledObject<>(session);
+	}
+
+	@Override
+	public void destroyObject(@Nonnull PooledObject<Session> pooled) throws Exception {
+		Session session = pooled.getObject();
 		session.close();
 	}
 
 	@Override
-	public boolean validateObject(@Nonnull Session session) {
+	public boolean validateObject(@Nonnull PooledObject<Session> pooled) {
+		Session session = pooled.getObject();
 		return session.isOpen();
 	}
 
