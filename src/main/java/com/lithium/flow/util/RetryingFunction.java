@@ -29,10 +29,16 @@ import javax.annotation.Nonnull;
 public class RetryingFunction<T, R, E extends Exception> {
 	private final CheckedFunction<T, R, E> function;
 	private final int tries;
+	private final long delay;
 
 	public RetryingFunction(int tries, @Nonnull CheckedFunction<T, R, E> function) {
+		this(tries, 0, function);
+	}
+
+	public RetryingFunction(int tries, long delay, @Nonnull CheckedFunction<T, R, E> function) {
 		this.function = checkNotNull(function);
 		this.tries = tries;
+		this.delay = delay;
 	}
 
 	@Nonnull
@@ -54,6 +60,10 @@ public class RetryingFunction<T, R, E extends Exception> {
 					exceptions = new ArrayList<>();
 				}
 				exceptions.add(e);
+
+				if (!Sleep.softly(delay)) {
+					break;
+				}
 			}
 		} while (--i > 0);
 

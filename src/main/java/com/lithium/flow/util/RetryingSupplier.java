@@ -29,10 +29,16 @@ import javax.annotation.Nonnull;
 public class RetryingSupplier<T, E extends Exception> {
 	private final CheckedSupplier<T, E> supplier;
 	private final int tries;
+	private final long delay;
 
 	public RetryingSupplier(int tries, @Nonnull CheckedSupplier<T, E> supplier) {
+		this(tries, 0, supplier);
+	}
+
+	public RetryingSupplier(int tries, long delay, @Nonnull CheckedSupplier<T, E> supplier) {
 		this.supplier = checkNotNull(supplier);
 		this.tries = tries;
+		this.delay = delay;
 	}
 
 	@Nonnull
@@ -52,6 +58,10 @@ public class RetryingSupplier<T, E extends Exception> {
 					exceptions = new ArrayList<>();
 				}
 				exceptions.add(e);
+
+				if (!Sleep.softly(delay)) {
+					break;
+				}
 			}
 		} while (--i > 0);
 
