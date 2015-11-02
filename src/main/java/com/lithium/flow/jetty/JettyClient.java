@@ -27,7 +27,6 @@ import com.lithium.flow.util.Unchecked;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,13 +55,13 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 
 	private final Map<Session, Token<?>> tokens = new ConcurrentHashMap<>();
 	private final AtomicInteger pos = new AtomicInteger();
-	private final Config config;
 	private final WebSocketClient client;
 	private final ObjectPool<Session> pool;
+	private final List<String> urls;
 	private final long timeout;
 
 	public JettyClient(@Nonnull Config config) {
-		this.config = checkNotNull(config);
+		checkNotNull(config);
 
 		client = new WebSocketClient(new SslContextFactory());
 		client.getPolicy().setMaxTextMessageSize(config.getInt("maxTextMessageSize", 1024 * 1024));
@@ -71,23 +70,16 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 
 		pool = new ConfigObjectPool<>(this, config);
 
+		urls = HostUtils.expand(config.getList("url", Splitter.on(' ')));
 		timeout = config.getTime("timeout", "15s");
 	}
 
 	@Override
 	@Nonnull
-	public Session makeObject() throws IOException {
-		List<String> urls = HostUtils.expand(config.getList("url", Splitter.on(' ')));
-		Collections.rotate(urls, pos.decrementAndGet() % urls.size());
-		for (String url : urls) {
-			log.debug("connecting: {}", url);
-			try {
-				return client.connect(this, new URI(url), new ClientUpgradeRequest()).get();
-			} catch (Exception e) {
-				log.warn("failed to connect to url: {}", url, e);
-			}
-		}
-		throw new IOException("unable to connect to any url: " + urls);
+	public Session makeObject() throws Exception {
+		String url = urls.get(pos.getAndIncrement() % urls.size());
+		log.debug("connecting: {}", url);
+		return client.connect(this, new URI(url), new ClientUpgradeRequest()).get();
 	}
 
 	@Override
@@ -112,22 +104,25 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 
 		Session session = Unchecked.get(pool::borrowObject);
 
-		Token<T> token = new Token<>(decoder);
-		tokens.put(session, token);
-		session.getRemote().sendStringByFuture(text);
-		return token.get(timeout);
+		try {
+			Token<T> token = new Token<>(decoder);
+			tokens.put(session, token);
+			session.getRemote().sendStringByFuture(text);
+			return token.get(timeout);
+		} finally {
+			tokens.remove(session);
+			Unchecked.run(() -> pool.returnObject(session));
+		}
 	}
 
 	@OnWebSocketMessage
 	public void onInput(@Nonnull Session session, @Nonnull String input) {
-		log.debug("input: {}", input);
+		log.trace("input: {}", input);
 
 		Token<?> token = tokens.remove(session);
 
-		Unchecked.run(() -> pool.returnObject(session));
-
 		if (token == null) {
-			log.warn("no token for input: {}", input);
+			// message was late and call has already timed out
 			return;
 		}
 
@@ -143,11 +138,11 @@ public class JettyClient extends BasePoolableObjectFactory<Session> implements C
 	}
 
 	@Override
-	public void close() {
+	public void close() throws IOException {
 		try {
 			client.stop();
 		} catch (Exception e) {
-			throw new RuntimeException("failed to close web socket client", e);
+			throw new IOException("failed to close web socket client", e);
 		}
 	}
 }
