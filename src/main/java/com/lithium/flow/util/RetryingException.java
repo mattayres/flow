@@ -17,7 +17,7 @@
 package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.List;
 
@@ -43,7 +43,7 @@ class RetryingException extends RuntimeException {
 	@Override
 	public String getMessage() {
 		return "Failed after " + exceptions.size() + " tries: "
-				+ Joiner.on(", ").join(exceptions.stream().map(Throwable::getMessage).collect(toList()));
+				+ Joiner.on(", ").join(exceptions.stream().map(Throwable::getMessage).collect(toSet()));
 	}
 
 	@Override
