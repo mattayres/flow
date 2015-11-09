@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Comparator;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -29,6 +30,8 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.google.common.primitives.Longs;
 
 /**
  * Details for a single file from a {@link Filer}.
@@ -149,5 +152,25 @@ public class Record implements Serializable {
 		checkNotNull(path);
 		File file = new File(path);
 		return new Record(uri, file.getParent(), file.getName(), 0, NO_EXIST_SIZE, false);
+	}
+
+	@Nonnull
+	public static Comparator<Record> sizeAsc() {
+		return (r1, r2) -> Longs.compare(r1.getSize(), r2.getSize());
+	}
+
+	@Nonnull
+	public static Comparator<Record> sizeDesc() {
+		return (r1, r2) -> -Longs.compare(r1.getSize(), r2.getSize());
+	}
+
+	@Nonnull
+	public static Comparator<Record> timeAsc() {
+		return (r1, r2) -> Longs.compare(r1.getTime(), r2.getTime());
+	}
+
+	@Nonnull
+	public static Comparator<Record> timeDesc() {
+		return (r1, r2) -> -Longs.compare(r1.getTime(), r2.getTime());
 	}
 }
