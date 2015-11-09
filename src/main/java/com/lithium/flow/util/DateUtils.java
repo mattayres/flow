@@ -84,12 +84,20 @@ public class DateUtils {
 	}
 
 	@Nonnull
-	public static List<String> getDates(@Nonnull Config config) {
+	public static List<String> getDates(@Nonnull Config config, @Nonnull DateTimeFormatter formatter) {
 		checkNotNull(config);
+		checkNotNull(formatter);
 
 		long startTime = toMillis(config.getString("start"));
 		long endTime = toMillis(config.getString("end"));
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(config.getString("format"));
 		return getDates(startTime, endTime, formatter);
+	}
+
+	@Nonnull
+	public static List<String> getDates(@Nonnull Config config) {
+		checkNotNull(config);
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(config.getString("format"));
+		return getDates(config, formatter);
 	}
 }
