@@ -76,7 +76,7 @@ public class Sleep {
 	}
 
 	/**
-	 * @deprecated use {@link CheckedRunnable<InterruptedException>} instead.
+	 * @deprecated use {@link CheckedRunnable} instead.
 	 */
 	@Deprecated
 	public static interface Interruptible {
