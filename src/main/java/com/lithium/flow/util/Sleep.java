@@ -43,10 +43,10 @@ public class Sleep {
 		return softly(() -> Thread.sleep(Math.max(0, time)));
 	}
 
-	public static boolean softly(@Nonnull Interruptible interruptible) {
-		checkNotNull(interruptible);
+	public static boolean softly(@Nonnull CheckedRunnable<InterruptedException> runnable) {
+		checkNotNull(runnable);
 		try {
-			interruptible.call();
+			runnable.run();
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return false;
@@ -59,13 +59,13 @@ public class Sleep {
 		return softly(minTime + (diff > 0 ? ThreadLocalRandom.current().nextInt(diff) : 0));
 	}
 
-	public static boolean until(@Nonnull Check check) {
-		return until(10, check);
+	public static boolean until(@Nonnull Checker checker) {
+		return until(10, checker);
 	}
 
-	public static boolean until(long interval, @Nonnull Check check) {
+	public static boolean until(long interval, @Nonnull Checker check) {
 		do {
-			if (check.test()) {
+			if (check.check()) {
 				return true;
 			}
 			if (!softly(interval)) {
@@ -75,10 +75,18 @@ public class Sleep {
 		return false;
 	}
 
+	/**
+	 * @deprecated use {@link CheckedRunnable<InterruptedException>} instead.
+	 */
+	@Deprecated
 	public static interface Interruptible {
 		void call() throws InterruptedException;
 	}
 
+	/**
+	 * @deprecated use {@link Checker} instead.
+	 */
+	@Deprecated
 	public static interface Check {
 		boolean test();
 	}
