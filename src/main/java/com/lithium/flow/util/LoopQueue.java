@@ -37,23 +37,24 @@ public class LoopQueue<T> {
 	private final int capacity;
 	private final BlockingQueue<T> queue;
 	private final List<LoopThread> threads = new CopyOnWriteArrayList<>();
+	private volatile boolean finish;
 
 	/**
-	 * @deprecated use {@link #LoopQueue()} and {@link #forList(Consumer)} instead.
+	 * @deprecated use {@link #LoopQueue()} and {@link #forList(CheckedConsumer)} instead.
 	 */
 	@Deprecated
 	public LoopQueue(@Nonnull Consumer<List<T>> consumer) {
 		this(Integer.MAX_VALUE);
-		forList(consumer);
+		forList(consumer::accept);
 	}
 
 	/**
-	 * @deprecated use {@link #LoopQueue(int)} and {@link #forList(Consumer)} instead.
+	 * @deprecated use {@link #LoopQueue(int)} and {@link #forList(CheckedConsumer)} instead.
 	 */
 	@Deprecated
 	public LoopQueue(int capacity, @Nonnull Consumer<List<T>> consumer) {
 		this(capacity);
-		forList(consumer);
+		forList(consumer::accept);
 	}
 
 	public LoopQueue() {
@@ -71,18 +72,30 @@ public class LoopQueue<T> {
 				: new PriorityBlockingQueue<>(capacity, comparator);
 	}
 
-	public void forList(@Nonnull Consumer<List<T>> consumer) {
+	public void forList(@Nonnull CheckedConsumer<List<T>, Exception> consumer) {
+		forList(consumer, () -> !queue.isEmpty(), Integer.MAX_VALUE);
+	}
+
+	public void forList(int batch, @Nonnull CheckedConsumer<List<T>, Exception> consumer) {
+		forList(consumer, () -> !queue.isEmpty() && (queue.size() >= batch || finish), batch);
+	}
+
+	private void forList(@Nonnull CheckedConsumer<List<T>, Exception> consumer, @Nonnull Checker checker, int max) {
 		threads.add(new LoopThread(10, () -> {
-			if (!queue.isEmpty()) {
+			if (checker.check()) {
 				List<T> list = new ArrayList<>();
-				queue.drainTo(list);
+				queue.drainTo(list, max);
 				consumer.accept(list);
 			}
 		}));
 	}
 
-	public void forEach(@Nonnull Consumer<T> consumer) {
-		forList(list -> list.forEach(consumer::accept));
+	public void forEach(@Nonnull CheckedConsumer<T, Exception> consumer) {
+		forList(list -> {
+			for (T item : list) {
+				consumer.accept(item);
+			}
+		});
 	}
 
 	public void add(@Nonnull T element) {
@@ -91,6 +104,7 @@ public class LoopQueue<T> {
 	}
 
 	public void finish() {
+		finish = true;
 		Sleep.until(queue::isEmpty);
 		threads.forEach(LoopThread::finish);
 	}
