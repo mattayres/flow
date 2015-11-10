@@ -19,6 +19,8 @@ package com.lithium.flow.util;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.lithium.flow.util.PrintUtils.time;
 
+import com.lithium.flow.config.Config;
+
 import java.util.List;
 import java.util.function.Function;
 
@@ -136,5 +138,10 @@ public class Progress {
 				.filter(m -> m.avg(avgInterval) > 0)
 				.mapToDouble(m -> m.getLeft() * 1000 / m.avg(avgInterval))
 				.max().orElse(0);
+	}
+
+	@Nonnull
+	public static Progress start(@Nonnull Config config) {
+		return new Progress().start(config.getTime("log.interval", "5s"), config.getTime("avg.interval", "1m"));
 	}
 }
