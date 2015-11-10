@@ -21,8 +21,13 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import com.lithium.flow.util.Unchecked;
 
+import java.util.List;
+
 import javax.annotation.Nonnull;
 
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -58,22 +63,34 @@ public class ElasticTable implements Table {
 
 	@Override
 	public void putRow(@Nonnull Row row) {
-		Key key = row.getKey();
-		Row newRow = new Row(key).putAll(getRow(key)).putAll(row);
-
-		Unchecked.run(() -> {
-			XContentBuilder content = jsonBuilder().startObject();
-			for (String column : newRow.columns()) {
-				content.field(column, newRow.getCell(column, Object.class));
-			}
-			content = content.endObject();
-
-			client.prepareIndex(index, type, key.id()).setSource(content).execute().actionGet();
-		});
+		indexRequest(row).execute().actionGet();
 	}
 
 	@Override
 	public void deleteRow(@Nonnull Key key) {
 		client.prepareDelete(index, type, key.id()).execute().actionGet();
+	}
+
+	@Override
+	public void putRows(@Nonnull List<Row> rows) {
+		BulkRequestBuilder request = client.prepareBulk();
+
+		rows.forEach(row -> request.add(indexRequest(row)));
+
+		BulkResponse response = request.execute().actionGet();
+		if (response.hasFailures()) {
+			throw new RuntimeException(response.buildFailureMessage());
+		}
+	}
+
+	@Nonnull
+	private IndexRequestBuilder indexRequest(@Nonnull Row row) {
+		return Unchecked.get(() -> {
+			XContentBuilder content = jsonBuilder().startObject();
+			for (String column : row.columns()) {
+				content.field(column, row.getCell(column, Object.class));
+			}
+			return client.prepareIndex(index, type, row.getKey().id()).setSource(content.endObject());
+		});
 	}
 }

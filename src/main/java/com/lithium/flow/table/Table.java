@@ -18,6 +18,7 @@ package com.lithium.flow.table;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -46,7 +47,17 @@ public interface Table {
 
 	void putRow(@Nonnull Row row);
 
+	default void updateRow(@Nonnull Row row) {
+		Key key = row.getKey();
+		Row newRow = new Row(key).putAll(getRow(key)).putAll(row);
+		putRow(newRow);
+	}
+
 	void deleteRow(@Nonnull Key key);
+
+	default void putRows(@Nonnull List<Row> rows) {
+		rows.forEach(this::putRow);
+	}
 
 	@Nonnull
 	default Stream<Key> keys() {
