@@ -100,20 +100,62 @@ public class SqlTable implements Table {
 		params.addAll(row.values());
 		params.addAll(row.getKey().list());
 
+		String query = buildInsertQuery(columns);
+		log.debug("insert: {} {}", query, params);
+
+		Unchecked.run(() -> schema.update(query, params));
+	}
+
+	@Override
+	public void putRows(@Nonnull List<Row> rows) {
+		checkNotNull(rows);
+
+		List<String> columns = rows.get(0).columns();
+		columns.forEach(this::checkValidColumn);
+		String query = buildInsertQuery(columns);
+
 		Unchecked.run(() -> {
 			try (Connection con = schema.getConnection()) {
-				String query = buildUpdateQuery(columns);
-				log.debug("update: {} {}", query, params);
+				con.setAutoCommit(false);
 
-				int result = update(con, query, params);
-				if (result == 0) {
-					query = buildInsertQuery(columns);
-					log.debug("insert: {} {}", query, params);
+				try (PreparedStatement ps = con.prepareStatement(query)) {
+					for (Row row : rows) {
+						List<Object> params = Lists.newArrayList();
+						params.addAll(row.values());
+						params.addAll(row.getKey().list());
 
-					update(con, query, params);
+						log.debug("insert: {} {}", query, params);
+
+						int i = 1;
+						for (Object param : params) {
+							ps.setObject(i++, param);
+						}
+						ps.addBatch();
+					}
+
+					ps.executeBatch();
 				}
+
+				con.commit();
 			}
 		});
+	}
+
+	@Override
+	public void updateRow(@Nonnull Row row) {
+		checkNotNull(row);
+
+		List<String> columns = row.columns();
+		columns.forEach(this::checkValidColumn);
+
+		List<Object> params = Lists.newArrayList();
+		params.addAll(row.values());
+		params.addAll(row.getKey().list());
+
+		String query = buildUpdateQuery(columns);
+		log.debug("update: {} {}", query, params);
+
+		Unchecked.run(() -> schema.update(query, params));
 	}
 
 	@Override
@@ -121,17 +163,6 @@ public class SqlTable implements Table {
 		String query = buildDeleteQuery();
 		log.debug("delete: {} {}", query, key.list());
 		Unchecked.run(() -> schema.update(query, key.array()));
-	}
-
-	private int update(@Nonnull Connection con, @Nonnull String query, @Nonnull List<Object> params)
-			throws SQLException {
-		try (PreparedStatement ps = con.prepareStatement(query)) {
-			int i = 1;
-			for (Object param : params) {
-				ps.setObject(i++, param);
-			}
-			return ps.executeUpdate();
-		}
 	}
 
 	private void checkValidColumn(@Nonnull String column) {
