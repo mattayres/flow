@@ -24,25 +24,29 @@ import javax.annotation.Nonnull;
  * @author Matt Ayres
  */
 public class Coders {
-	private static final CoderFactory factory = buildFactory();
+	private static final CoderFactory FACTORY = buildFactory();
 
 	@Nonnull
 	public static CoderFactory buildFactory() {
 		return new CoderFactory()
-				.register("bz2", Bzip2Coder.class)
-				.register("gz", GzipCoder.class)
-				.register("lz4", Lz4Coder.class)
-				.register("lzf", LzfCoder.class)
-				.register("lzo", LzopCoder.class)
-				.register("lzo_deflate", LzoCoder.class)
-				.register("snappy", SnappyCoder.class)
-				.register("xz", XzCoder.class)
-				.register("", NoCoder.class);
+				.register(".bz2", Bzip2Coder.class)
+				.register(".gz", GzipCoder.class)
+				.register(".lz4", Lz4Coder.class)
+				.register(".lzf", LzfCoder.class)
+				.register(".lzo", LzopCoder.class)
+				.register(".lzo_deflate", LzoCoder.class)
+				.register(".snappy", SnappyCoder.class)
+				.register(".xz", XzCoder.class);
+	}
+
+	@Nonnull
+	public static CoderFactory getFactory() {
+		return FACTORY;
 	}
 
 	@Nonnull
 	public static Coder getCoder(@Nonnull String path) {
 		checkNotNull(path);
-		return factory.getCoder(path);
+		return FACTORY.getCoder(path);
 	}
 }

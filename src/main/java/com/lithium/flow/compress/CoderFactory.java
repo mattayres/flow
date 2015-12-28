@@ -20,54 +20,39 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.util.Lazy;
 
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
-
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
  */
 public class CoderFactory {
-	private final List<Spec> specs = Lists.newCopyOnWriteArrayList();
+	private final Map<String, Lazy<Coder>> coders = new ConcurrentHashMap<>();
+	private final Lazy<Coder> defaultCoder = new Lazy<>(NoCoder.class::newInstance);
 
 	@Nonnull
 	public CoderFactory register(@Nonnull String extension, @Nonnull Class<? extends Coder> clazz) {
 		checkNotNull(extension);
 		checkNotNull(clazz);
-		specs.add(new Spec(extension, clazz));
+		return register(extension, new Lazy<>(clazz::newInstance));
+	}
+
+	@Nonnull
+	public CoderFactory register(@Nonnull String extension, @Nonnull Lazy<Coder> lazy) {
+		checkNotNull(extension);
+		checkNotNull(lazy);
+		coders.put(extension, lazy);
 		return this;
 	}
 
 	@Nonnull
 	public Coder getCoder(@Nonnull String path) {
 		checkNotNull(path);
-		return specs.stream()
-				.filter(spec -> spec.matches(path))
-				.findFirst()
-				.orElseThrow(() -> new RuntimeException("unknown coder for path: " + path))
-				.getCoder();
-	}
 
-	private static class Spec {
-		private final String extension;
-		private final Lazy<Coder> coder;
-
-		private Spec(@Nonnull String extension, @Nonnull Class<? extends Coder> clazz) {
-			this.extension = checkNotNull(extension);
-			checkNotNull(clazz);
-			coder = new Lazy<>(clazz::newInstance);
-		}
-
-		private boolean matches(@Nonnull String path) {
-			checkNotNull(path);
-			return extension.isEmpty() || path.equals(extension) || path.endsWith("." + extension);
-		}
-
-		@Nonnull
-		public Coder getCoder() {
-			return coder.get();
-		}
+		int index = path.lastIndexOf(".");
+		String extension = index > -1 ? path.substring(index) : "." + path;
+		return coders.getOrDefault(extension, defaultCoder).get();
 	}
 }
