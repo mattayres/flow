@@ -134,15 +134,7 @@ public class JettyClient extends BasePooledObjectFactory<Session> implements Clo
 			return;
 		}
 
-		if (input.startsWith("ERROR: ")) {
-			token.exception(new RuntimeException(input));
-		} else {
-			try {
-				token.set(input);
-			} catch (Exception e) {
-				token.exception(e);
-			}
-		}
+		token.process(input);
 	}
 
 	@Override

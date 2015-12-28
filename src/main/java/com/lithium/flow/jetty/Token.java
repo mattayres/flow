@@ -39,6 +39,18 @@ public class Token<T> {
 		this.decoder = checkNotNull(decoder);
 	}
 
+	public void process(@Nonnull String result) {
+		if (result.startsWith("ERROR: ")) {
+			exception(new RuntimeException(result));
+		} else {
+			try {
+				set(result);
+			} catch (Exception e) {
+				exception(e);
+			}
+		}
+	}
+
 	public void set(@Nonnull String result) throws Exception {
 		object = decoder.decode(result);
 		latch.countDown();
