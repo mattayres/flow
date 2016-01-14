@@ -78,9 +78,9 @@ public class LuceneFiler extends DecoratedFiler {
 		long targetMinStale = config.getTime("index.targetMinStale", "1s");
 
 		Version version = Version.LATEST;
-		Directory dir = FSDirectory.open(new File(path));
+		Directory dir = FSDirectory.open(new File(path).toPath());
 		NRTCachingDirectory cachingDir = new NRTCachingDirectory(dir, maxMergeMb, maxCachedMb);
-		IndexWriterConfig writerConfig = new IndexWriterConfig(version, null);
+		IndexWriterConfig writerConfig = new IndexWriterConfig(null);
 		writerConfig.setOpenMode(OpenMode.CREATE_OR_APPEND);
 
 		writer = new TrackingIndexWriter(new IndexWriter(cachingDir, writerConfig));

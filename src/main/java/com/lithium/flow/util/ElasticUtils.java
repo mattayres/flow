@@ -16,17 +16,16 @@
 
 package com.lithium.flow.util;
 
-import static org.elasticsearch.common.settings.ImmutableSettings.settingsBuilder;
-
 import com.lithium.flow.config.Config;
 
+import java.net.InetAddress;
 import java.util.List;
 
 import javax.annotation.Nonnull;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.NodeBuilder;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ public class ElasticUtils {
 		if (config.getBoolean("elastic.node", false)) {
 			return NodeBuilder.nodeBuilder().client(true).clusterName(name).node().client();
 		} else {
-			ImmutableSettings.Builder settings = settingsBuilder();
+			Settings.Builder settings = Settings.settingsBuilder();
 			settings.put("cluster.name", name);
 
 			config.keySet().stream()
@@ -54,10 +53,11 @@ public class ElasticUtils {
 
 			List<String> hosts = config.getList("elastic.hosts", Splitter.on(' '));
 			int port = config.getInt("elastic.port", 9300);
-			TransportClient client = new TransportClient(settings.build());
+			TransportClient client = TransportClient.builder().settings(settings).build();
 			for (String host : HostUtils.expand(hosts)) {
 				log.debug("adding host: {}", host);
-				client.addTransportAddress(new InetSocketTransportAddress(host, port));
+				InetAddress address = Unchecked.get(() -> InetAddress.getByName(host));
+				client.addTransportAddress(new InetSocketTransportAddress(address, port));
 			}
 			return client;
 		}
