@@ -18,13 +18,14 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -33,15 +34,16 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public class Needle<T> {
 	private final Threader threader;
-	private final List<ListenableFuture<T>> futures = Collections.synchronizedList(Lists.newArrayList());
+	private final BlockingQueue<ListenableFuture<T>> queue = new LinkedBlockingQueue<>();
 
 	public Needle(@Nonnull Threader threader) {
 		checkNotNull(threader);
 		this.threader = checkNotNull(threader);
 	}
 
-	public void execute(@Nonnull String name, @Nonnull Executable executable) {
-		submit(name, () -> {
+	@Nonnull
+	public ListenableFuture<T> execute(@Nonnull String name, @Nonnull Executable executable) {
+		return submit(name, () -> {
 			executable.call();
 			return null;
 		});
@@ -53,12 +55,20 @@ public class Needle<T> {
 		checkNotNull(callable);
 
 		ListenableFuture<T> future = threader.submit(name, callable);
-		futures.add(future);
+		queue.add(future);
 		return future;
 	}
 
 	@Nonnull
 	public List<T> finish() {
-		return Unchecked.get(() -> Futures.successfulAsList(futures).get());
+		List<T> values = new ArrayList<>();
+
+		while (!queue.isEmpty()) {
+			List<ListenableFuture<T>> futures = new ArrayList<>();
+			queue.drainTo(futures);
+			values.addAll(Unchecked.get(() -> Futures.successfulAsList(futures).get()));
+		}
+
+		return values;
 	}
 }

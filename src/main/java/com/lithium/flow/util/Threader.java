@@ -65,8 +65,9 @@ public class Threader {
 		return this;
 	}
 
-	public void execute(@Nonnull String name, @Nonnull Executable executable) {
-		submit(name, executable);
+	@Nonnull
+	public ListenableFuture<Void> execute(@Nonnull String name, @Nonnull Executable executable) {
+		return submit(name, executable);
 	}
 
 	@Nonnull
