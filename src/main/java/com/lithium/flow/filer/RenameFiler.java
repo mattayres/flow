@@ -78,8 +78,11 @@ public class RenameFiler implements Filer {
 		return delegate.findRecords(path, threads).map(this::adjustRecord);
 	}
 
-	private Record adjustRecord(Record record) {
-		return record.withName(fromReplacer.replace(record.getName()));
+	@Nonnull
+	private Record adjustRecord(@Nonnull Record record) {
+		return record
+				.withParent(fromReplacer.replace(record.getParent().orElse(null)))
+				.withName(fromReplacer.replace(record.getName()));
 	}
 
 	@Override

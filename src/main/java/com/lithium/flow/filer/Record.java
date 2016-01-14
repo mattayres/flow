@@ -106,7 +106,12 @@ public class Record implements Serializable {
 	}
 
 	@Nonnull
-	public Record withName(String newName) {
+	public Record withParent(@Nullable String newParent) {
+		return new Record(uri, newParent, name, time, size, dir);
+	}
+
+	@Nonnull
+	public Record withName(@Nonnull String newName) {
 		return new Record(uri, parent, newName, time, size, dir);
 	}
 
