@@ -82,10 +82,12 @@ public class LoopQueue<T> {
 
 	private void forList(@Nonnull CheckedConsumer<List<T>, Exception> consumer, @Nonnull Checker checker, int max) {
 		threads.add(new LoopThread(10, () -> {
-			if (checker.check()) {
+			while (queue.size() > 0 && checker.check()) {
 				List<T> list = new ArrayList<>();
 				queue.drainTo(list, max);
-				consumer.accept(list);
+				if (list.size() > 0) {
+					consumer.accept(list);
+				}
 			}
 		}));
 	}
