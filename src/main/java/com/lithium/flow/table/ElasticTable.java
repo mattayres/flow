@@ -73,13 +73,14 @@ public class ElasticTable implements Table {
 
 	@Override
 	public void putRows(@Nonnull List<Row> rows) {
-		BulkRequestBuilder request = client.prepareBulk();
+		if (rows.size() > 0) {
+			BulkRequestBuilder request = client.prepareBulk();
+			rows.forEach(row -> request.add(indexRequest(row)));
 
-		rows.forEach(row -> request.add(indexRequest(row)));
-
-		BulkResponse response = request.execute().actionGet();
-		if (response.hasFailures()) {
-			throw new RuntimeException(response.buildFailureMessage());
+			BulkResponse response = request.execute().actionGet();
+			if (response.hasFailures()) {
+				throw new RuntimeException(response.buildFailureMessage());
+			}
 		}
 	}
 
