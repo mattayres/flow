@@ -19,8 +19,9 @@ package com.lithium.flow.compress;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
-import com.lithium.flow.util.Threader;
+import com.lithium.flow.util.Unchecked;
 
+import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,8 +37,6 @@ import org.apache.commons.io.IOUtils;
  * @author Matt Ayres
  */
 public class ProcessCoder implements Coder {
-	private final Threader threader = new Threader();
-
 	private final String extension;
 	private final List<String> inCommands;
 	private final List<String> outCommands;
@@ -53,12 +52,19 @@ public class ProcessCoder implements Coder {
 	@Nonnull
 	public InputStream wrapIn(@Nonnull InputStream in) throws IOException {
 		Process process = new ProcessBuilder(inCommands).start();
-		threader.execute("", () -> {
+		Unchecked.runAsync(() -> {
 			try (OutputStream out = process.getOutputStream()) {
 				IOUtils.copy(in, out);
 			}
 		});
-		return process.getInputStream();
+
+		return new FilterInputStream(process.getInputStream()) {
+			@Override
+			public void close() throws IOException {
+				super.close();
+				process.destroy();
+			}
+		};
 	}
 
 	@Override
@@ -71,14 +77,20 @@ public class ProcessCoder implements Coder {
 				.collect(toList());
 
 		Process process = new ProcessBuilder(optionCommands).start();
-		threader.execute("", () -> {
+		Unchecked.runAsync(() -> {
 			try (InputStream in = process.getInputStream()) {
 				IOUtils.copy(in, out);
 			}
 			latch.countDown();
 		});
 
-		return new FilterOutputStream(process.getOutputStream()) {
+		OutputStream pout = process.getOutputStream();
+		return new FilterOutputStream(pout) {
+			@Override
+			public void write(@Nonnull byte[] b, int off, int len) throws IOException {
+				pout.write(b, off, len);
+			}
+
 			@Override
 			public void close() throws IOException {
 				super.close();

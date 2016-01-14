@@ -18,6 +18,8 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -40,5 +42,10 @@ public class Unchecked {
 		} catch (Exception e) {
 			throw new UncheckedException(e);
 		}
+	}
+
+	public static void runAsync(@Nonnull CheckedRunnable<Exception> runnable) {
+		checkNotNull(runnable);
+		CompletableFuture.runAsync(() -> run(runnable));
 	}
 }

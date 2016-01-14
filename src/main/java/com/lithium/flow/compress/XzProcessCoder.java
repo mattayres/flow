@@ -16,6 +16,13 @@
 
 package com.lithium.flow.compress;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.annotation.Nonnull;
+
+import org.tukaani.xz.LZMA2Options;
+
 import com.google.common.collect.Lists;
 
 /**
@@ -24,5 +31,11 @@ import com.google.common.collect.Lists;
 public class XzProcessCoder extends ProcessCoder {
 	public XzProcessCoder() {
 		super(".xz", Lists.newArrayList("xz", "-d"), Lists.newArrayList("xz", "-{option}"));
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream wrapOut(@Nonnull OutputStream out) throws IOException {
+		return wrapOut(out, LZMA2Options.PRESET_DEFAULT);
 	}
 }
