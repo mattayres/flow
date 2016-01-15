@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -102,14 +103,16 @@ public interface Config {
 
 	@Nonnull
 	default Map<String, String> asMap() {
+		Map<String, String> map = new LinkedHashMap<>();
 		Config config = toBuilder().allowUndefined(true).build();
-		return ImmutableMap.copyOf(keySet().stream().collect(toMap((String key) -> key, config::getString)));
+		keySet().stream().forEach(key -> map.put(key, config.getString(key)));
+		return ImmutableMap.copyOf(map);
 	}
 
 	@Nonnull
 	default SortedMap<String, String> asSortedMap() {
 		Config config = toBuilder().allowUndefined(true).build();
-		return ImmutableSortedMap.copyOf(keySet().stream().collect(toMap((String key) -> key, config::getString)));
+		return ImmutableSortedMap.copyOf(keySet().stream().collect(toMap(key -> key, config::getString)));
 	}
 
 	@Nonnull
