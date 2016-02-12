@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toMap;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Repo;
+import com.lithium.flow.util.Caches;
 import com.lithium.flow.util.Checker;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.LoopThread;
@@ -37,6 +38,7 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 
 /**
@@ -45,22 +47,23 @@ import com.google.common.collect.Lists;
 public class ScheduledRepo implements Repo {
 	private static final Logger log = Logs.getLogger();
 
-	private final Repo delegate;
 	private final CountDownLatch latch = new CountDownLatch(1);
 	private final Thread thread;
 	private volatile Map<String, Config> configMap;
+	private final LoadingCache<String, Config> configCache;
 
 	public ScheduledRepo(@Nonnull Repo delegate, long interval, long offset) {
 		this(delegate, interval, offset, () -> true);
 	}
 
 	public ScheduledRepo(@Nonnull Repo delegate, long interval, long offset, @Nonnull Checker checker) {
-		this.delegate = checkNotNull(delegate);
+		configCache = Caches.build(delegate::getConfig);
 
 		thread = new LoopThread(interval, offset, true, () -> {
 			if (configMap == null || checker.check()) {
 				try {
 					configMap = delegate.streamConfigs().collect(toMap(Config::getName, config -> config));
+					configMap.keySet().forEach(configCache::invalidate);
 					latch.countDown();
 				} catch (IOException e) {
 					log.warn("failed to read configs", e);
@@ -81,7 +84,7 @@ public class ScheduledRepo implements Repo {
 		checkNotNull(name);
 		Config config = getConfigMap().get(name);
 		if (config == null) {
-			return delegate.getConfig(name);
+			return Caches.get(configCache, name, IOException.class);
 		}
 		return config;
 	}
