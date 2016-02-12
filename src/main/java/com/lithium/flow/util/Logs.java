@@ -83,7 +83,12 @@ public class Logs {
 	 */
 	@Nonnull
 	public static Logger getLogger() {
-		return LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[2].getClassName());
+		return getLogger(3);
+	}
+
+	@Nonnull
+	static Logger getLogger(int index) {
+		return LoggerFactory.getLogger(Thread.currentThread().getStackTrace()[index].getClassName());
 	}
 
 	@Nonnull

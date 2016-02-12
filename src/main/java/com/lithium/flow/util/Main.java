@@ -39,14 +39,16 @@ import org.slf4j.Logger;
 /**
  * @author Matt Ayres
  */
-public class Main {
-	private static final Logger log = Logs.getLogger();
+public interface Main {
+	Logger log = Logs.getLogger(3);
 
-	public static void run() {
+	void main(@Nonnull Config config) throws Exception;
+
+	static void run() {
 		run(Thread.currentThread().getStackTrace()[2].getClassName());
 	}
 
-	public static void run(@Nonnull String className) {
+	static void run(@Nonnull String className) {
 		try {
 			run(Class.forName(className));
 		} catch (ClassNotFoundException e) {
@@ -55,7 +57,7 @@ public class Main {
 	}
 
 	@Nonnull
-	public static <T> T run(@Nonnull Class<T> clazz) {
+	static <T> T run(@Nonnull Class<T> clazz) {
 		checkNotNull(clazz);
 		AtomicReference<T> ref = new AtomicReference<>();
 		run(clazz, config -> {
@@ -64,15 +66,19 @@ public class Main {
 			} catch (NoSuchMethodException e) {
 				ref.set(clazz.getDeclaredConstructor().newInstance());
 			}
+
+			if (ref.get() instanceof Main) {
+				((Main) ref.get()).main(config);
+			}
 		});
 		return ref.get();
 	}
 
-	public static void run(@Nonnull Callback callback) {
+	static void run(@Nonnull CheckedConsumer<Config, Exception> callback) {
 		run(null, callback);
 	}
 
-	public static void run(@Nullable Class<?> clazz, @Nonnull Callback callback) {
+	static void run(@Nullable Class<?> clazz, @Nonnull CheckedConsumer<Config, Exception> callback) {
 		checkNotNull(callback);
 		try {
 			Config config = config(clazz);
@@ -85,7 +91,7 @@ public class Main {
 
 			Logs.configure(config);
 			Logs.redirect(config);
-			callback.call(config);
+			callback.accept(config);
 		} catch (Exception e) {
 			log.error("failed to start", e);
 			System.exit(1);
@@ -93,12 +99,12 @@ public class Main {
 	}
 
 	@Nonnull
-	public static Config config() throws IOException {
+	static Config config() throws IOException {
 		return config(null);
 	}
 
 	@Nonnull
-	private static Config config(@Nullable Class<?> clazz) throws IOException {
+	static Config config(@Nullable Class<?> clazz) throws IOException {
 		String path = System.getProperty("config");
 		if (path != null) {
 			return configFromFile(path);
@@ -133,7 +139,7 @@ public class Main {
 	}
 
 	@Nonnull
-	private static Config configFromFile(@Nonnull String path) throws IOException {
+	static Config configFromFile(@Nonnull String path) throws IOException {
 		checkNotNull(path);
 
 		File file = new File(path);
@@ -147,9 +153,5 @@ public class Main {
 		ConfigLoader loader = new FileConfigLoader(file.getParent());
 
 		return Configs.newBuilder().addLoader(loader).include(path).build();
-	}
-
-	public static interface Callback {
-		void call(@Nonnull Config config) throws Exception;
 	}
 }
