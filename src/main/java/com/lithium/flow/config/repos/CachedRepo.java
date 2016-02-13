@@ -24,7 +24,6 @@ import com.lithium.flow.util.Caches;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
@@ -53,29 +52,13 @@ public class CachedRepo implements Repo {
 	@Override
 	@Nonnull
 	public List<String> getNames() throws IOException {
-		try {
-			return namesCache.get("");
-		} catch (ExecutionException e) {
-			if (e.getCause() instanceof IOException) {
-				throw (IOException) e.getCause();
-			} else {
-				throw new IOException(e.getCause());
-			}
-		}
+		return Caches.get(namesCache, "", IOException.class);
 	}
 
 	@Override
 	@Nonnull
 	public Config getConfig(@Nonnull String name) throws IOException {
-		try {
-			return configCache.get(name);
-		} catch (ExecutionException e) {
-			if (e.getCause() instanceof IOException) {
-				throw (IOException) e.getCause();
-			} else {
-				throw new IOException(e.getCause());
-			}
-		}
+		return Caches.get(configCache, name, IOException.class);
 	}
 
 	@Override

@@ -18,10 +18,12 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.concurrent.ExecutionException;
 import java.util.function.UnaryOperator;
 
 import javax.annotation.Nonnull;
 
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -55,5 +57,19 @@ public class Caches {
 				return function.apply(key);
 			}
 		};
+	}
+
+	@Nonnull
+	public static <K, V, E extends Exception> V get(@Nonnull LoadingCache<K, V> cache, @Nonnull K key,
+			@Nonnull Class<E> clazz) throws E {
+		checkNotNull(cache);
+		checkNotNull(key);
+		checkNotNull(clazz);
+		try {
+			return cache.get(key);
+		} catch (ExecutionException e) {
+			Throwables.propagateIfInstanceOf(e.getCause(), clazz);
+			throw Throwables.propagate(e.getCause());
+		}
 	}
 }

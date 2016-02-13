@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
 
 import javax.annotation.Nonnull;
 
@@ -68,15 +67,7 @@ public class CachedReadFiler extends DecoratedFiler {
 			}
 		}
 
-		try {
-			return new ByteArrayInputStream(cache.get(path).getRight());
-		} catch (ExecutionException e) {
-			if (e.getCause() instanceof IOException) {
-				throw (IOException) e.getCause();
-			} else {
-				throw new IOException(e);
-			}
-		}
+		return new ByteArrayInputStream(Caches.get(cache, path, IOException.class).getRight());
 	}
 
 	@Override

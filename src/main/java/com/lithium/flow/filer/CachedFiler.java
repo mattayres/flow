@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
@@ -58,15 +57,7 @@ public class CachedFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
-		try {
-			return dirCache.get(path);
-		} catch (ExecutionException e) {
-			if (e.getCause() instanceof IOException) {
-				throw (IOException) e.getCause();
-			} else {
-				throw new IOException(e);
-			}
-		}
+		return Caches.get(dirCache, path, IOException.class);
 	}
 
 	@Override
@@ -81,15 +72,7 @@ public class CachedFiler extends DecoratedFiler {
 			}
 		}
 
-		try {
-			return fileCache.get(path);
-		} catch (ExecutionException e) {
-			if (e.getCause() instanceof IOException) {
-				throw (IOException) e.getCause();
-			} else {
-				throw new IOException(e);
-			}
-		}
+		return Caches.get(fileCache, path, IOException.class);
 	}
 
 	@Override

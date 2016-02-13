@@ -23,7 +23,6 @@ import com.lithium.flow.config.Config;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +31,6 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 
-import com.google.common.base.Throwables;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
 
@@ -60,14 +58,7 @@ public class Recycler<K, V extends Closeable> {
 	public Reusable<V> get(@Nonnull K key) throws IOException {
 		checkNotNull(key);
 
-		V value;
-		try {
-			value = cache.get(key);
-		} catch (ExecutionException e) {
-			Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
-			throw Throwables.propagate(e.getCause());
-		}
-
+		V value = Caches.get(cache, key, IOException.class);
 		Bin bin = bins.getUnchecked(value);
 
 		Reusable<V> reusable = new Reusable<V>() {
