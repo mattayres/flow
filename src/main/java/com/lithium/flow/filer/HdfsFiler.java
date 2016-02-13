@@ -121,8 +121,20 @@ public class HdfsFiler implements Filer {
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
 		checkNotNull(path);
+		return wrapOut(fileSystem.create(new Path(path), overwrite));
+	}
 
-		FSDataOutputStream fsOut = fileSystem.create(new Path(path), overwrite);
+	@Override
+	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+		Path fsPath = new Path(path);
+		fileSystem.createNewFile(fsPath);
+		return wrapOut(fileSystem.append(fsPath));
+	}
+
+	@Nonnull
+	private OutputStream wrapOut(@Nonnull FSDataOutputStream fsOut) {
 		return new DecoratedOutputStream(fsOut) {
 			@Override
 			public void flush() throws IOException {

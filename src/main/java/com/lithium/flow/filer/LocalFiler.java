@@ -105,6 +105,13 @@ public class LocalFiler implements Filer {
 
 	@Override
 	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		checkNotNull(path);
+		return new FileOutputStream(path, true);
+	}
+
+	@Override
+	@Nonnull
 	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
 		checkNotNull(path);
 		RandomAccessFile file = new RandomAccessFile(path, write ? "rw" : "r");

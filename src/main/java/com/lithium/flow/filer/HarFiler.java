@@ -98,11 +98,18 @@ public class HarFiler implements Filer {
 		return getFiler(path).readFile(path);
 	}
 
-	@Nonnull
 	@Override
+	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
 		checkNotHarPath(path);
 		return hdfsFiler.writeFile(path);
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		checkNotHarPath(path);
+		return hdfsFiler.appendFile(path);
 	}
 
 	@Override

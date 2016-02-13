@@ -39,6 +39,7 @@ import javax.annotation.Nonnull;
 import net.schmizz.sshj.sftp.FileAttributes;
 import net.schmizz.sshj.sftp.FileMode;
 import net.schmizz.sshj.sftp.OpenMode;
+import net.schmizz.sshj.sftp.RemoteFile;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import net.schmizz.sshj.sftp.SFTPClient;
 
@@ -48,6 +49,7 @@ import net.schmizz.sshj.sftp.SFTPClient;
 public class SshjFiler implements Filer {
 	private static final Set<OpenMode> readModes = EnumSet.of(OpenMode.READ);
 	private static final Set<OpenMode> writeModes = EnumSet.of(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT);
+	private static final Set<OpenMode> appendModes = EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.APPEND);
 
 	private final URI uri;
 	private final SFTPClient sftp;
@@ -105,6 +107,13 @@ public class SshjFiler implements Filer {
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
 		return new SshjUpload(sftp, path).getOutputStream();
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		RemoteFile remoteFile = sftp.open(path, appendModes);
+		return remoteFile.new RemoteFileOutputStream(remoteFile.length(), 16);
 	}
 
 	@Override

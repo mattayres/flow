@@ -94,6 +94,12 @@ public class DecoratedFiler implements Filer {
 	}
 
 	@Override
+	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		return delegate.appendFile(path);
+	}
+
+	@Override
 	public void setFileTime(@Nonnull String path, long time) throws IOException {
 		delegate.setFileTime(path, time);
 	}

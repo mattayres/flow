@@ -160,6 +160,21 @@ public class LogFiler extends DecoratedFiler {
 
 	@Override
 	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		if (enter) {
+			log.info("enter: appendFile(\"{}\")", path);
+		}
+		try {
+			return delegate.appendFile(path);
+		} finally {
+			if (exit) {
+				log.info("exit: appendFile(\"{}\")", path);
+			}
+		}
+	}
+
+	@Override
+	@Nonnull
 	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
 		if (enter) {
 			log.info("enter: openFile(\"{}\")", path);

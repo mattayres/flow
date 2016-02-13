@@ -101,6 +101,13 @@ public class RenameFiler implements Filer {
 
 	@Override
 	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		path = toReplacer.replace(path);
+		return delegate.appendFile(path);
+	}
+
+	@Override
+	@Nonnull
 	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
 		path = toReplacer.replace(path);
 		return delegate.openFile(path, write);

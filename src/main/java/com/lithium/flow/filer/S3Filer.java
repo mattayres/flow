@@ -214,6 +214,12 @@ public class S3Filer implements Filer {
 
 	@Override
 	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	@Nonnull
 	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
 		throw new UnsupportedOperationException();
 	}

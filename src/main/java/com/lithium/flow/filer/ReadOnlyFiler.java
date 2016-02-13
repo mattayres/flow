@@ -54,6 +54,16 @@ public class ReadOnlyFiler extends DecoratedFiler {
 	}
 
 	@Override
+	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		if (predicate.apply(this)) {
+			throw new IOException("read only: " + path);
+		} else {
+			return super.appendFile(path);
+		}
+	}
+
+	@Override
 	public void setFileTime(@Nonnull String path, long time) throws IOException {
 		if (predicate.apply(this)) {
 			throw new IOException("read only: " + path);

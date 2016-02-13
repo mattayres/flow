@@ -66,6 +66,9 @@ public interface Filer extends Closeable {
 	OutputStream writeFile(@Nonnull String path) throws IOException;
 
 	@Nonnull
+	OutputStream appendFile(@Nonnull String path) throws IOException;
+
+	@Nonnull
 	DataIo openFile(@Nonnull String path, boolean write) throws IOException;
 
 	void setFileTime(@Nonnull String path, long time) throws IOException;

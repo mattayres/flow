@@ -51,6 +51,7 @@ public class StatsFiler extends DecoratedFiler {
 	private final Stat getHashFileStat = new Stat("getHash");
 	private final Stat readFileStat = new Stat("readFile");
 	private final Stat writeFileStat = new Stat("writeFile");
+	private final Stat appendFileStat = new Stat("appendFile");
 	private final Stat openFileStat = new Stat("openFile");
 	private final Stat setFileTimeStat = new Stat("setFileTime");
 	private final Stat removeFileStat = new Stat("deleteFile");
@@ -143,6 +144,17 @@ public class StatsFiler extends DecoratedFiler {
 		Token token = writeFileStat.start();
 		try {
 			return delegate.writeFile(path);
+		} finally {
+			token.finish();
+		}
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		Token token = appendFileStat.start();
+		try {
+			return delegate.appendFile(path);
 		} finally {
 			token.finish();
 		}

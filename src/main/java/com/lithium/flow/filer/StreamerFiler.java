@@ -28,7 +28,7 @@ import javax.annotation.Nonnull;
 
 /**
  * Decorates an instance of {@link Filer} to manipulate the reading and writing of streams.
- * 
+ *
  * @author Matt Ayres
  */
 public class StreamerFiler extends DecoratedFiler {
@@ -63,21 +63,37 @@ public class StreamerFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
-		final OutputStream out = super.writeFile(path);
+		OutputStream out = super.writeFile(path);
 		try {
 			return streamer.filterOut(out, path);
-		} catch (final Exception e) {
-			return new OutputStream() {
-				@Override
-				public void write(int b) throws IOException {
-					throw new IOException(e);
-				}
-
-				@Override
-				public void close() throws IOException {
-					out.close();
-				}
-			};
+		} catch (Exception e) {
+			return exceptionOut(out, e);
 		}
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream appendFile(@Nonnull String path) throws IOException {
+		OutputStream out = super.appendFile(path);
+		try {
+			return streamer.filterOut(out, path);
+		} catch (Exception e) {
+			return exceptionOut(out, e);
+		}
+	}
+
+	@Nonnull
+	private OutputStream exceptionOut(@Nonnull OutputStream out, Exception e) {
+		return new OutputStream() {
+			@Override
+			public void write(int b) throws IOException {
+				throw new IOException(e);
+			}
+
+			@Override
+			public void close() throws IOException {
+				out.close();
+			}
+		};
 	}
 }
