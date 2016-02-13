@@ -47,9 +47,10 @@ import net.schmizz.sshj.sftp.SFTPClient;
  * @author Matt Ayres
  */
 public class SshjFiler implements Filer {
-	private static final Set<OpenMode> readModes = EnumSet.of(OpenMode.READ);
-	private static final Set<OpenMode> writeModes = EnumSet.of(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT);
-	private static final Set<OpenMode> appendModes = EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.APPEND);
+	private static final Set<OpenMode> READ_MODES = EnumSet.of(OpenMode.READ);
+	private static final Set<OpenMode> WRITE_MODES = EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC);
+	private static final Set<OpenMode> APPEND_MODES = EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.APPEND);
+	private static final Set<OpenMode> OPEN_WRITE_MODES = EnumSet.of(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT);
 
 	private final URI uri;
 	private final SFTPClient sftp;
@@ -100,26 +101,28 @@ public class SshjFiler implements Filer {
 	@Override
 	@Nonnull
 	public InputStream readFile(@Nonnull String path) throws IOException {
-		return new SshjDownload(sftp, path).getInputStream();
+		RemoteFile remoteFile = sftp.open(path, READ_MODES);
+		return remoteFile.new RemoteFileInputStream();
 	}
 
 	@Override
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
-		return new SshjUpload(sftp, path).getOutputStream();
+		RemoteFile remoteFile = sftp.open(path, WRITE_MODES);
+		return remoteFile.new RemoteFileOutputStream(0, 16);
 	}
 
 	@Override
 	@Nonnull
 	public OutputStream appendFile(@Nonnull String path) throws IOException {
-		RemoteFile remoteFile = sftp.open(path, appendModes);
+		RemoteFile remoteFile = sftp.open(path, APPEND_MODES);
 		return remoteFile.new RemoteFileOutputStream(remoteFile.length(), 16);
 	}
 
 	@Override
 	@Nonnull
 	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
-		return new SshjDataIo(sftp.open(path, write ? writeModes : readModes));
+		return new SshjDataIo(sftp.open(path, write ? OPEN_WRITE_MODES : READ_MODES));
 	}
 
 	@Override
