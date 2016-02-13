@@ -16,11 +16,14 @@
 
 package com.lithium.flow.util;
 
-import java.io.Closeable;
-import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 
 /**
  * @author Matt Ayres
  */
-public interface Reusable<T> extends Closeable, Supplier<T> {
+public interface Reusable<T> {
+	@Nonnull
+	T get(@Nonnull Object object);
+
+	void recycle(@Nonnull Object object);
 }

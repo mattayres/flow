@@ -38,16 +38,16 @@ public class DisposableTunnel implements Tunnel {
 	@Override
 	@Nonnull
 	public String getHost() {
-		return reusable.get().getHost();
+		return reusable.get(this).getHost();
 	}
 
 	@Override
 	public int getPort() {
-		return reusable.get().getPort();
+		return reusable.get(this).getPort();
 	}
 
 	@Override
 	public void close() throws IOException {
-		reusable.close();
+		reusable.recycle(this);
 	}
 }

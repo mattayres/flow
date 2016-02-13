@@ -44,21 +44,21 @@ public class DisposableShell implements Shell {
 	public DisposableShell(@Nonnull Config config, @Nonnull Reusable<Shell> reusable) {
 		checkNotNull(config);
 		this.reusable = checkNotNull(reusable);
-		tunnels = new Recycler<>(config, tunneling -> reusable.get().tunnel(tunneling));
-		filers = new Recycler<>(config, shell -> reusable.get().getFiler());
+		tunnels = new Recycler<>(config, tunneling -> reusable.get(this).tunnel(tunneling));
+		filers = new Recycler<>(config, shell -> reusable.get(this).getFiler());
 	}
 
 	@Override
 	@Nonnull
 	public URI getUri() {
-		return reusable.get().getUri();
+		return reusable.get(this).getUri();
 	}
 
 	@Override
 	@Nonnull
 	public Exec exec(@Nonnull String command) throws IOException {
 		checkNotNull(command);
-		return reusable.get().exec(command);
+		return reusable.get(this).exec(command);
 	}
 
 	@Override
@@ -73,16 +73,18 @@ public class DisposableShell implements Shell {
 	@Nonnull
 	public Filer getFiler() throws IOException {
 		Reusable<Filer> reusableFiler = filers.get(this);
-		return new DecoratedFiler(reusableFiler.get()) {
+		return new DecoratedFiler(reusableFiler.get(this)) {
 			@Override
 			public void close() throws IOException {
-				reusableFiler.close();
+				reusableFiler.recycle(this);
 			}
 		};
 	}
 
 	@Override
 	public void close() throws IOException {
-		reusable.close();
+		tunnels.close();
+		filers.close();
+		reusable.recycle(this);
 	}
 }

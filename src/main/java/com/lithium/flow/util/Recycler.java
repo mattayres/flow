@@ -22,90 +22,82 @@ import com.lithium.flow.config.Config;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
  */
-public class Recycler<K, V extends Closeable> {
+public class Recycler<K, V extends Closeable> implements Closeable {
 	private static final Logger log = Logs.getLogger();
 
 	private final long time;
-	private final LoadingCache<K, V> cache;
-	private final LoadingCache<V, Bin> bins;
-	private final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+	private final LoadingCache<K, Bin> cache;
+	private volatile boolean closing;
 
-	public Recycler(@Nonnull Config config, @Nonnull Loader<K, V> loader) {
+	public Recycler(@Nonnull Config config, @Nonnull CheckedFunction<K, V, Exception> function) {
 		checkNotNull(config);
-		checkNotNull(loader);
+		checkNotNull(function);
 
 		time = config.getTime("recycle.time", "1m");
-		cache = Caches.build(loader::load);
-		bins = Caches.build(key -> new Bin());
+
+		cache = Caches.buildWithListener(key -> new Bin(key, function.apply(key)),
+				builder -> builder.expireAfterAccess(time, TimeUnit.MILLISECONDS),
+				notification -> IOUtils.closeQuietly(notification.getValue()));
 	}
 
 	@Nonnull
 	public Reusable<V> get(@Nonnull K key) throws IOException {
 		checkNotNull(key);
-
-		V value = Caches.get(cache, key, IOException.class);
-		Bin bin = bins.getUnchecked(value);
-
-		Reusable<V> reusable = new Reusable<V>() {
-			@Override
-			@Nonnull
-			public V get() {
-				return value;
-			}
-
-			@Override
-			public void close() {
-				service.schedule(() -> {
-					try {
-						bin.close(this, () -> {
-							cache.invalidate(key);
-							bins.invalidate(value);
-							value.close();
-						});
-					} catch (IOException e) {
-						log.warn("failed to close: {}", value, e);
-					}
-
-				}, time, TimeUnit.MILLISECONDS);
-			}
-		};
-
-		return bin.open(reusable) ? reusable : get(key);
+		return Caches.get(cache, key, IOException.class);
 	}
 
-	public static interface Loader<K, V> {
-		@Nonnull
-		V load(@Nonnull K key) throws Exception;
+	@Override
+	public void close() throws IOException {
+		closing = true;
+		cache.invalidateAll();
 	}
 
-	private static class Bin {
-		private final Set<Object> set = Sets.newHashSet();
+	private class Bin implements Reusable<V>, Closeable {
+		private final K key;
+		private final V value;
+		private final Set<Object> set = new HashSet<>();
 		private boolean closed;
 
-		private synchronized boolean open(@Nonnull Object object) {
-			set.add(object);
-			return !closed;
+		public Bin(@Nonnull K key, @Nonnull V value) {
+			this.key = checkNotNull(key);
+			this.value = checkNotNull(value);
 		}
 
-		private synchronized void close(@Nonnull Object object, @Nonnull Closeable closeable) throws IOException {
-			if (set.remove(object) && set.isEmpty() && !closed) {
+		@Override
+		@Nonnull
+		public synchronized V get(@Nonnull Object object) {
+			set.add(object);
+			return value;
+		}
+
+		@Override
+		public synchronized void recycle(@Nonnull Object object) {
+			set.remove(object);
+		}
+
+		@Override
+		public synchronized void close() throws IOException {
+			if (!closed) {
+				if (closing || set.isEmpty()) {
+					value.close();
+				} else {
+					Execute.in(time, this::close);
+				}
 				closed = true;
-				closeable.close();
 			}
 		}
 	}

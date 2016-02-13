@@ -27,6 +27,7 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 
 /**
  * @author Matt Ayres
@@ -45,6 +46,22 @@ public class Caches {
 		checkNotNull(function);
 		checkNotNull(operator);
 		return operator.apply((CacheBuilder<K, V>) CacheBuilder.newBuilder()).build(loader(function));
+	}
+
+	@Nonnull
+	public static <K, V> LoadingCache<K, V> buildWithListener(@Nonnull CheckedFunction<K, V, Exception> function,
+			@Nonnull RemovalListener<K, V> listener) {
+		checkNotNull(function);
+		checkNotNull(listener);
+		return build(function, b -> b.removalListener(listener));
+	}
+
+	@Nonnull
+	public static <K, V> LoadingCache<K, V> buildWithListener(@Nonnull CheckedFunction<K, V, Exception> function,
+			@Nonnull UnaryOperator<CacheBuilder<K, V>> operator, @Nonnull RemovalListener<K, V> listener) {
+		checkNotNull(function);
+		checkNotNull(listener);
+		return build(function, b -> operator.apply(b.removalListener(listener)));
 	}
 
 	@Nonnull

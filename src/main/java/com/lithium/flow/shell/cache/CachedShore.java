@@ -62,6 +62,7 @@ public class CachedShore implements Shore {
 
 	@Override
 	public void close() throws IOException {
+		shells.close();
 		delegate.close();
 	}
 }
