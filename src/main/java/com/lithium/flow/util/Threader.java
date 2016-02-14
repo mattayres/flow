@@ -41,7 +41,9 @@ public class Threader {
 
 	private final ListeningExecutorService service;
 	private final AtomicInteger remaining = new AtomicInteger();
-	private int retries = 0;
+	private final AtomicInteger queued = new AtomicInteger();
+	private volatile int retries;
+	private volatile int maxQueued = Integer.MAX_VALUE;
 
 	public Threader() {
 		this(-1);
@@ -66,6 +68,12 @@ public class Threader {
 	}
 
 	@Nonnull
+	public Threader setMaxQueued(int maxQueued) {
+		this.maxQueued = maxQueued;
+		return this;
+	}
+
+	@Nonnull
 	public ListenableFuture<Void> execute(@Nonnull String name, @Nonnull Executable executable) {
 		return submit(name, executable);
 	}
@@ -80,8 +88,15 @@ public class Threader {
 		checkNotNull(name);
 		checkNotNull(callable);
 
+		Sleep.until(() -> queued.get() < maxQueued);
+
 		remaining.incrementAndGet();
-		ListenableFuture<T> future = service.submit(callable);
+		queued.incrementAndGet();
+
+		ListenableFuture<T> future = service.submit(() -> {
+			queued.decrementAndGet();
+			return callable.call();
+		});
 
 		Futures.addCallback(future, new FutureCallback<T>() {
 			@Override
@@ -119,8 +134,17 @@ public class Threader {
 		return remaining.get();
 	}
 
+	public int getQueued() {
+		return queued.get();
+	}
+
 	@Nonnull
 	public <T> Needle<T> needle() {
 		return new Needle<>(this);
+	}
+
+	@Nonnull
+	public static Threader forCompute() {
+		return new Threader(Runtime.getRuntime().availableProcessors());
 	}
 }
