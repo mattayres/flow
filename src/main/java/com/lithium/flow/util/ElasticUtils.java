@@ -16,7 +16,11 @@
 
 package com.lithium.flow.util;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.lithium.flow.config.Config;
+import com.lithium.flow.table.ElasticTable;
+import com.lithium.flow.table.Table;
 
 import java.net.InetAddress;
 import java.util.List;
@@ -40,6 +44,8 @@ public class ElasticUtils {
 
 	@Nonnull
 	public static Client buildClient(@Nonnull Config config) {
+		checkNotNull(config);
+
 		String name = config.getString("elastic.name");
 		if (config.getBoolean("elastic.node", false)) {
 			return NodeBuilder.nodeBuilder().client(true).clusterName(name).node().client();
@@ -61,5 +67,22 @@ public class ElasticUtils {
 			}
 			return client;
 		}
+	}
+
+	@Nonnull
+	public static Table buildTable(@Nonnull Config config) {
+		checkNotNull(config);
+
+		return buildTable(config, buildClient(config));
+	}
+
+	@Nonnull
+	public static Table buildTable(@Nonnull Config config, @Nonnull Client client) {
+		checkNotNull(config);
+		checkNotNull(client);
+
+		String index = config.getString("elastic.index");
+		String type = config.getString("elastic.type");
+		return new ElasticTable(client, index, type);
 	}
 }
