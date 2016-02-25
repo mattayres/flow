@@ -35,7 +35,7 @@ public class ConfigObjectPool2<T> extends GenericObjectPool<T> {
 	}
 
 	@Nonnull
-	private static GenericObjectPoolConfig buildConfig(@Nonnull Config config) {
+	public static GenericObjectPoolConfig buildConfig(@Nonnull Config config) {
 		GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
 		poolConfig.setLifo(config.getBoolean("pool.lifo", true));
 		poolConfig.setMaxTotal(config.getInt("pool.maxTotal",

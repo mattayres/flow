@@ -17,15 +17,23 @@
 package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toSet;
 
 import com.lithium.flow.config.Config;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
@@ -86,6 +94,26 @@ public class JedisUtils {
 		int port = config.getInt("redis.port", Protocol.DEFAULT_PORT);
 		int timeout = (int) config.getTime("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT));
 		return new Jedis(host, port, timeout);
+	}
+
+	@Nonnull
+	public static JedisCluster buildCluster(@Nonnull Config config) {
+		checkNotNull(config);
+
+		List<String> hosts = config.getList("redis.hosts", Collections.singletonList("localhost"));
+		Set<HostAndPort> nodes = hosts.stream().map(JedisUtils::buildHostAndPort).collect(toSet());
+		int timeout = (int) config.getTime("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT));
+		GenericObjectPoolConfig poolConfig = ConfigObjectPool2.buildConfig(config.prefix("redis"));
+
+		return new JedisCluster(nodes, timeout, poolConfig);
+	}
+
+	@Nonnull
+	public static HostAndPort buildHostAndPort(@Nonnull String host) {
+		checkNotNull(host);
+		int index = host.indexOf(":");
+		return index == -1 ? new HostAndPort(host, Protocol.DEFAULT_PORT) :
+				new HostAndPort(host.substring(0, index), Integer.parseInt(host.substring(index + 1)));
 	}
 
 	/**
