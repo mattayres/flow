@@ -18,14 +18,21 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.time.ZoneOffset.UTC;
-import static java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME;
+import static java.time.format.DateTimeFormatter.ISO_DATE;
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 import com.lithium.flow.config.Config;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQueries;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
@@ -63,7 +70,11 @@ public class DateUtils {
 				long diff = TimeUtils.getMillisValue(part);
 				time = op.apply(time, diff);
 			} else {
-				time = ZonedDateTime.parse(part, ISO_ZONED_DATE_TIME).toInstant().toEpochMilli();
+				boolean hasTime = part.contains("T");
+				TemporalAccessor ta = hasTime ? ISO_DATE_TIME.parse(part) : ISO_DATE.parse(part);
+				ZoneId zi = Optional.ofNullable(ta.query(TemporalQueries.zone())).orElse(ZoneId.systemDefault());
+				ZonedDateTime zdt = hasTime ? LocalDateTime.from(ta).atZone(zi) : LocalDate.from(ta).atStartOfDay(zi);
+				time = zdt.toInstant().toEpochMilli();
 			}
 		}
 
