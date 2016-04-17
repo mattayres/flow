@@ -53,7 +53,7 @@ public class Shells {
 		checkNotNull(access);
 
 		Shore shore = new SshjShore(config, access);
-		if (config.getBoolean("shell.cache", true)) {
+		if (config.getBoolean("shell.cache", false)) {
 			shore = new CachedShore(shore, config, access);
 		}
 		return shore;
