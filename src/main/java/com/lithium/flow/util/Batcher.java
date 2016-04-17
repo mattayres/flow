@@ -1,16 +1,35 @@
+/*
+ * Copyright 2016 Lithium Technologies, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.lithium.flow.util;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.Lists;
 
 /**
- * @author pradeep.gollakota
+ * @author Pradeep Gollakota
  */
 public class Batcher<T> {
 
@@ -32,7 +51,9 @@ public class Batcher<T> {
 		this.POISON_PILL = new Batch<>(0);
 	}
 
-	public synchronized void offer(T item) {
+	public synchronized void offer(@Nonnull T item) {
+		checkNotNull(item);
+
 		if (finished) {
 			throw new IllegalStateException("Cannot offer more elements after finish() has been called");
 		}

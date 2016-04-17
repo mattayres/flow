@@ -16,30 +16,30 @@
 
 package com.lithium.flow.config.loaders;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.ConfigLoader;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Filers;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
- * @author Jigar joshi
+ * @author Jigar Joshi
  */
 public class FilerConfigLoader implements ConfigLoader {
-	private Filer filer;
+	private final Filer filer;
 
-	public FilerConfigLoader(@Nullable Filer filer) {
-		checkNotNull(filer);
-		this.filer = filer;
+	public FilerConfigLoader(@Nonnull Filer filer) {
+		this.filer = checkNotNull(filer);
 	}
 
-	public FilerConfigLoader(@Nullable Config config) throws IOException {
+	public FilerConfigLoader(@Nonnull Config config) throws IOException {
 		checkNotNull(config);
 		this.filer = Filers.buildFiler(config);
 	}
