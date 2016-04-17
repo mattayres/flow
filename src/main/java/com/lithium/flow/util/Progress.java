@@ -57,6 +57,11 @@ public class Progress {
 	}
 
 	@Nonnull
+	public Measure unique(@Nonnull String name) {
+		return measure(name).hideAvg();
+	}
+
+	@Nonnull
 	public synchronized Measure measure(@Nonnull String name, @Nonnull Function<Number, String> printer) {
 		checkNotNull(name);
 		checkNotNull(printer);
@@ -125,8 +130,10 @@ public class Progress {
 				sb.append("/").append(printer.apply(todo));
 			}
 			sb.append(" ").append(measure.getName());
-			sb.append(" (").append(printer.apply(measure.avg(avgInterval)));
-			sb.append("/s)");
+			if (!measure.isHideAvg()) {
+				sb.append(" (").append(printer.apply(measure.avg(avgInterval)));
+				sb.append("/s)");
+			}
 		}
 
 		log.info(sb.toString());

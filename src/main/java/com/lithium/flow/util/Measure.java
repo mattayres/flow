@@ -22,6 +22,8 @@ import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.primitives.Longs;
 
 /**
@@ -31,10 +33,12 @@ public class Measure {
 	private final String name;
 	private final Function<Number, String> printer;
 	private final long startTime = System.currentTimeMillis();
+	private final Multiset<Object> uniques = HashMultiset.create();
 	private long[] bins = new long[1024];
 	private long todo;
 	private long done;
 	private boolean forEta;
+	private boolean hideAvg;
 
 	public Measure(@Nonnull String name, @Nonnull Function<Number, String> printer) {
 		this.name = checkNotNull(name);
@@ -49,6 +53,28 @@ public class Measure {
 	public Measure useForEta() {
 		forEta = true;
 		return this;
+	}
+
+	@Nonnull
+	public Measure hideAvg() {
+		hideAvg = true;
+		return this;
+	}
+
+	public synchronized void add(@Nonnull Object object) {
+		checkNotNull(object);
+		uniques.add(object);
+		done = uniques.elementSet().size();
+	}
+
+	public synchronized void remove(@Nonnull Object object) {
+		checkNotNull(object);
+		uniques.remove(object);
+		done = uniques.elementSet().size();
+	}
+
+	public boolean isHideAvg() {
+		return hideAvg;
 	}
 
 	@Nonnull
