@@ -18,6 +18,8 @@ package com.lithium.flow.table;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -27,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  * @author Matt Ayres
  */
-public interface Table {
+public interface Table extends Closeable {
 	@Nullable
 	default <T> T getCell(@Nonnull Key key, @Nonnull String column, @Nonnull Class<T> clazz) {
 		checkNotNull(key);
@@ -75,5 +77,8 @@ public interface Table {
 			table.putRow(row);
 			return row;
 		}).count();
+	}
+
+	default void close() throws IOException {
 	}
 }

@@ -37,7 +37,7 @@ public class CsvFormats {
 		checkNotNull(config);
 		switch (config.getString("csv.format", "default")) {
 			case "default":
-				return CSVFormat.DEFAULT;
+				return CSVFormat.DEFAULT.withHeader(getHeader(config, "csv.header"));
 			case "excel":
 				return CSVFormat.EXCEL;
 			case "mysql":

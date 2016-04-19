@@ -19,6 +19,7 @@ package com.lithium.flow.table;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ import com.google.common.collect.Maps;
 /**
  * @author Matt Ayres
  */
-public class Row {
+public class Row implements Iterable<Object> {
 	private final Map<String, Object> map = Maps.newLinkedHashMap();
 	private final Key key;
 
@@ -45,6 +46,13 @@ public class Row {
 	@Nonnull
 	public Key getKey() {
 		return key;
+	}
+
+	@Nonnull
+	public Row withKey(@Nonnull Key withKey) {
+		Row row = new Row(withKey);
+		row.map.putAll(map);
+		return row;
 	}
 
 	@Nullable
@@ -103,6 +111,12 @@ public class Row {
 	@Nonnull
 	public List<Object> values() {
 		return columns().stream().map(map::get).collect(toList());
+	}
+
+	@Override
+	@Nonnull
+	public Iterator<Object> iterator() {
+		return values().iterator();
 	}
 
 	public int size() {

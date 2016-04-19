@@ -21,6 +21,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import com.lithium.flow.util.Unchecked;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -93,5 +94,10 @@ public class ElasticTable implements Table {
 			}
 			return client.prepareIndex(index, type, row.getKey().id()).setSource(content.endObject());
 		});
+	}
+
+	@Override
+	public void close() throws IOException {
+		client.close();
 	}
 }

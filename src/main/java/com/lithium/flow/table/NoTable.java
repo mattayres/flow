@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Lithium Technologies, Inc.
+ * Copyright 2016 Lithium Technologies, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,51 +16,23 @@
 
 package com.lithium.flow.table;
 
-import com.lithium.flow.util.Caches;
-
-import java.io.IOException;
-import java.util.stream.Stream;
-
 import javax.annotation.Nonnull;
-
-import com.google.common.cache.LoadingCache;
 
 /**
  * @author Matt Ayres
  */
-public class MemoryTable implements Table {
-	private final LoadingCache<Key, Row> cache = Caches.build(Row::new);
-
+public class NoTable implements Table {
 	@Override
 	@Nonnull
 	public Row getRow(@Nonnull Key key) {
-		return cache.getUnchecked(key);
+		return new Row(key);
 	}
 
 	@Override
 	public void putRow(@Nonnull Row row) {
-		cache.put(row.getKey(), row);
 	}
 
 	@Override
 	public void deleteRow(@Nonnull Key key) {
-		cache.invalidate(key);
-	}
-
-	@Override
-	@Nonnull
-	public Stream<Key> keys() {
-		return cache.asMap().keySet().stream();
-	}
-
-	@Override
-	@Nonnull
-	public Stream<Row> rows() {
-		return cache.asMap().values().stream();
-	}
-
-	@Override
-	public void close() throws IOException {
-		cache.invalidateAll();
 	}
 }

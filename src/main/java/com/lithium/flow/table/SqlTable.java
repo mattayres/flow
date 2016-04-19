@@ -21,7 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.db.Schema;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Unchecked;
+import com.lithium.flow.util.UncheckedException;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -65,7 +67,11 @@ public class SqlTable implements Table {
 		String query = buildSelectQuery(column);
 		log.debug("select: {} {}", query, key.list());
 
-		return Unchecked.get(() -> schema.select(query, key.array()));
+		try {
+			return schema.select(query, key.array());
+		} catch (SQLException e) {
+			throw new UncheckedException(e);
+		}
 	}
 
 	@Override
@@ -252,5 +258,10 @@ public class SqlTable implements Table {
 			}
 		}
 		return list;
+	}
+
+	@Override
+	public void close() throws IOException {
+		schema.close();
 	}
 }
