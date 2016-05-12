@@ -18,12 +18,12 @@ package com.lithium.flow.filer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.stream.IndefiniteSpliterator;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Sleep;
 import com.lithium.flow.util.Threader;
 
 import java.io.IOException;
-import java.util.Spliterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 /**
  * @author Matt Ayres
  */
-public class RecordFinder implements Spliterator<Record> {
+public class RecordFinder extends IndefiniteSpliterator<Record> {
 	private static final Logger log = Logs.getLogger();
 
 	private final Filer filer;
@@ -92,21 +92,6 @@ public class RecordFinder implements Spliterator<Record> {
 		}
 		threader.finish();
 		return false;
-	}
-
-	@Override
-	public Spliterator<Record> trySplit() {
-		return null;
-	}
-
-	@Override
-	public long estimateSize() {
-		return Long.MAX_VALUE;
-	}
-
-	@Override
-	public int characteristics() {
-		return IMMUTABLE;
 	}
 
 	@Nonnull

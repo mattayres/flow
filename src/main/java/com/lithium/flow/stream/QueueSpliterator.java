@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Lithium Technologies, Inc.
+ * Copyright 2016 Lithium Technologies, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,31 @@
  * limitations under the License.
  */
 
-package com.lithium.flow.io;
+package com.lithium.flow.stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.stream.IndefiniteSpliterator;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
+import java.util.concurrent.BlockingQueue;
 import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.io.LineIterator;
-
 /**
  * @author Matt Ayres
  */
-public class InputStreamSpliterator extends IndefiniteSpliterator<String> {
-	private final LineIterator it;
+public class QueueSpliterator<T> extends IndefiniteSpliterator<T> {
+	private final BlockingQueue<T> queue;
 
-	public InputStreamSpliterator(@Nonnull InputStream in, @Nonnull Charset encoding) {
-		checkNotNull(in);
-		checkNotNull(encoding);
-		it = new LineIterator(new InputStreamReader(in, encoding));
+	public QueueSpliterator(@Nonnull BlockingQueue<T> queue) {
+		this.queue = checkNotNull(queue);
 	}
 
 	@Override
-	public boolean tryAdvance(@Nonnull Consumer<? super String> action) {
-		if (it.hasNext()) {
-			action.accept(it.nextLine());
+	public boolean tryAdvance(Consumer<? super T> action) {
+		try {
+			action.accept(queue.take());
 			return true;
-		} else {
-			it.close();
+		} catch (InterruptedException e) {
 			return false;
 		}
 	}
