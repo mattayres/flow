@@ -31,6 +31,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
@@ -39,7 +40,6 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -82,16 +82,30 @@ public class DateUtils {
 	}
 
 	@Nonnull
-	public static List<String> getDates(long startTime, long endTime, @Nonnull DateTimeFormatter formatter) {
+	public static List<String> getDates(long startTime, long endTime, @Nonnull DateTimeFormatter formatter,
+			@Nonnull ZoneId zoneId) {
 		checkNotNull(formatter);
 
-		List<String> dates = Lists.newArrayList();
-		ZonedDateTime dateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), UTC);
-		while (dateTime.toInstant().toEpochMilli() < endTime) {
-			dates.add(formatter.format(dateTime));
-			dateTime = dateTime.plusDays(1);
+		ZonedDateTime dateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), zoneId);
+
+		List<String> dates = new ArrayList<>();
+		if (endTime > startTime) {
+			while (dateTime.toInstant().toEpochMilli() < endTime) {
+				dates.add(formatter.format(dateTime));
+				dateTime = dateTime.plusDays(1);
+			}
+		} else {
+			while (dateTime.toInstant().toEpochMilli() > endTime) {
+				dates.add(formatter.format(dateTime));
+				dateTime = dateTime.minusDays(1);
+			}
 		}
 		return dates;
+	}
+
+	@Nonnull
+	public static List<String> getDates(long startTime, long endTime, @Nonnull DateTimeFormatter formatter) {
+		return getDates(startTime, endTime, formatter, UTC);
 	}
 
 	@Nonnull
@@ -101,14 +115,17 @@ public class DateUtils {
 
 		long startTime = toMillis(config.getString("start"));
 		long endTime = toMillis(config.getString("end"));
-		return getDates(startTime, endTime, formatter);
+		ZoneId zoneId = ZoneId.of(config.getString("tz", "UTC"));
+		return getDates(startTime, endTime, formatter, zoneId);
 	}
 
 	@Nonnull
 	public static List<String> getDates(@Nonnull Config config) {
 		checkNotNull(config);
 
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(config.getString("format"));
+		DateTimeFormatter formatter = config.containsKey("format")
+				? DateTimeFormatter.ofPattern(config.getString("format"))
+				: DateTimeFormatter.ISO_DATE;
 		return getDates(config, formatter);
 	}
 }
