@@ -24,19 +24,17 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.shell.Shore;
 import com.lithium.flow.shell.util.DecoratedShell;
-import com.lithium.flow.util.Caches;
+import com.lithium.flow.util.Mutex;
+import com.lithium.flow.util.Mutexes;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.io.IOUtils;
-
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
@@ -44,8 +42,8 @@ import com.google.common.collect.Sets;
 public class SshjShore implements Shore {
 	private final Config config;
 	private final Access access;
-	private final Set<Shell> shells = Sets.newCopyOnWriteArraySet();
-	private final LoadingCache<String, Lock> locks = Caches.build(key -> new ReentrantLock());
+	private final Set<Shell> shells = Collections.synchronizedSet(new HashSet<>());
+	private final Mutexes<String> mutexes = new Mutexes<>();
 
 	public SshjShore(@Nonnull Config config, @Nonnull Access access) {
 		this.config = checkNotNull(config);
@@ -66,9 +64,7 @@ public class SshjShore implements Shore {
 
 		Sshj client = new Sshj(config, access.getPrompt());
 
-		Lock lock = locks.getUnchecked(login.getHost());
-		lock.lock();
-		try {
+		try (Mutex ignored = mutexes.getMutex(login.getHost())) {
 			Shell shell = new SshjShell(client, login);
 			shells.add(shell);
 			return new DecoratedShell(shell) {
@@ -78,8 +74,6 @@ public class SshjShore implements Shore {
 					super.close();
 				}
 			};
-		} finally {
-			lock.unlock();
 		}
 	}
 
