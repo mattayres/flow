@@ -1,0 +1,28 @@
+<ruleset comparisonMethod="maven"
+		 xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0
+		  http://mojo.codehaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
+
+	<ignoreVersions>
+		<ignoreVersion type="regex">.*alpha.*</ignoreVersion>
+		<ignoreVersion type="regex">.*beta.*</ignoreVersion>
+		<ignoreVersion type="regex">.*rc[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">.*pr[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">.*b[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">.*M[\d].*</ignoreVersion>
+	</ignoreVersions>
+
+	<rules>
+		<rule groupId="org.apache.lucene" comparisonMethod="maven">
+			<ignoreVersions>
+				<ignoreVersion type="regex">6..*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="org.elasticsearch" comparisonMethod="maven">
+			<ignoreVersions>
+				<ignoreVersion type="regex">5..*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+	</rules>
+</ruleset>
