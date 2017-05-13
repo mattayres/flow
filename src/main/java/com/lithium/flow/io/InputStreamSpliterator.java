@@ -18,7 +18,7 @@ package com.lithium.flow.io;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.stream.IndefiniteSpliterator;
+import com.lithium.flow.util.IndefiniteSpliterator;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;

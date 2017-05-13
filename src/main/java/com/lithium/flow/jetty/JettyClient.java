@@ -19,7 +19,7 @@ package com.lithium.flow.jetty;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
-import com.lithium.flow.util.ConfigObjectPool2;
+import com.lithium.flow.util.ConfigObjectPool;
 import com.lithium.flow.util.HostUtils;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Unchecked;
@@ -72,7 +72,7 @@ public class JettyClient extends BasePooledObjectFactory<Session> implements Clo
 		client.setConnectTimeout(config.getTime("connectTimeout", "15s"));
 		Unchecked.run(client::start);
 
-		pool = new ConfigObjectPool2<>(this, config);
+		pool = new ConfigObjectPool<>(this, config);
 
 		urls = HostUtils.expand(config.getList("url", Splitter.on(' ')));
 		timeout = config.getTime("timeout", "15s");

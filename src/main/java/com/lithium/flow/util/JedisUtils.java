@@ -24,8 +24,6 @@ import com.lithium.flow.config.Config;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 
@@ -42,30 +40,6 @@ import redis.clients.jedis.Protocol;
  * @author Matt Ayres
  */
 public class JedisUtils {
-	/**
-	 * @deprecated use {@link #buildPool(Config)} instead.
-	 */
-	@Deprecated
-	@Nonnull
-	public static ThreadLocal<Jedis> buildTL(@Nonnull Config config) {
-		checkNotNull(config);
-		return ThreadLocal.withInitial(() -> build(config));
-	}
-
-	/**
-	 * @deprecated use {@link #buildPool(Config)} instead.
-	 */
-	@Deprecated
-	@Nonnull
-	public static ThreadLocal<Jedis> buildTL(@Nonnull Config config, @Nonnull Consumer<Jedis> consumer) {
-		checkNotNull(config);
-		return ThreadLocal.withInitial(() -> {
-			Jedis jedis = build(config);
-			consumer.accept(jedis);
-			return jedis;
-		});
-	}
-
 	@Nonnull
 	public static JedisPool buildPool(@Nonnull Config config) {
 		return buildPooler(config);
@@ -103,7 +77,7 @@ public class JedisUtils {
 		List<String> hosts = config.getList("redis.hosts", Collections.singletonList("localhost"));
 		Set<HostAndPort> nodes = hosts.stream().map(JedisUtils::buildHostAndPort).collect(toSet());
 		int timeout = (int) config.getTime("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT));
-		GenericObjectPoolConfig poolConfig = ConfigObjectPool2.buildConfig(config.prefix("redis"));
+		GenericObjectPoolConfig poolConfig = ConfigObjectPool.buildConfig(config.prefix("redis"));
 
 		return new JedisCluster(nodes, timeout, poolConfig);
 	}
@@ -114,18 +88,5 @@ public class JedisUtils {
 		int index = host.indexOf(":");
 		return index == -1 ? new HostAndPort(host, Protocol.DEFAULT_PORT) :
 				new HostAndPort(host.substring(0, index), Integer.parseInt(host.substring(index + 1)));
-	}
-
-	/**
-	 * @deprecated use {@link JedisPooler} from {@link #buildPooler(Config)} instead.
-	 */
-	@Deprecated
-	public static void parallel(@Nonnull Config config, @Nonnull String pattern,
-			@Nonnull BiConsumer<Jedis, String> consumer) {
-		checkNotNull(config);
-		checkNotNull(pattern);
-		checkNotNull(consumer);
-		ThreadLocal<Jedis> jedisTL = buildTL(config);
-		jedisTL.get().keys(pattern).parallelStream().forEach(key -> consumer.accept(jedisTL.get(), key));
 	}
 }

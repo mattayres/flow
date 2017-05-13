@@ -25,7 +25,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -38,24 +37,6 @@ public class LoopQueue<T> {
 	private final BlockingQueue<T> queue;
 	private final List<LoopThread> threads = new CopyOnWriteArrayList<>();
 	private volatile boolean finish;
-
-	/**
-	 * @deprecated use {@link #LoopQueue()} and {@link #forList(CheckedConsumer)} instead.
-	 */
-	@Deprecated
-	public LoopQueue(@Nonnull Consumer<List<T>> consumer) {
-		this(Integer.MAX_VALUE);
-		forList(consumer::accept);
-	}
-
-	/**
-	 * @deprecated use {@link #LoopQueue(int)} and {@link #forList(CheckedConsumer)} instead.
-	 */
-	@Deprecated
-	public LoopQueue(int capacity, @Nonnull Consumer<List<T>> consumer) {
-		this(capacity);
-		forList(consumer::accept);
-	}
 
 	public LoopQueue() {
 		this(Integer.MAX_VALUE);

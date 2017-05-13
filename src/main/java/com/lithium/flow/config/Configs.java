@@ -16,9 +16,6 @@
 
 package com.lithium.flow.config;
 
-import com.lithium.flow.util.Main;
-
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,12 +48,6 @@ public class Configs {
 	@Nonnull
 	public static ConfigBuilder newBuilder(@Nullable Config defaults) {
 		return new BaseConfigBuilder(defaults);
-	}
-
-	@Deprecated
-	@Nonnull
-	public static Config local() throws IOException {
-		return Main.config();
 	}
 
 	/**

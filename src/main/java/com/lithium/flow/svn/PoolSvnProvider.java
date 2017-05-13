@@ -19,7 +19,7 @@ package com.lithium.flow.svn;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
-import com.lithium.flow.util.ConfigObjectPool2;
+import com.lithium.flow.util.ConfigObjectPool;
 
 import javax.annotation.Nonnull;
 
@@ -40,7 +40,7 @@ public class PoolSvnProvider extends BasePooledObjectFactory<SVNRepository> impl
 
 	public PoolSvnProvider(@Nonnull SvnProvider delegate, @Nonnull Config config) {
 		this.delegate = checkNotNull(delegate);
-		pool = new ConfigObjectPool2<>(this, checkNotNull(config).prefix("svn"));
+		pool = new ConfigObjectPool<>(this, checkNotNull(config).prefix("svn"));
 	}
 
 	@Override

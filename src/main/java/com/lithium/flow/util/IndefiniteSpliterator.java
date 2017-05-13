@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Lithium Technologies, Inc.
+ * Copyright 2016 Lithium Technologies, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,24 @@
 
 package com.lithium.flow.util;
 
-import javax.annotation.Nonnull;
+import java.util.Spliterator;
 
 /**
  * @author Matt Ayres
- * @deprecated Use {@link Unchecked} instead.
  */
-@Deprecated
-public class Exceptions {
-	/**
-	 * @deprecated use {@link Unchecked#get(CheckedSupplier)} instead.
-	 */
-	@Nonnull
-	@Deprecated
-	public static <T> T unchecked(@Nonnull CheckedSupplier<T, Exception> supplier) {
-		try {
-			return supplier.get();
-		} catch (Exception e) {
-			throw new UncheckedException(e);
-		}
+public abstract class IndefiniteSpliterator<T> implements Spliterator<T> {
+	@Override
+	public Spliterator<T> trySplit() {
+		return null;
+	}
+
+	@Override
+	public long estimateSize() {
+		return Long.MAX_VALUE;
+	}
+
+	@Override
+	public int characteristics() {
+		return IMMUTABLE;
 	}
 }

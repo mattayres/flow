@@ -74,20 +74,4 @@ public class Sleep {
 		} while (!Thread.interrupted());
 		return false;
 	}
-
-	/**
-	 * @deprecated use {@link CheckedRunnable} instead.
-	 */
-	@Deprecated
-	public static interface Interruptible {
-		void call() throws InterruptedException;
-	}
-
-	/**
-	 * @deprecated use {@link Checker} instead.
-	 */
-	@Deprecated
-	public static interface Check {
-		boolean test();
-	}
 }

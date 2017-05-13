@@ -18,53 +18,53 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.config.exception.IllegalConfigException;
+import com.lithium.flow.config.Config;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.pool.PoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.pool2.PooledObjectFactory;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 /**
  * @author Matt Ayres
- * @deprecated Use {@link ConfigObjectPool2} instead.
  */
-@Deprecated
 public class ConfigObjectPool<T> extends GenericObjectPool<T> {
-	public ConfigObjectPool(@Nonnull PoolableObjectFactory<T> factory, @Nonnull com.lithium.flow.config.Config config) {
+	public ConfigObjectPool(@Nonnull PooledObjectFactory<T> factory, @Nonnull Config config) {
 		super(checkNotNull(factory), buildConfig(checkNotNull(config)));
 	}
 
 	@Nonnull
-	private static Config buildConfig(@Nonnull com.lithium.flow.config.Config config) {
-		Config poolConfig = new Config();
-		poolConfig.lifo = config.getBoolean("pool.lifo", true);
-		poolConfig.maxActive = config.getInt("pool.maxActive", Runtime.getRuntime().availableProcessors());
-		poolConfig.maxIdle = config.getInt("pool.maxIdle", -1);
-		poolConfig.minIdle = config.getInt("pool.minIdle", 0);
-		poolConfig.testOnBorrow = config.getBoolean("pool.testOnBorrow", true);
-		poolConfig.testOnReturn = config.getBoolean("pool.testOnReturn", false);
-		poolConfig.timeBetweenEvictionRunsMillis = config.getTime("pool.timeBetweenEvictionRunsMillis", "-1");
-		poolConfig.minEvictableIdleTimeMillis = config.getTime("pool.minEvictableIdleTimeMillis", "30m");
-		poolConfig.testWhileIdle = config.getBoolean("pool.testWhileIdle", false);
-		poolConfig.softMinEvictableIdleTimeMillis = config.getTime("pool.softMinEvictableIdleTimeMillis", "-1");
-		poolConfig.numTestsPerEvictionRun = config.getInt("pool.numTestsPerEvictionRun", 3);
+	public static GenericObjectPoolConfig buildConfig(@Nonnull Config config) {
+		GenericObjectPoolConfig pc = new GenericObjectPoolConfig();
 
-		String action = config.getString("pool.whenExhaustedAction", "block");
-		switch (action) {
-			case "fail":
-				poolConfig.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_FAIL;
-				break;
-			case "block":
-				poolConfig.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_BLOCK;
-				break;
-			case "grow":
-				poolConfig.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_GROW;
-				break;
-			default:
-				throw new IllegalConfigException("pool.whenExhaustedAction", action, "string", null);
-		}
+		// GenericObjectPoolConfig
+		pc.setMaxTotal(config.getInt("pool.maxTotal", pc.getMaxTotal()));
+		pc.setMaxIdle(config.getInt("pool.maxIdle", pc.getMaxIdle()));
+		pc.setMinIdle(config.getInt("pool.minIdle", pc.getMinIdle()));
 
-		return poolConfig;
+		// BaseObjectPoolConfig
+		pc.setLifo(config.getBoolean("pool.lifo", pc.getLifo()));
+		pc.setFairness(config.getBoolean("pool.fairness", pc.getFairness()));
+		pc.setMaxWaitMillis(config.getLong("pool.maxWaitMillis", pc.getMaxWaitMillis()));
+		pc.setMinEvictableIdleTimeMillis(config.getLong("pool.minEvictableIdleTimeMillis",
+				pc.getMinEvictableIdleTimeMillis()));
+		pc.setSoftMinEvictableIdleTimeMillis(config.getLong("pool.softMinEvictableIdleTimeMillis",
+				pc.getSoftMinEvictableIdleTimeMillis()));
+		pc.setNumTestsPerEvictionRun(config.getInt("pool.numTestsPerEvictionRun", pc.getNumTestsPerEvictionRun()));
+		pc.setTestOnCreate(config.getBoolean("pool.testOnCreate", pc.getTestOnCreate()));
+		pc.setTestOnBorrow(config.getBoolean("pool.testOnBorrow", pc.getTestOnBorrow()));
+		pc.setTestOnReturn(config.getBoolean("pool.testOnReturn", pc.getTestOnReturn()));
+		pc.setTestWhileIdle(config.getBoolean("pool.testWhileIdle", pc.getTestWhileIdle()));
+		pc.setTimeBetweenEvictionRunsMillis(config.getLong("pool.timeBetweenEvictionRunsMillis",
+				pc.getTimeBetweenEvictionRunsMillis()));
+		pc.setBlockWhenExhausted(config.getBoolean("pool.blockWhenExhausted", pc.getBlockWhenExhausted()));
+		pc.setJmxEnabled(config.getBoolean("pool.jmxEnabled", pc.getJmxEnabled()));
+		pc.setJmxNamePrefix(config.getString("pool.jmxNamePrefix", pc.getJmxNamePrefix()));
+		pc.setJmxNameBase(config.getString("pool.jmxNameBase", pc.getJmxNameBase()));
+		pc.setEvictionPolicyClassName(config.getString("pool.evictionPolicyClassName",
+				pc.getEvictionPolicyClassName()));
+
+		return pc;
 	}
 }

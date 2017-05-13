@@ -25,15 +25,6 @@ public interface Prompt {
 	@Nonnull
 	String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type, boolean retry);
 
-	/**
-	 * @deprecated use {@link #prompt(String, String, Type, boolean)} instead.
-	 */
-	@Deprecated
-	@Nonnull
-	default String prompt(@Nonnull String name, @Nonnull String message, boolean mask, boolean retry) {
-		return prompt(name, message, mask ? Type.MASKED : Type.PLAIN, retry);
-	}
-
 	enum Type {
 		PLAIN, MASKED, BLOCK
 	}

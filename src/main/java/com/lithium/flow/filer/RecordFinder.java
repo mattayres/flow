@@ -18,7 +18,7 @@ package com.lithium.flow.filer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.stream.IndefiniteSpliterator;
+import com.lithium.flow.util.IndefiniteSpliterator;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Sleep;
 import com.lithium.flow.util.Threader;
