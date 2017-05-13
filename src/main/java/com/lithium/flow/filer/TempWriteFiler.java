@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.io.DecoratedOutputStream;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,7 +63,7 @@ public class TempWriteFiler extends DecoratedFiler {
 						throw new IOException("destination already exists: " + path);
 					}
 				} else {
-					createDirs(new File(path).getParent());
+					createDirs(RecordPath.getFolder(path));
 				}
 				renameFile(tempPath, path);
 			}

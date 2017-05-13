@@ -62,7 +62,7 @@ public class LocalFiler implements Filer {
 				String name = file.getName();
 				long time = file.lastModified();
 				long size = file.length();
-				records.add(new Record(getUri(), parentFile.getCanonicalPath(), name, time,
+				records.add(new Record(getUri(), RecordPath.from(parentFile.getCanonicalPath(), name), time,
 						size, file.isDirectory()));
 			}
 		}
@@ -77,10 +77,9 @@ public class LocalFiler implements Filer {
 
 		File file = new File(path);
 		if (file.exists()) {
-			return new Record(getUri(), file.getParent(), file.getName(), file.lastModified(),
-					file.length(), file.isDirectory());
+			return new Record(getUri(), RecordPath.from(path), file.lastModified(), file.length(), file.isDirectory());
 		} else {
-			return new Record(getUri(), file.getParent(), file.getName(), 0, Record.NO_EXIST_SIZE, false);
+			return new Record(getUri(), RecordPath.from(path), 0, Record.NO_EXIST_SIZE, false);
 		}
 	}
 

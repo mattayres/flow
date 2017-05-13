@@ -21,10 +21,10 @@ import static java.util.stream.Collectors.toList;
 
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Record;
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.io.DataIo;
 import com.lithium.flow.util.Unchecked;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -82,7 +82,7 @@ public class SshjFiler implements Filer {
 
 		long time = info.getAttributes().getMtime() * 1000;
 		long size = info.getAttributes().getSize();
-		return new Record(uri, info.getParent(), info.getName(), time, size, info.isDirectory());
+		return new Record(uri, RecordPath.from(info.getParent(), info.getName()), time, size, info.isDirectory());
 	}
 
 	@Override
@@ -90,8 +90,7 @@ public class SshjFiler implements Filer {
 	public Record getRecord(@Nonnull String path) throws IOException {
 		try {
 			FileAttributes attributes = sftp.stat(path);
-			File file = new File(path);
-			return new Record(uri, file.getParent(), file.getName(), attributes.getMtime() * 1000,
+			return new Record(uri, RecordPath.from(path), attributes.getMtime() * 1000,
 					attributes.getSize(), attributes.getMode().getType() == FileMode.Type.DIRECTORY);
 		} catch (IOException e) {
 			return Record.noFile(uri, path);

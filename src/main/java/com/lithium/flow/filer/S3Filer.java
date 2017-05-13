@@ -123,15 +123,15 @@ public class S3Filer implements Filer {
 
 		for (String dir : listing.getCommonPrefixes()) {
 			String name = dir.replaceFirst(s3Path, "").replace("/", "");
-			records.add(new Record(uri, path, name, 0, 0, true));
+			records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
 		}
 
 		for (S3ObjectSummary summary : listing.getObjectSummaries()) {
 			if (!summary.getKey().endsWith("/")) {
-				String name = new File(summary.getKey()).getName();
+				String name = RecordPath.getName(summary.getKey());
 				long time = summary.getLastModified().getTime();
 				long size = summary.getSize();
-				records.add(new Record(uri, path, name, time, size, false));
+				records.add(new Record(uri, RecordPath.from(path, name), time, size, false));
 			}
 		}
 
@@ -149,13 +149,10 @@ public class S3Filer implements Filer {
 			return Record.noFile(uri, path);
 		}
 
-		File file = new File(summary.getKey());
-		String parent = file.getParent();
-		String name = file.getName();
 		long time = summary.getLastModified().getTime();
 		long size = summary.getSize();
-		boolean directory = name.endsWith("/");
-		return new Record(uri, "/" + parent, name, time, size, directory);
+		boolean directory = summary.getKey().endsWith("/");
+		return new Record(uri, RecordPath.from("/" + summary.getKey()), time, size, directory);
 	}
 
 	@Override

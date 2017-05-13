@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.io.DataIo;
 import com.lithium.flow.io.DecoratedOutputStream;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,13 +91,12 @@ public class HdfsFiler implements Filer {
 		try {
 			FileStatus status = fileSystem.getFileStatus(filePath);
 			if (status != null) {
-				File file = new File(path);
-				return getRecordForStatus(status, file.getParent() == null ? "" : file.getParent());
+				return getRecordForStatus(status, RecordPath.getFolder(path));
 			}
 		} catch (FileNotFoundException e) {
 			// catch this here to avoid calling fileSystem.exists() that does the same thing
 		}
-		return new Record(getUri(), filePath.getParent().toString(), filePath.getName(), 0, -1, false);
+		return new Record(getUri(), RecordPath.from(filePath.getParent().toString(), filePath.getName()), 0, -1, false);
 	}
 
 	private Record getRecordForStatus(@Nonnull FileStatus status, @Nonnull String parent) {
@@ -106,7 +104,7 @@ public class HdfsFiler implements Filer {
 		long time = status.getModificationTime();
 		long size = status.getLen();
 		boolean directory = status.isDirectory();
-		return new Record(getUri(), parent, name, time, size, directory);
+		return new Record(getUri(), RecordPath.from(parent, name), time, size, directory);
 	}
 
 	@Override

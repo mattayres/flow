@@ -20,11 +20,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Record;
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.io.DataIo;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -77,13 +77,11 @@ public class SvnFiler implements Filer {
 		SVNRepository repository = svnProvider.getRepository();
 		try {
 			SVNDirEntry entry = repository.info(path, revision);
-			File file = new File(path);
-			String parent = file.getParent() != null ? file.getParent() : "";
+			RecordPath recordPath = RecordPath.from(path);
 			if (entry != null) {
-				return getRecord(entry, parent);
+				return getRecord(entry, recordPath.getFolder());
 			} else {
-				return new Record(getUri(), parent, file.getName(), 0,
-						Record.NO_EXIST_SIZE, false);
+				return new Record(getUri(), recordPath, 0, Record.NO_EXIST_SIZE, false);
 			}
 		} catch (SVNException e) {
 			throw new IOException("failed to get file record: " + getFullPath(path), e);
@@ -93,10 +91,11 @@ public class SvnFiler implements Filer {
 	}
 
 	@Nonnull
-	private Record getRecord(@Nonnull SVNDirEntry entry, @Nonnull String parent) {
+	private Record getRecord(@Nonnull SVNDirEntry entry, @Nonnull String folder) {
 		boolean dir = SVNNodeKind.DIR.equals(entry.getKind());
 		long size = dir ? 0 : entry.getSize();
-		return new Record(getUri(), parent, entry.getName(), entry.getDate().getTime(), size, dir);
+		String name = entry.getName().equals("/") ? "" : entry.getName();
+		return new Record(getUri(), RecordPath.from(folder, name), entry.getDate().getTime(), size, dir);
 	}
 
 	@Override

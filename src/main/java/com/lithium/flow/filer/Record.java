@@ -16,17 +16,14 @@
 
 package com.lithium.flow.filer;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Comparator;
-import java.util.Optional;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -42,19 +39,14 @@ public class Record implements Serializable {
 	public static final long NO_EXIST_SIZE = -1;
 
 	private final URI uri;
-	private final String parent;
-	private final String name;
+	private final RecordPath path;
 	private final long time;
 	private final long size;
 	private final boolean dir;
-	private volatile transient String path;
 
-	public Record(@Nonnull URI uri, @Nullable String parent, @Nonnull String name, long time, long size, boolean dir) {
-		checkNotNull(name);
-		checkArgument(!name.contains("/"), "name cannot include '/' in it: %s", name);
+	public Record(@Nonnull URI uri, @Nonnull RecordPath path, long time, long size, boolean dir) {
 		this.uri = checkNotNull(uri);
-		this.parent = parent;
-		this.name = name;
+		this.path = checkNotNull(path);
 		this.time = time;
 		this.size = size;
 		this.dir = dir;
@@ -66,21 +58,18 @@ public class Record implements Serializable {
 	}
 
 	@Nonnull
-	public Optional<String> getParent() {
-		return Optional.ofNullable(parent);
+	public String getFolder() {
+		return path.getFolder();
 	}
 
 	@Nonnull
 	public String getName() {
-		return name;
+		return path.getName();
 	}
 
 	@Nonnull
 	public String getPath() {
-		if (path == null) {
-			path = parent == null ? "/" : parent.equals("/") ? "/" + name : parent + "/" + name;
-		}
-		return path;
+		return path.getPath();
 	}
 
 	public long getTime() {
@@ -104,18 +93,13 @@ public class Record implements Serializable {
 	}
 
 	@Nonnull
-	public Record withParent(@Nullable String newParent) {
-		return new Record(uri, newParent, name, time, size, dir);
-	}
-
-	@Nonnull
-	public Record withName(@Nonnull String newName) {
-		return new Record(uri, parent, newName, time, size, dir);
+	public Record withPath(@Nonnull String path) {
+		return new Record(uri, RecordPath.from(path), time, size, dir);
 	}
 
 	@Nonnull
 	public Record withSize(long newSize) {
-		return new Record(uri, parent, name, time, newSize, dir);
+		return new Record(uri, path, time, newSize, dir);
 	}
 
 	@Override
@@ -128,19 +112,17 @@ public class Record implements Serializable {
 			return false;
 		}
 
-		Record that = (Record) o;
-		return dir == that.dir && size == that.size && time == that.time && uri.equals(that.uri)
-				&& name.equals(that.name);
+		Record record = (Record) o;
+		return time == record.time
+				&& size == record.size
+				&& dir == record.dir
+				&& Objects.equals(uri, record.uri)
+				&& Objects.equals(path, record.path);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = uri.hashCode();
-		result = 31 * result + name.hashCode();
-		result = 31 * result + (int) (time ^ (time >>> 32));
-		result = 31 * result + (int) (size ^ (size >>> 32));
-		result = 31 * result + (dir ? 1 : 0);
-		return result;
+		return Objects.hash(uri, path, time, size, dir);
 	}
 
 	@Override
@@ -153,8 +135,7 @@ public class Record implements Serializable {
 	public static Record noFile(@Nonnull URI uri, @Nonnull String path) {
 		checkNotNull(uri);
 		checkNotNull(path);
-		File file = new File(path);
-		return new Record(uri, file.getParent(), file.getName(), 0, NO_EXIST_SIZE, false);
+		return new Record(uri, RecordPath.from(path), 0, NO_EXIST_SIZE, false);
 	}
 
 	@Nonnull

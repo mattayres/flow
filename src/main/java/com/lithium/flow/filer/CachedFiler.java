@@ -22,7 +22,6 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.io.DecoratedOutputStream;
 import com.lithium.flow.util.Caches;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -63,12 +62,10 @@ public class CachedFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public Record getRecord(@Nonnull String path) throws IOException {
-		String parent = new File(path).getParent();
-		if (parent != null) {
-			for (Record record : listRecords(parent)) {
-				if (path.equals(record.getPath())) {
-					return record;
-				}
+		String parent = RecordPath.getFolder(path);
+		for (Record record : listRecords(parent)) {
+			if (path.equals(record.getPath())) {
+				return record;
 			}
 		}
 
@@ -92,7 +89,7 @@ public class CachedFiler extends DecoratedFiler {
 			@Override
 			public void close() throws IOException {
 				super.close();
-				dirCache.invalidate(new File(path).getParent());
+				dirCache.invalidate(RecordPath.getFolder(path));
 				fileCache.invalidate(path);
 			}
 		};

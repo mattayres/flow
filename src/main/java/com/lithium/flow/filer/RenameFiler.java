@@ -80,9 +80,7 @@ public class RenameFiler implements Filer {
 
 	@Nonnull
 	private Record adjustRecord(@Nonnull Record record) {
-		return record
-				.withParent(fromReplacer.replace(record.getParent().orElse(null)))
-				.withName(fromReplacer.replace(record.getName()));
+		return record.withPath(fromReplacer.replace(record.getPath()));
 	}
 
 	@Override

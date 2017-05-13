@@ -19,6 +19,7 @@ package com.lithium.flow.filer.lucene;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.lucene.document.Field.Store;
 
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.filer.Record;
 
 import java.io.IOException;
@@ -82,7 +83,7 @@ public class RecordDoc {
 		Document doc = new Document();
 		doc.add(new StringField(RECORD_URI, record.getUri().toString(), Store.YES));
 		doc.add(new StringField(RECORD_PATH, record.getPath(), Store.YES));
-		doc.add(new StringField(RECORD_PARENT, record.getParent().orElse(""), Store.YES));
+		doc.add(new StringField(RECORD_PARENT, record.getFolder(), Store.YES));
 		doc.add(new StringField(RECORD_NAME, record.getName(), Store.YES));
 		doc.add(new LongField(RECORD_TIME, record.getTime(), Store.YES));
 		doc.add(new LongField(RECORD_SIZE, record.getSize(), Store.YES));
@@ -104,7 +105,7 @@ public class RecordDoc {
 		boolean dir = Boolean.valueOf(doc.get(RECORD_DIR));
 		long indexTime = Long.parseLong(doc.get(INDEX_TIME));
 
-		Record record = new Record(uri, parent, name, time, size, dir);
+		Record record = new Record(uri, RecordPath.from(parent, name), time, size, dir);
 		return new RecordDoc(record, doc, indexTime);
 	}
 
