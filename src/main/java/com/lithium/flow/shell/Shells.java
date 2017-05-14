@@ -19,7 +19,9 @@ package com.lithium.flow.shell;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.access.Access;
+import com.lithium.flow.access.Login;
 import com.lithium.flow.access.Prompt;
+import com.lithium.flow.access.Prompt.Response;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.ioc.Locator;
 import com.lithium.flow.shell.cache.CachedShore;
@@ -28,7 +30,10 @@ import com.lithium.flow.shell.tunnel.AutoTunneler;
 import com.lithium.flow.shell.tunnel.CachedTunneler;
 import com.lithium.flow.shell.tunnel.ShellTunneler;
 
+import java.io.IOException;
+
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author Matt Ayres
@@ -37,8 +42,36 @@ public class Shells {
 	@Nonnull
 	public static Access buildAccess(@Nonnull Config config) {
 		checkNotNull(config);
-		Prompt prompt = (name, message, mask) -> Prompt.Response.build("");
+		Prompt prompt = (name, message, mask) -> Response.build("");
 		return new ShellAccess(config, prompt);
+	}
+
+	@Nonnull
+	public static Access buildAccess(@Nonnull String user, @Nonnull String pass) {
+		return buildAccess(user, pass, null);
+	}
+
+	@Nonnull
+	public static Access buildAccess(@Nonnull String user, @Nonnull String pass, @Nullable String keyPath) {
+		return new Access() {
+			@Override
+			@Nonnull
+			public Prompt getPrompt() {
+				return new Prompt() {
+					@Override
+					@Nonnull
+					public Response prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type) {
+						return Response.build(pass);
+					}
+				};
+			}
+
+			@Override
+			@Nonnull
+			public Login getLogin(@Nonnull String spec) throws IOException {
+				return Login.from(spec).toBuilder().setUser(user).setKeyPath(keyPath).build();
+			}
+		};
 	}
 
 	@Nonnull

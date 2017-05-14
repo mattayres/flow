@@ -98,6 +98,26 @@ public class Login {
 		return new Builder();
 	}
 
+	@Nonnull
+	public static Login from(@Nonnull String spec) {
+		String host = spec;
+		String user = System.getProperty("user.name");
+		int port = -1;
+
+		int index = host.indexOf('@');
+		if (index > -1) {
+			user = host.substring(0, index);
+			host = host.substring(index + 1);
+		}
+		index = host.indexOf(':');
+		if (index > -1) {
+			port = Integer.parseInt(host.substring(index + 1));
+			host = host.substring(0, index);
+		}
+
+		return Login.builder().setUser(user).setHost(host).setPort(port).build();
+	}
+
 	public static class Builder {
 		private String user;
 		private String host;

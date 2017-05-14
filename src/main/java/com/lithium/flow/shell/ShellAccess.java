@@ -50,25 +50,10 @@ public class ShellAccess implements Access {
 	public Login getLogin(@Nonnull String spec) throws IOException {
 		checkNotNull(spec);
 
-		String host = spec;
-		String user = System.getProperty("user.name");
-		int port = -1;
-
-		int index = host.indexOf('@');
-		if (index > -1) {
-			user = host.substring(0, index);
-			host = host.substring(index + 1);
-		}
-		index = host.indexOf(':');
-		if (index > -1) {
-			port = Integer.parseInt(host.substring(index + 1));
-			host = host.substring(0, index);
-		}
-
-		user = config.getMatch("shell.users", host).orElse(user);
-
+		Login login = Login.from(spec);
+		String host = login.getHost();
+		String user = config.getMatch("shell.users", host).orElse(login.getUser());
 		String keyPath = config.getMatch("shell.keys", host).orElse(null);
-
-		return Login.builder().setUser(user).setHost(host).setPort(port).setKeyPath(keyPath).build();
+		return Login.builder().setUser(user).setHost(host).setKeyPath(keyPath).build();
 	}
 }
