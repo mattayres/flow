@@ -10,7 +10,7 @@
 
 	<groupId>com.lithium.flow</groupId>
 	<artifactId>flow</artifactId>
-	<version>0.7-beta3-SNAPSHOT</version>
+	<version>0.7-beta3</version>
 
 	<build>
 		<pluginManagement>
@@ -40,7 +40,7 @@
 	<scm>
 		<developerConnection>scm:git:git@github.com:lithiumtech/flow.git</developerConnection>
 		<url>https://github.com/lithiumtech/flow</url>
-		<tag>HEAD</tag>
+		<tag>flow-0.7-beta3</tag>
 	</scm>
 
 	<dependencies>
