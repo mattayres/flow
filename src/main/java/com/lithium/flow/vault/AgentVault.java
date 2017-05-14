@@ -22,6 +22,7 @@ import com.lithium.flow.config.Configs;
 import com.lithium.flow.store.MemoryStore;
 import com.lithium.flow.store.Store;
 import com.lithium.flow.util.Logs;
+import com.lithium.flow.util.Passwords;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -147,7 +148,7 @@ public class AgentVault implements Vault {
 	private void startAgent(@Nonnull String password) {
 		try {
 			int port = findFreePort();
-			String agentPassword = Vaults.securePassword();
+			String agentPassword = Passwords.create(32);
 
 			Map<String, String> map = new HashMap<>();
 			Store agentStore = new MemoryStore(map);

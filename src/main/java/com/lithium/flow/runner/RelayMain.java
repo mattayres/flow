@@ -27,12 +27,12 @@ import com.lithium.flow.util.Lines;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.LoopThread;
 import com.lithium.flow.util.Main;
+import com.lithium.flow.util.Passwords;
 import com.lithium.flow.util.Sleep;
 import com.lithium.flow.util.Threader;
 import com.lithium.flow.util.Unchecked;
 import com.lithium.flow.vault.SecureVault;
 import com.lithium.flow.vault.Vault;
-import com.lithium.flow.vault.Vaults;
 
 import java.io.File;
 import java.io.IOException;
@@ -143,7 +143,7 @@ public class RelayMain {
 				log.warn("failed to delete vault: {}", file.getAbsolutePath());
 			}
 
-			String password = Vaults.securePassword();
+			String password = Passwords.create(32);
 			Vault fileVault = new SecureVault(Configs.empty(), new FileStore(file));
 			fileVault.setup(password);
 			memoryVault.getKeys().forEach(key -> fileVault.putValue(key, memoryVault.getValue(key)));

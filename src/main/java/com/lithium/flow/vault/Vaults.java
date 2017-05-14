@@ -35,7 +35,6 @@ import com.lithium.flow.util.Logs;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -43,7 +42,6 @@ import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 
 import com.google.common.collect.Maps;
-import com.google.common.io.BaseEncoding;
 
 /**
  * @author Matt Ayres
@@ -131,12 +129,5 @@ public class Vaults {
 			}
 		}
 		return vault;
-	}
-
-	@Nonnull
-	public static String securePassword() {
-		byte[] bytes = new byte[32];
-		new SecureRandom().nextBytes(bytes);
-		return BaseEncoding.base64().encode(bytes);
 	}
 }
