@@ -28,5 +28,10 @@ public interface Access {
 	Prompt getPrompt();
 
 	@Nonnull
+	default Prompt.Response prompt(@Nonnull String name, @Nonnull String message, @Nonnull Prompt.Type type) {
+		return getPrompt().prompt(name, message, type);
+	}
+
+	@Nonnull
 	Login getLogin(@Nonnull String spec) throws IOException;
 }

@@ -18,7 +18,10 @@ package com.lithium.flow.shell.sshj;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.access.Login;
 import com.lithium.flow.access.Prompt;
+import com.lithium.flow.access.Prompt.Response;
+import com.lithium.flow.access.Prompt.Type;
 import com.lithium.flow.config.Config;
 
 import java.io.File;
@@ -29,17 +32,21 @@ import javax.annotation.Nonnull;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.SecurityUtils;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
+import net.schmizz.sshj.userauth.UserAuthException;
+import net.schmizz.sshj.userauth.password.PasswordFinder;
+import net.schmizz.sshj.userauth.password.Resource;
 
 /**
  * @author Matt Ayres
  */
 public class Sshj extends SSHClient {
+	private final Prompt prompt;
 	private final boolean pty;
 	private final int retries;
 
 	public Sshj(@Nonnull Config config, @Nonnull Prompt prompt) throws IOException {
 		checkNotNull(config);
-		checkNotNull(prompt);
+		this.prompt = checkNotNull(prompt);
 
 		getConnection().setMaxPacketSize(config.getInt("shell.maxPacketSize", getConnection().getMaxPacketSize()));
 		getConnection().setWindowSize(config.getLong("shell.windowSize", getConnection().getWindowSize()));
@@ -67,12 +74,79 @@ public class Sshj extends SSHClient {
 				String fingerprint = SecurityUtils.getFingerprint(key);
 				String name = "fingerprint[" + fingerprint + "]@" + host;
 				String message = "Enter yes/no to verify fingerprint " + fingerprint + " for " + host + ": ";
-				return prompt.prompt(name, message, Prompt.Type.PLAIN, false).equals("yes");
+				return prompt.prompt(name, message, Type.PLAIN).accept().equals("yes");
 			});
 		}
 
 		pty = config.getBoolean("shell.pty", false);
 		retries = config.getInt("shell.retries", 3);
+	}
+
+	public void connect(@Nonnull Login login) throws IOException {
+		log.debug("connect: {}", login);
+		connect(login.getHost(), login.getPortOrDefault(22));
+
+		UserAuthException exception = null;
+		String keyPath = login.getKeyPath();
+
+		for (int i = 0; i < retries + 1; i++) {
+			if (keyPath != null) {
+				if (new File(keyPath).isFile()) {
+					Response pass = prompt(keyPath, "Enter passphrase for {name}: ", Type.MASKED);
+					try {
+						authPublickey(login.getUser(), loadKeys(keyPath, pass.value()));
+						pass.accept();
+						return;
+					} catch (UserAuthException e) {
+						exception = e;
+						pass.reject();
+					}
+				} else {
+					Response key = prompt("key[" + keyPath + "]", "Enter private key for {name}: ", Type.BLOCK);
+					Response pass = prompt("pass[" + keyPath + "]", "Enter passphrase for {name}: ", Type.MASKED);
+
+					try {
+						authPublickey(login.getUser(), loadKeys(key.value(), null, new PasswordFinder() {
+							@Override
+							public char[] reqPassword(Resource<?> resource) {
+								return pass.value().toCharArray();
+							}
+
+							@Override
+							public boolean shouldRetry(Resource<?> resource) {
+								return false;
+							}
+						}));
+						key.accept();
+						pass.accept();
+						return;
+					} catch (UserAuthException e) {
+						exception = e;
+						key.reject();
+						pass.reject();
+					}
+				}
+			} else {
+				Response pass = prompt(login.getDisplayString(), "Enter password for {name}: ", Type.MASKED);
+				try {
+					authPassword(login.getUser(), pass.value());
+					pass.accept();
+					return;
+				} catch (UserAuthException e) {
+					exception = e;
+					pass.reject();
+				}
+			}
+		}
+
+		if (exception != null) {
+			throw exception;
+		}
+	}
+
+	@Nonnull
+	private Response prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type) {
+		return prompt.prompt(name, message.replace("{name}", name), type);
 	}
 
 	public boolean isPty() {

@@ -23,9 +23,7 @@ import com.lithium.flow.access.Login;
 import com.lithium.flow.access.Prompt;
 import com.lithium.flow.config.Config;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
@@ -71,28 +69,6 @@ public class ShellAccess implements Access {
 
 		String keyPath = config.getMatch("shell.keys", host).orElse(null);
 
-		Function<Boolean, String> pass = retry -> null;
-		Function<Boolean, String> key = retry -> null;
-
-		Login login = Login.builder().setUser(user).setHost(host).setPort(port)
-				.setKeyPath(keyPath).setPass(pass).setKey(key).build();
-
-		if (keyPath != null && !keyPath.isEmpty()) {
-			if (new File(keyPath).isFile()) {
-				pass = prompt(keyPath, "Enter passphrase for {name}: ", Prompt.Type.MASKED);
-			} else {
-				pass = prompt("pass[" + keyPath + "]", "Enter passphrase for {name}: ", Prompt.Type.MASKED);
-				key = prompt("key[" + keyPath + "]", "Enter private key for {name}: ", Prompt.Type.BLOCK);
-			}
-		} else {
-			pass = prompt(login.getDisplayString(), "Enter password for {name}: ", Prompt.Type.MASKED);
-		}
-
-		return login.toBuilder().setPass(pass).setKey(key).build();
-	}
-
-	@Nonnull
-	private Function<Boolean, String> prompt(@Nonnull String name, @Nonnull String message, @Nonnull Prompt.Type type) {
-		return retry -> prompt.prompt(name, message.replace("{name}", name), type, retry);
+		return Login.builder().setUser(user).setHost(host).setPort(port).setKeyPath(keyPath).build();
 	}
 }

@@ -26,7 +26,7 @@ import javax.annotation.Nonnull;
 public class NoPrompt implements Prompt {
 	@Override
 	@Nonnull
-	public String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type mask, boolean retry) {
+	public Response prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type mask) {
 		throw new RuntimeException("no prompt available: " + name);
 	}
 }

@@ -51,7 +51,7 @@ public class DialogPrompt implements Prompt {
 
 	@Override
 	@Nonnull
-	public String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type, boolean retry) {
+	public Response prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type) {
 		Label label = new Label(message);
 		JButton button = new JButton("Submit");
 		JTextComponent text;
@@ -102,6 +102,6 @@ public class DialogPrompt implements Prompt {
 
 		dialog.dispose();
 
-		return text.getText();
+		return Response.build(text.getText());
 	}
 }

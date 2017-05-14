@@ -30,6 +30,7 @@ import com.lithium.flow.util.Mutexes;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.net.URI;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -62,10 +63,13 @@ public class SshjShore implements Shore {
 	public Shell getShell(@Nonnull Login login) throws IOException {
 		checkNotNull(login);
 
-		Sshj client = new Sshj(config, access.getPrompt());
+		Sshj ssh = new Sshj(config, access.getPrompt());
 
 		try (Mutex ignored = mutexes.getMutex(login.getHost())) {
-			Shell shell = new SshjShell(client, login);
+			URI uri = URI.create("ssh://" + login.getUser() + "@" + login.getHostAndPort());
+			Shell shell = new SshjShell(ssh, uri);
+			ssh.connect(login);
+
 			shells.add(shell);
 			return new DecoratedShell(shell) {
 				@Override

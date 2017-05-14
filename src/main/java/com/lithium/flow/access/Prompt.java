@@ -16,6 +16,8 @@
 
 package com.lithium.flow.access;
 
+import java.util.function.Consumer;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -23,9 +25,48 @@ import javax.annotation.Nonnull;
  */
 public interface Prompt {
 	@Nonnull
-	String prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type, boolean retry);
+	Response prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type);
 
 	enum Type {
 		PLAIN, MASKED, BLOCK
+	}
+
+	interface Response {
+		@Nonnull
+		String value();
+
+		@Nonnull
+		String accept();
+
+		void reject();
+
+		@Nonnull
+		static Response build(@Nonnull String value) {
+			return build(value, valid -> {
+			});
+		}
+
+		@Nonnull
+		static Response build(@Nonnull String value, @Nonnull Consumer<Boolean> consumer) {
+			return new Response() {
+				@Override
+				@Nonnull
+				public String value() {
+					return value;
+				}
+
+				@Override
+				@Nonnull
+				public String accept() {
+					consumer.accept(true);
+					return value;
+				}
+
+				@Override
+				public void reject() {
+					consumer.accept(false);
+				}
+			};
+		}
 	}
 }

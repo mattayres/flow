@@ -65,7 +65,7 @@ public class FileStore implements Store {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Map<String, String> read() {
+	private synchronized Map<String, String> read() {
 		if (file.exists()) {
 			try {
 				return mapper.readValue(file, Map.class);
@@ -77,7 +77,7 @@ public class FileStore implements Store {
 		}
 	}
 
-	private void write(@Nonnull Map<String, String> map) {
+	private synchronized void write(@Nonnull Map<String, String> map) {
 		try {
 			mapper.writeValue(file, map);
 		} catch (IOException e) {

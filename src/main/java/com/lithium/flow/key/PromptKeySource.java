@@ -18,11 +18,11 @@ package com.lithium.flow.key;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.BaseEncoding.base16;
-import static java.util.Arrays.asList;
 
 import com.lithium.flow.access.Prompt;
 
 import java.security.Key;
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -44,7 +44,7 @@ public class PromptKeySource implements KeySource {
 	@Nonnull
 	public List<Key> getKeys(@Nonnull String name) {
 		checkNotNull(name);
-		String hexKey = prompt.prompt(promptName, promptName + " key: ", Prompt.Type.MASKED, false);
-		return asList(new SecretKeySpec(base16().decode(hexKey), "AES"));
+		String hexKey = prompt.prompt(promptName, promptName + " key: ", Prompt.Type.MASKED).accept();
+		return Collections.singletonList(new SecretKeySpec(base16().decode(hexKey), "AES"));
 	}
 }

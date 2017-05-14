@@ -19,7 +19,8 @@ package com.lithium.flow.filer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.access.Access;
-import com.lithium.flow.access.Prompt;
+import com.lithium.flow.access.Prompt.Response;
+import com.lithium.flow.access.Prompt.Type;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.io.DataIo;
 import com.lithium.flow.util.Lazy;
@@ -47,6 +48,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
@@ -89,18 +91,35 @@ public class S3Filer implements Filer {
 
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 
-		String key = config.getString("aws.key", null);
-		if (key != null) {
-			String secret = config.getString("aws.secret", null);
-			if (secret == null) {
-				secret = access.getPrompt().prompt(key + ".secret", key + ".secret: ", Prompt.Type.MASKED, false);
-			}
-			builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
-		}
-
 		String region = config.getString("aws.region", null);
 		if (region != null) {
 			builder.withRegion(region);
+		}
+
+		String key = config.getString("aws.key", null);
+		if (key != null) {
+			AmazonS3Exception exception = null;
+			int retries = config.getInt("aws.retries", 3);
+
+			for (int i = 0; i < retries + 1; i++) {
+				Response response = access.prompt(key + ".secret", key + ".secret: ", Type.MASKED);
+				try {
+					String secret = response.value();
+					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
+
+					AmazonS3 testS3 = builder.build();
+					testS3.listObjects(new ListObjectsRequest().withBucketName(bucket));
+					response.accept();
+					break;
+				} catch (AmazonS3Exception e) {
+					exception = e;
+					response.reject();
+				}
+			}
+
+			if (exception != null) {
+				throw exception;
+			}
 		}
 
 		s3 = builder.build();

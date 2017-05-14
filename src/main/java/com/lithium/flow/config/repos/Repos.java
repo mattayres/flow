@@ -19,7 +19,6 @@ package com.lithium.flow.config.repos;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.access.Access;
-import com.lithium.flow.access.Login;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.ConfigBuilder;
 import com.lithium.flow.config.Configs;
@@ -38,7 +37,6 @@ import com.lithium.flow.svn.SvnProvider;
 import com.lithium.flow.util.Checker;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -87,7 +85,7 @@ public class Repos {
 
 		List<Filer> filers = Lists.newArrayList();
 		for (String url : config.getList("configs.url")) {
-			filers.add(buildFiler(config, url, access));
+			filers.add(buildFiler(config, access, url));
 		}
 
 		List<String> paths = config.getList("configs.path", Arrays.asList("prod"));
@@ -113,16 +111,14 @@ public class Repos {
 	}
 
 	@Nonnull
-	public static Filer buildFiler(@Nonnull Config config, @Nonnull String url, @Nonnull Access access)
+	public static Filer buildFiler(@Nonnull Config config, @Nonnull Access access, @Nonnull String url)
 			throws IOException {
 		checkNotNull(config);
 		checkNotNull(url);
 		checkNotNull(access);
 
 		try {
-			String host = URI.create(url).getHost();
-			Login login = access.getLogin(host);
-			SvnProvider svnProvider = new LoginSvnProvider(url, login);
+			SvnProvider svnProvider = new LoginSvnProvider(config, access, url);
 			svnProvider = new PoolSvnProvider(svnProvider, config);
 
 			Filer filer = new SvnFiler(svnProvider, config.getLong("configs.revision", -1));

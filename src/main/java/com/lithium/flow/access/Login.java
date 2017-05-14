@@ -18,8 +18,6 @@ package com.lithium.flow.access;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.function.Function;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -34,22 +32,12 @@ public class Login {
 	private final String host;
 	private final int port;
 	private final String keyPath;
-	private final transient Function<Boolean, String> pass;
-	private final transient Function<Boolean, String> key;
 
-	public Login(@Nonnull String user, @Nonnull String host, int port, @Nullable String keyPath,
-			@Nonnull Function<Boolean, String> pass) {
-		this(user, host, port, keyPath, pass, retry -> null);
-	}
-
-	public Login(@Nonnull String user, @Nonnull String host, int port, @Nullable String keyPath,
-			@Nonnull Function<Boolean, String> pass, @Nonnull Function<Boolean, String> key) {
+	public Login(@Nonnull String user, @Nonnull String host, int port, @Nullable String keyPath) {
 		this.user = checkNotNull(user);
 		this.host = checkNotNull(host);
 		this.port = port;
 		this.keyPath = keyPath;
-		this.pass = checkNotNull(pass);
-		this.key = checkNotNull(key);
 	}
 
 	@Nonnull
@@ -73,16 +61,6 @@ public class Login {
 	@Nullable
 	public String getKeyPath() {
 		return keyPath;
-	}
-
-	@Nullable
-	public String getPass(boolean retry) {
-		return pass.apply(retry);
-	}
-
-	@Nullable
-	public String getKey(boolean retry) {
-		return key.apply(retry);
 	}
 
 	@Nonnull
@@ -113,7 +91,7 @@ public class Login {
 
 	@Nonnull
 	public Builder toBuilder() {
-		return new Builder().setUser(user).setHost(host).setPort(port).setKeyPath(keyPath).setPass(pass).setKey(key);
+		return new Builder().setUser(user).setHost(host).setPort(port).setKeyPath(keyPath);
 	}
 
 	public static Builder builder() {
@@ -125,8 +103,6 @@ public class Login {
 		private String host;
 		private int port;
 		private String keyPath;
-		private Function<Boolean, String> pass;
-		private Function<Boolean, String> key;
 
 		@Nonnull
 		public Builder setUser(@Nonnull String user) {
@@ -153,20 +129,8 @@ public class Login {
 		}
 
 		@Nonnull
-		public Builder setPass(@Nonnull Function<Boolean, String> pass) {
-			this.pass = checkNotNull(pass);
-			return this;
-		}
-
-		@Nonnull
-		public Builder setKey(@Nonnull Function<Boolean, String> key) {
-			this.key = checkNotNull(key);
-			return this;
-		}
-
-		@Nonnull
 		public Login build() {
-			return new Login(user, host, port, keyPath, pass, key);
+			return new Login(user, host, port, keyPath);
 		}
 	}
 }

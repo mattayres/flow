@@ -18,13 +18,18 @@ package com.lithium.flow.svn;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.access.Access;
 import com.lithium.flow.access.Login;
+import com.lithium.flow.access.Prompt.Response;
+import com.lithium.flow.access.Prompt.Type;
+import com.lithium.flow.config.Config;
 
 import java.io.File;
 import java.io.IOException;
 
 import javax.annotation.Nonnull;
 
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
@@ -38,12 +43,14 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  * @author Matt Ayres
  */
 public class LoginSvnProvider implements SvnProvider {
+	private final Config config;
+	private final Access access;
 	private final SVNURL url;
-	private final Login login;
 
-	public LoginSvnProvider(@Nonnull String url, @Nonnull Login login) throws SVNException {
+	public LoginSvnProvider(@Nonnull Config config, @Nonnull Access access, @Nonnull String url) throws SVNException {
+		this.config = checkNotNull(config);
+		this.access = checkNotNull(access);
 		this.url = SVNURL.parseURIEncoded(checkNotNull(url));
-		this.login = checkNotNull(login);
 	}
 
 	@Override
@@ -56,30 +63,57 @@ public class LoginSvnProvider implements SvnProvider {
 	@Nonnull
 	@SuppressWarnings("deprecation")
 	public SVNRepository getRepository() throws IOException {
-		String key = login.getKey(false);
-		String pass = login.getPass(false);
+		SVNException exception = null;
+		Login login = access.getLogin(url.getHost());
+		String keyPath = login.getKeyPath();
+		int retries = config.getInt("svn.retries", 3);
 
-		ISVNAuthenticationManager authManager;
-		if (key != null) {
-			authManager = BasicAuthenticationManager.newInstance(new SVNAuthentication[] {
-					SVNSSHAuthentication.newInstance(login.getUser(), key.toCharArray(),
-							pass != null ? pass.toCharArray() : null, login.getPortOrDefault(22), false, null, false)
-			});
-		} else if (login.getKeyPath() != null) {
-			authManager = new BasicAuthenticationManager(login.getUser(), new File(login.getKeyPath()),
-					pass, login.getPortOrDefault(22));
-		} else {
-			authManager = new BasicAuthenticationManager(login.getUser(), pass);
+		for (int i = 0; i < retries + 1; i++) {
+			ISVNAuthenticationManager authManager;
+			Response key = Response.build("");
+			Response pass;
+
+			if (keyPath != null) {
+				if (new File(keyPath).isFile()) {
+					pass = prompt(keyPath, "Enter passphrase for {name}: ", Type.MASKED);
+					authManager = new BasicAuthenticationManager(login.getUser(), new File(keyPath),
+							pass.value(), login.getPortOrDefault(22));
+				} else {
+					key = prompt("key[" + keyPath + "]", "Enter private key for {name}: ", Type.BLOCK);
+					pass = prompt("pass[" + keyPath + "]", "Enter passphrase for {name}: ", Type.MASKED);
+
+					String user = login.getUser();
+					char[] keyChars = key.value().toCharArray();
+					char[] passChars = pass.value().isEmpty() ? null : pass.value().toCharArray();
+					int port = login.getPortOrDefault(22);
+
+					authManager = BasicAuthenticationManager.newInstance(new SVNAuthentication[] {
+							SVNSSHAuthentication.newInstance(user, keyChars, passChars, port, false, null, false)
+					});
+				}
+			} else {
+				pass = prompt(login.getDisplayString(), "Enter password for {name}: ", Type.MASKED);
+				authManager = new BasicAuthenticationManager(login.getUser(), pass.value());
+			}
+
+			try {
+				SVNRepository repository = SVNRepositoryFactory.create(url);
+				repository.setAuthenticationManager(authManager);
+				repository.testConnection();
+				key.accept();
+				pass.accept();
+				return repository;
+			} catch (SVNAuthenticationException e) {
+				exception = e;
+				key.reject();
+				pass.reject();
+			} catch (SVNException e) {
+				exception = e;
+				break;
+			}
 		}
 
-		try {
-			SVNRepository repository = SVNRepositoryFactory.create(url);
-			repository.setAuthenticationManager(authManager);
-			repository.testConnection();
-			return repository;
-		} catch (SVNException e) {
-			throw new IOException("failed to created repository: " + url, e);
-		}
+		throw new IOException("failed to created repository: " + url, exception);
 	}
 
 	@Override
@@ -89,5 +123,10 @@ public class LoginSvnProvider implements SvnProvider {
 
 	@Override
 	public void close() {
+	}
+
+	@Nonnull
+	private Response prompt(@Nonnull String name, @Nonnull String message, @Nonnull Type type) {
+		return access.getPrompt().prompt(name, message.replace("{name}", name), type);
 	}
 }

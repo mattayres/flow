@@ -37,7 +37,7 @@ public class Shells {
 	@Nonnull
 	public static Access buildAccess(@Nonnull Config config) {
 		checkNotNull(config);
-		Prompt prompt = (name, message, mask, retry) -> "";
+		Prompt prompt = (name, message, mask) -> Prompt.Response.build("");
 		return new ShellAccess(config, prompt);
 	}
 

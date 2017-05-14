@@ -18,7 +18,6 @@ package com.lithium.flow.shell.sshj;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.access.Login;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.shell.Exec;
 import com.lithium.flow.shell.Shell;
@@ -33,10 +32,6 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 
-import net.schmizz.sshj.userauth.UserAuthException;
-import net.schmizz.sshj.userauth.password.PasswordFinder;
-import net.schmizz.sshj.userauth.password.Resource;
-
 /**
  * @author Matt Ayres
  */
@@ -46,46 +41,9 @@ public class SshjShell implements Shell {
 	private final Sshj ssh;
 	private final URI uri;
 
-	public SshjShell(@Nonnull Sshj ssh, @Nonnull Login login) throws IOException {
+	public SshjShell(@Nonnull Sshj ssh, @Nonnull URI uri) throws IOException {
 		this.ssh = checkNotNull(ssh);
-		checkNotNull(login);
-
-		uri = URI.create("ssh://" + login.getUser() + "@" + login.getHostAndPort());
-
-		log.debug("connect: {}", uri);
-		ssh.connect(login.getHost(), login.getPortOrDefault(22));
-
-		for (int i = 0; i <= ssh.getRetries(); i++) {
-			boolean retry = i > 0;
-			String pass = login.getPass(retry);
-			try {
-				String key = login.getKey(retry);
-				if (key != null) {
-					ssh.authPublickey(login.getUser(), ssh.loadKeys(key, null, new PasswordFinder() {
-						@Override
-						public char[] reqPassword(@Nonnull Resource<?> resource) {
-							return pass != null ? pass.toCharArray() : null;
-						}
-
-						@Override
-						public boolean shouldRetry(@Nonnull Resource<?> resource) {
-							return false;
-						}
-					}));
-				} else if (login.getKeyPath() != null) {
-					ssh.authPublickey(login.getUser(), ssh.loadKeys(login.getKeyPath(), pass != null ? pass : ""));
-				} else {
-					ssh.authPassword(login.getUser(), pass != null ? pass : "");
-				}
-				break;
-			} catch (UserAuthException e) {
-				log.warn("auth failed: {}", login);
-				if (i == ssh.getRetries()) {
-					throw new IOException("authentication failed: " + login
-							+ " (key path: " + login.getKeyPath() + ")");
-				}
-			}
-		}
+		this.uri = checkNotNull(uri);
 	}
 
 	@Override

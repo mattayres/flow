@@ -21,8 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.access.Access;
 import com.lithium.flow.access.Login;
 import com.lithium.flow.access.Prompt;
-import com.lithium.flow.util.Unchecked;
-import com.lithium.flow.util.UncheckedException;
 
 import java.io.IOException;
 
@@ -50,13 +48,16 @@ public class VaultAccess implements Access {
 	@Nonnull
 	public Login getLogin(@Nonnull String spec) throws IOException {
 		checkNotNull(spec);
-		try {
-			return vault.getKeys().stream().map(s -> Unchecked.get(() -> delegate.getLogin(s)))
-					.filter(login -> spec.matches(login.getHost()))
-					.findFirst().orElseGet(() -> Unchecked.get(() -> delegate.getLogin(spec)))
-					.toBuilder().setHost(spec).build();
-		} catch (UncheckedException e) {
-			throw e.unwrap(IOException.class);
+
+		String host = delegate.getLogin(spec).getHost();
+
+		for (String key : vault.getKeys()) {
+			Login login = delegate.getLogin(key);
+			if (host.matches(login.getHost())) {
+				return login.toBuilder().setHost(host).build();
+			}
 		}
+
+		return delegate.getLogin(spec).toBuilder().setHost(host).build();
 	}
 }
