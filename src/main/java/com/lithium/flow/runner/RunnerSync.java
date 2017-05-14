@@ -111,7 +111,7 @@ public class RunnerSync {
 
 			for (Record srcRecord : srcRecords) {
 				String srcPath = context.normalize(srcRecord.getPath());
-				String destPath = srcPath.replace(context.getSrcDir(), destDir);
+				String destPath = srcPath.replace(context.getNormalizedSrcDir(), destDir);
 				Record destRecord = destRecords.remove(destPath);
 
 				boolean sameSize = destRecord != null && srcRecord.getSize() == destRecord.getSize();
@@ -158,7 +158,7 @@ public class RunnerSync {
 
 	private void copyFile(@Nonnull Record srcRecord) throws IOException {
 		String srcPath = context.normalize(srcRecord.getPath());
-		String destPath = srcPath.replace(context.getSrcDir(), destDir);
+		String destPath = srcPath.replace(context.getNormalizedSrcDir(), destDir);
 
 		once.accept(RecordPath.getFolder(destPath));
 

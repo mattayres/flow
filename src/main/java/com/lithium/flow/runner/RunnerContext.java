@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
@@ -61,6 +62,7 @@ public class RunnerContext {
 	private final Threader syncThreader;
 	private final Threader runThreader;
 	private final String srcDir;
+	private final String normalizedSrcDir;
 	private final JarProvider jarProvider;
 
 	private final Lazy<Local> local;
@@ -108,7 +110,8 @@ public class RunnerContext {
 		shore = Shells.buildShore(config, access);
 		syncThreader = new Threader(config.getInt("sync.threads"));
 		runThreader = new Threader(config.getInt("run.threads"));
-		srcDir = RecordPath.from(config.getString("src.dir")).getPath();
+		srcDir = config.getString("src.dir");
+		normalizedSrcDir = normalize(srcDir);
 		jarProvider = JarProvider.build(config, access, filer);
 
 		local = new Lazy<>(Local::new).eager();
@@ -129,7 +132,8 @@ public class RunnerContext {
 
 	@Nonnull
 	public List<String> getClasspath(@Nonnull String destDir) {
-		return local.get().classpath.stream().map(path -> normalize(path.replace(srcDir, destDir))).collect(toList());
+		Stream<String> classpath = local.get().classpath.stream();
+		return classpath.map(path -> normalize(path).replace(normalizedSrcDir, destDir)).collect(toList());
 	}
 
 	@Nonnull
@@ -175,6 +179,11 @@ public class RunnerContext {
 	@Nonnull
 	public String getSrcDir() {
 		return srcDir;
+	}
+
+	@Nonnull
+	public String getNormalizedSrcDir() {
+		return normalizedSrcDir;
 	}
 
 	@Nonnull
