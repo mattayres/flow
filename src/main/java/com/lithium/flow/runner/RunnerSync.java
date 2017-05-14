@@ -22,12 +22,12 @@ import static java.util.stream.Collectors.toMap;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Record;
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Once;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -110,7 +110,7 @@ public class RunnerSync {
 					.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
 
 			for (Record srcRecord : srcRecords) {
-				String srcPath = srcRecord.getPath();
+				String srcPath = context.normalize(srcRecord.getPath());
 				String destPath = srcPath.replace(context.getSrcDir(), destDir);
 				Record destRecord = destRecords.remove(destPath);
 
@@ -128,12 +128,12 @@ public class RunnerSync {
 			List<String> destDirs = new ArrayList<>();
 			paths.forEach(path -> destDirs.add(path.replace(context.getSrcDir(), destDir)));
 			context.getClasspath(destDir).stream()
-					.filter(path -> !new File(path).getName().contains("."))
+					.filter(path -> !RecordPath.getName(path).contains("."))
 					.forEach(destDirs::add);
 
 			for (Record destRecord : destRecords.values()) {
-				for (String destDir : destDirs) {
-					if (destRecord.getPath().startsWith(destDir)) {
+				for (String dir : destDirs) {
+					if (destRecord.getPath().startsWith(dir)) {
 						log.debug("delete: {}", destRecord.getPath());
 						destFiler.deleteFile(destRecord.getPath());
 						context.getDeletedMeasure().incDone();
@@ -157,10 +157,10 @@ public class RunnerSync {
 	}
 
 	private void copyFile(@Nonnull Record srcRecord) throws IOException {
-		String srcPath = srcRecord.getPath();
+		String srcPath = context.normalize(srcRecord.getPath());
 		String destPath = srcPath.replace(context.getSrcDir(), destDir);
 
-		once.accept(new File(destPath).getParent());
+		once.accept(RecordPath.getFolder(destPath));
 
 		sync(srcPath, destPath, srcRecord.getTime());
 

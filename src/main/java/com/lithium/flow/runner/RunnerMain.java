@@ -25,6 +25,7 @@ import com.lithium.flow.config.ConfigLoader;
 import com.lithium.flow.config.Configs;
 import com.lithium.flow.config.loaders.FileConfigLoader;
 import com.lithium.flow.filer.Filer;
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.shell.Exec;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.util.HostUtils;
@@ -85,7 +86,7 @@ public class RunnerMain {
 		String user = context.getAccess().getLogin(host).getUser();
 		log.info("deploying {} to {}@{}", name, user, host);
 
-		vaultRun = new VaultRun(context.getVault(), context.getAccess().getPrompt(), runnerConfig, deployConfig);
+		vaultRun = new VaultRun(context.getVault(), context.getAccess().getPrompt(), runnerConfig);
 
 		destFiler = new FasterShellFiler(getShell().getFiler(), this::getShell);
 
@@ -111,7 +112,7 @@ public class RunnerMain {
 		vaultRun.deploy(destFiler);
 
 		String configOut = runnerConfig.getString("config.out");
-		destFiler.createDirs(new File(configOut).getParent());
+		destFiler.createDirs(RecordPath.getFolder(configOut));
 		writeConfig(deployConfig, destFiler.writeFile(configOut), Charsets.UTF_8);
 		log.debug("wrote: {}", configOut);
 

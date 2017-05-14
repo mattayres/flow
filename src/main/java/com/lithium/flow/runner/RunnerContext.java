@@ -25,6 +25,7 @@ import com.lithium.flow.filer.CachedFiler;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.LocalFiler;
 import com.lithium.flow.filer.Record;
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.shell.Shells;
 import com.lithium.flow.shell.Shore;
 import com.lithium.flow.util.Lazy;
@@ -85,7 +86,7 @@ public class RunnerContext {
 					log.debug("classpath: {}", path);
 
 					if (path.endsWith(".jar") || path.endsWith(".xml")) {
-						String name = new File(path).getName();
+						String name = RecordPath.getName(path);
 						String destPath = libDir + "/" + name;
 						classpath.add(destPath);
 						jars.add(path);
@@ -107,7 +108,7 @@ public class RunnerContext {
 		shore = Shells.buildShore(config, access);
 		syncThreader = new Threader(config.getInt("sync.threads"));
 		runThreader = new Threader(config.getInt("run.threads"));
-		srcDir = new File(config.getString("src.dir")).getCanonicalPath();
+		srcDir = RecordPath.from(config.getString("src.dir")).getPath();
 		jarProvider = JarProvider.build(config, access, filer);
 
 		local = new Lazy<>(Local::new).eager();
@@ -128,7 +129,12 @@ public class RunnerContext {
 
 	@Nonnull
 	public List<String> getClasspath(@Nonnull String destDir) {
-		return local.get().classpath.stream().map(path -> path.replace(srcDir, destDir)).collect(toList());
+		return local.get().classpath.stream().map(path -> normalize(path.replace(srcDir, destDir))).collect(toList());
+	}
+
+	@Nonnull
+	public String normalize(@Nonnull String path) {
+		return RecordPath.from(path).getPath().replaceFirst("^[A-Z]:", "");
 	}
 
 	@Nonnull
@@ -187,7 +193,7 @@ public class RunnerContext {
 		for (String path : paths) {
 			log.debug("path: {}", path);
 
-			Record record = filer.getRecord(new File(path).getCanonicalPath());
+			Record record = filer.getRecord(path);
 			if (record.isDir()) {
 				filer.findRecords(path, 1).filter(Record::isFile).forEach(records::add);
 			} else {

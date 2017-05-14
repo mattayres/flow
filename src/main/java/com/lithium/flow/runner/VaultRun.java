@@ -23,12 +23,12 @@ import com.lithium.flow.access.Prompt;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Configs;
 import com.lithium.flow.filer.Filer;
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.store.MemoryStore;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.vault.SecureVault;
 import com.lithium.flow.vault.Vault;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.LinkedHashMap;
@@ -54,8 +54,7 @@ public class VaultRun {
 
 	private String env;
 
-	public VaultRun(@Nonnull Vault vault, @Nonnull Prompt prompt, @Nonnull Config runnerConfig,
-			@Nonnull Config deployConfig) throws IOException {
+	public VaultRun(@Nonnull Vault vault, @Nonnull Prompt prompt, @Nonnull Config runnerConfig) throws IOException {
 		this.runnerConfig = checkNotNull(runnerConfig);
 
 		Vault memoryVault = new SecureVault(Configs.empty(), new MemoryStore(map));
@@ -85,7 +84,7 @@ public class VaultRun {
 		String vaultOut = runnerConfig.getString("vault.out", "");
 
 		if (vaultOut.length() > 0) {
-			destFiler.createDirs(new File(vaultOut).getParent());
+			destFiler.createDirs(RecordPath.getFolder(vaultOut));
 			try (OutputStream out = destFiler.writeFile(vaultOut)) {
 				mapper.writeValue(out, map);
 			}

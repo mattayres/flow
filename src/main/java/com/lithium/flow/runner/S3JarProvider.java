@@ -22,12 +22,12 @@ import com.lithium.flow.access.Access;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Record;
+import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.filer.S3Filer;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.util.Caches;
 import com.lithium.flow.util.Logs;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
@@ -58,7 +58,7 @@ public class S3JarProvider implements JarProvider {
 		Filer s3Filer = new S3Filer(config.prefix("s3"), access);
 
 		cache = Caches.build(path -> {
-			String name = new File(path).getName();
+			String name = RecordPath.getName(path);
 			String s3Path = "/lib/" + name;
 
 			Record srcRecord = srcFiler.getRecord(path);
@@ -75,7 +75,7 @@ public class S3JarProvider implements JarProvider {
 	@Override
 	public boolean copy(@Nonnull String path, @Nonnull Shell shell, @Nonnull Filer destFiler, @Nonnull String destDir)
 			throws IOException {
-		String name = new File(path).getName();
+		String name = RecordPath.getName(path);
 		String destPath = destDir + "/" + name;
 
 		Record srcRecord = srcFiler.getRecord(path);
