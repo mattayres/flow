@@ -23,6 +23,7 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.store.Store;
 import com.lithium.flow.util.Encodings;
 
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.SecureRandom;
@@ -41,7 +42,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
 
 /**
@@ -220,7 +220,7 @@ public class SecureVault implements Vault {
 		Cipher cipher = Cipher.getInstance(cipherValue);
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 		byte[] iv = cipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
-		byte[] bytes = cipher.doFinal(text.getBytes(Charsets.UTF_8));
+		byte[] bytes = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
 		return encoding.encode(iv) + "." + encoding.encode(bytes);
 	}
 
@@ -236,6 +236,6 @@ public class SecureVault implements Vault {
 
 		Cipher cipher = Cipher.getInstance(cipherValue);
 		cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
-		return new String(cipher.doFinal(bytes), Charsets.UTF_8);
+		return new String(cipher.doFinal(bytes), StandardCharsets.UTF_8);
 	}
 }

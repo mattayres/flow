@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -55,7 +56,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
@@ -113,7 +113,7 @@ public class RunnerMain {
 
 		String configOut = runnerConfig.getString("config.out");
 		destFiler.createDirs(RecordPath.getFolder(configOut));
-		writeConfig(deployConfig, destFiler.writeFile(configOut), Charsets.UTF_8);
+		writeConfig(deployConfig, destFiler.writeFile(configOut), StandardCharsets.UTF_8);
 		log.debug("wrote: {}", configOut);
 
 		String classpath = Joiner.on(":").join(context.getClasspath(runnerConfig.getString("dest.dir")));

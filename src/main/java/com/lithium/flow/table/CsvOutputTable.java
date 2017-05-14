@@ -25,13 +25,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.csv.CSVPrinter;
-
-import com.google.common.base.Charsets;
 
 /**
  * @author Matt Ayres
@@ -45,7 +44,7 @@ public class CsvOutputTable implements Table {
 	}
 
 	public CsvOutputTable(@Nonnull OutputStream out, @Nonnull Config config) throws IOException {
-		Writer writer = new OutputStreamWriter(out, Charsets.UTF_8);
+		Writer writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
 		printer = new CSVPrinter(writer, CsvFormats.fromConfig(config));
 		needsHeader = config.getBoolean("csv.autoHeader", false);
 	}
