@@ -54,6 +54,6 @@ public class ShellAccess implements Access {
 		String host = login.getHost();
 		String user = config.getMatch("shell.users", host).orElse(login.getUser());
 		String keyPath = config.getMatch("shell.keys", host).orElse(null);
-		return Login.builder().setUser(user).setHost(host).setKeyPath(keyPath).build();
+		return Login.newBuilder().setUser(user).setHost(host).setKeyPath(keyPath).build();
 	}
 }

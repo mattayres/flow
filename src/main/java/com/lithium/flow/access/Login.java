@@ -18,16 +18,17 @@ package com.lithium.flow.access;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Objects;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * @author Matt Ayres
  */
 public class Login {
+	private static final int NO_PORT = -1;
+
 	private final String user;
 	private final String host;
 	private final int port;
@@ -55,7 +56,7 @@ public class Login {
 	}
 
 	public int getPortOrDefault(int def) {
-		return port != -1 ? port : def;
+		return port != NO_PORT ? port : def;
 	}
 
 	@Nullable
@@ -65,7 +66,7 @@ public class Login {
 
 	@Nonnull
 	public String getHostAndPort() {
-		return host + (port == -1 ? "" : ":" + port);
+		return host + (port == NO_PORT ? "" : ":" + port);
 	}
 
 	@Nonnull
@@ -74,13 +75,23 @@ public class Login {
 	}
 
 	@Override
-	public boolean equals(Object that) {
-		return EqualsBuilder.reflectionEquals(this, that);
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		Login login = (Login) o;
+		return port == login.port
+				&& Objects.equals(user, login.user)
+				&& Objects.equals(host, login.host)
+				&& Objects.equals(keyPath, login.keyPath);
 	}
 
 	@Override
 	public int hashCode() {
-		return HashCodeBuilder.reflectionHashCode(this);
+		return Objects.hash(user, host, port, keyPath);
 	}
 
 	@Override
@@ -94,7 +105,7 @@ public class Login {
 		return new Builder().setUser(user).setHost(host).setPort(port).setKeyPath(keyPath);
 	}
 
-	public static Builder builder() {
+	public static Builder newBuilder() {
 		return new Builder();
 	}
 
@@ -102,7 +113,7 @@ public class Login {
 	public static Login from(@Nonnull String spec) {
 		String host = spec;
 		String user = System.getProperty("user.name");
-		int port = -1;
+		int port = NO_PORT;
 
 		int index = host.indexOf('@');
 		if (index > -1) {
@@ -115,13 +126,13 @@ public class Login {
 			host = host.substring(0, index);
 		}
 
-		return Login.builder().setUser(user).setHost(host).setPort(port).build();
+		return Login.newBuilder().setUser(user).setHost(host).setPort(port).build();
 	}
 
 	public static class Builder {
 		private String user;
 		private String host;
-		private int port;
+		private int port = NO_PORT;
 		private String keyPath;
 
 		@Nonnull
