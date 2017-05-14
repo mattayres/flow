@@ -30,14 +30,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
-
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -102,7 +101,7 @@ public class SqlTable implements Table {
 		List<String> columns = row.columns();
 		columns.forEach(this::checkValidColumn);
 
-		List<Object> params = Lists.newArrayList();
+		List<Object> params = new ArrayList<>();
 		params.addAll(row.values());
 		params.addAll(row.getKey().list());
 
@@ -126,7 +125,7 @@ public class SqlTable implements Table {
 
 				try (PreparedStatement ps = con.prepareStatement(query)) {
 					for (Row row : rows) {
-						List<Object> params = Lists.newArrayList();
+						List<Object> params = new ArrayList<>();
 						params.addAll(row.values());
 						params.addAll(row.getKey().list());
 
@@ -154,7 +153,7 @@ public class SqlTable implements Table {
 		List<String> columns = row.columns();
 		columns.forEach(this::checkValidColumn);
 
-		List<Object> params = Lists.newArrayList();
+		List<Object> params = new ArrayList<>();
 		params.addAll(row.values());
 		params.addAll(row.getKey().list());
 
@@ -247,7 +246,7 @@ public class SqlTable implements Table {
 
 	@Nonnull
 	private static List<String> buildColumns(@Nonnull Schema schema, @Nonnull String table) throws SQLException {
-		List<String> list = Lists.newArrayList();
+		List<String> list = new ArrayList<>();
 		try (Connection con = schema.getConnection()) {
 			DatabaseMetaData meta = con.getMetaData();
 			try (ResultSet rs = meta.getColumns(null, null, table, null)) {

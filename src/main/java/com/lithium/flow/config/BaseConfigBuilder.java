@@ -37,7 +37,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,20 +49,18 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
  */
 public class BaseConfigBuilder implements ConfigBuilder {
 	private final Map<String, String> rawMap = new LinkedHashMap<>();
-	private final Set<String> requiredKeys = Sets.newHashSet();
+	private final Set<String> requiredKeys = new HashSet<>();
 	private final Deque<String> pathDeque = new ArrayDeque<>();
 	private final Deque<String> prefixDeque = new ArrayDeque<>();
-	private List<ConfigLoader> loaders = Lists.newArrayList();
-	private List<ConfigParser> parsers = Lists.newArrayList();
-	private List<ConfigWatcher> watchers = Lists.newArrayList();
+	private List<ConfigLoader> loaders = new ArrayList<>();
+	private List<ConfigParser> parsers = new ArrayList<>();
+	private List<ConfigWatcher> watchers = new ArrayList<>();
 	private String name = "unknown";
 	private boolean allowFileNotFound;
 	private boolean allowUndefined;

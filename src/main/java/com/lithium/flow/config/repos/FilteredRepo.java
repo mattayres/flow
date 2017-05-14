@@ -27,6 +27,7 @@ import com.lithium.flow.matcher.StringMatchers;
 import com.lithium.flow.util.Logs;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -58,7 +59,7 @@ public class FilteredRepo extends DecoratedRepo {
 			configNames = config.getList("configs", Configs.emptyList());
 		}
 
-		configNames = Lists.newArrayList(configNames);
+		configNames = new ArrayList<>(configNames);
 
 		if (config.containsKey("configs.matcher")) {
 			StringMatcher matcher = StringMatchers.fromConfig(config, "configs.matcher");

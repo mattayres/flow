@@ -29,6 +29,7 @@ import com.lithium.flow.util.Logs;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -53,8 +54,6 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NRTCachingDirectory;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
-
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -149,7 +148,7 @@ public class LuceneFiler extends DecoratedFiler {
 		try {
 			TopDocs topDocs = searcher.search(new TermQuery(term), Integer.MAX_VALUE);
 			if (topDocs.totalHits > 0) {
-				List<Record> records = Lists.newArrayList();
+				List<Record> records = new ArrayList<>();
 				for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
 					Document doc = searcher.doc(scoreDoc.doc);
 					RecordDoc recordDoc = RecordDoc.create(doc);

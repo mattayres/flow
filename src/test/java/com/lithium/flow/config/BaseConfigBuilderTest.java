@@ -31,11 +31,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-
-import com.google.common.collect.Maps;
 
 /**
  * @author Matt Ayres
@@ -211,7 +210,7 @@ public class BaseConfigBuilderTest {
 	}
 
 	private Map<String, String> map(String... keyValues) {
-		Map<String, String> map = Maps.newHashMap();
+		Map<String, String> map = new HashMap<>();
 		for (int i = 0; i < keyValues.length; i += 2) {
 			map.put(keyValues[i], keyValues[i + 1]);
 		}

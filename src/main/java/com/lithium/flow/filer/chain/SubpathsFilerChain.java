@@ -17,7 +17,6 @@
 package com.lithium.flow.filer.chain;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.filer.Filer;
@@ -26,10 +25,9 @@ import com.lithium.flow.filer.Record;
 import com.lithium.flow.filer.RegexSubpathPredicate;
 import com.lithium.flow.ioc.Chain;
 
-import javax.annotation.Nonnull;
+import java.util.function.Predicate;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
+import javax.annotation.Nonnull;
 
 /**
  * @author Matt Ayres
@@ -39,7 +37,12 @@ public class SubpathsFilerChain implements Chain<Filer> {
 
 	public SubpathsFilerChain(@Nonnull Config config) {
 		checkNotNull(config);
-		predicate = Predicates.or(config.getList("subpaths").stream().map(RegexSubpathPredicate::new).collect(toList()));
+
+		Predicate<Record> composite = r -> false;
+		for (String subpath : config.getList("subpaths")) {
+			composite = composite.or(new RegexSubpathPredicate(subpath));
+		}
+		predicate = composite;
 	}
 
 	@Override

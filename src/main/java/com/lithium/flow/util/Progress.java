@@ -21,6 +21,7 @@ import static com.lithium.flow.util.PrintUtils.time;
 
 import com.lithium.flow.config.Config;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -28,15 +29,13 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
-
 /**
  * @author Matt Ayres
  */
 public class Progress {
 	private static final Logger log = Logs.getLogger();
 
-	private final List<Measure> measures = Lists.newArrayList();
+	private final List<Measure> measures = new ArrayList<>();
 	private Thread loop;
 	private long startTime;
 	private boolean stopped;

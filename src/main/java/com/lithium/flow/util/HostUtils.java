@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
 import static java.util.stream.Collectors.toList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +30,6 @@ import javax.annotation.Nonnull;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -46,8 +46,8 @@ public class HostUtils {
 			String ranges = expression.substring(index1 + 1, index2);
 			String postfix = expression.substring(index2 + 1);
 
-			List<String> includes = Lists.newArrayList();
-			List<String> excludes = Lists.newArrayList();
+			List<String> includes = new ArrayList<>();
+			List<String> excludes = new ArrayList<>();
 
 			for (String range : Splitter.on(CharMatcher.anyOf(",;")).split(ranges)) {
 				List<String> list = range.startsWith("!") ? excludes : includes;

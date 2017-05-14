@@ -23,8 +23,10 @@ import com.lithium.flow.config.Config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 
@@ -34,9 +36,7 @@ import org.apache.commons.io.IOUtils;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
@@ -78,28 +78,28 @@ public class StringMatchers {
 			}
 		}
 
-		List<StringMatcher> quickMatchers = Lists.newArrayList();
+		List<StringMatcher> quickMatchers = new ArrayList<>();
 		quickMatchers.addAll(buildList(multimap, "len", LenStringMatcher::new));
 		Collection<String> exacts = multimap.get("exact");
 		if (exacts.size() == 1) {
 			quickMatchers.add(new ExactStringMatcher(exacts.iterator().next()));
 		} else if (exacts.size() > 1) {
-			quickMatchers.add(new ExactSetStringMatcher(Sets.newHashSet(exacts)));
+			quickMatchers.add(new ExactSetStringMatcher(new HashSet<>(exacts)));
 		}
 		quickMatchers.addAll(buildList(multimap, "prefix", PrefixStringMatcher::new));
 		quickMatchers.addAll(buildList(multimap, "suffix", SuffixStringMatcher::new));
 		quickMatchers.addAll(buildList(multimap, "contains", ContainsStringMatcher::new));
 
-		List<StringMatcher> lowerMatchers = Lists.newArrayList();
+		List<StringMatcher> lowerMatchers = new ArrayList<>();
 		lowerMatchers.addAll(buildList(multimap, "lower.prefix", PrefixStringMatcher::new));
 		lowerMatchers.addAll(buildList(multimap, "lower.suffix", SuffixStringMatcher::new));
 		lowerMatchers.addAll(buildList(multimap, "lower.contains", ContainsStringMatcher::new));
 
-		List<StringMatcher> regexMatchers = Lists.newArrayList();
+		List<StringMatcher> regexMatchers = new ArrayList<>();
 		regexMatchers.addAll(buildList(multimap, "regex", RegexStringMatcher::new));
 		regexMatchers.addAll(buildList(multimap, "lower.regex", LowerRegexStringMatcher::new));
 
-		List<StringMatcher> allMatchers = Lists.newArrayList();
+		List<StringMatcher> allMatchers = new ArrayList<>();
 		allMatchers.add(buildComposite(quickMatchers, false));
 		allMatchers.add(buildComposite(lowerMatchers, true));
 		allMatchers.add(buildComposite(regexMatchers, false));
@@ -122,7 +122,7 @@ public class StringMatchers {
 	@Nonnull
 	private static List<StringMatcher> buildList(@Nonnull Multimap<String, String> multimap, @Nonnull String group,
 			@Nonnull Function<String, StringMatcher> function) {
-		List<StringMatcher> list = Lists.newArrayList();
+		List<StringMatcher> list = new ArrayList<>();
 		multimap.get(group).stream().map(function).forEach(list::add);
 		multimap.get(group + "?").stream().map(input -> buildConditional(input, function)).forEach(list::add);
 		return list;

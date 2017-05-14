@@ -30,11 +30,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
-
-import com.google.common.collect.Lists;
 
 /**
  * Local file system implementation of {@link Filer}.
@@ -53,7 +52,7 @@ public class LocalFiler implements Filer {
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
 		checkNotNull(path);
 
-		List<Record> records = Lists.newArrayList();
+		List<Record> records = new ArrayList<>();
 
 		File parentFile = new File(path);
 		File[] files = parentFile.listFiles();

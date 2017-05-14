@@ -28,6 +28,7 @@ import com.lithium.flow.util.LoopThread;
 import com.lithium.flow.util.Sleep;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class ScheduledRepo implements Repo {
 	@Override
 	@Nonnull
 	public List<String> getNames() throws IOException {
-		return Lists.newArrayList(getConfigMap().keySet());
+		return new ArrayList<>(getConfigMap().keySet());
 	}
 
 	@Override

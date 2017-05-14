@@ -18,22 +18,22 @@ package com.lithium.flow.filer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
  */
 public class RegexSubpathPredicate implements Predicate<Record> {
 	private final Splitter splitter = Splitter.on('/');
-	private final List<Pattern> patterns = Lists.newArrayList();
+	private final List<Pattern> patterns = new ArrayList<>();
 
 	public RegexSubpathPredicate(@Nonnull String pathRegex) {
 		checkNotNull(pathRegex);
@@ -41,7 +41,7 @@ public class RegexSubpathPredicate implements Predicate<Record> {
 	}
 
 	@Override
-	public boolean apply(@Nullable Record record) {
+	public boolean test(@Nullable Record record) {
 		if (record == null) {
 			return false;
 		}

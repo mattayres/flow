@@ -32,21 +32,20 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.Maps;
-
 /**
  * @author Matt Ayres
  */
 public class FilerFactory {
-	private final Map<String, Class<? extends Filer>> schemes = Maps.newConcurrentMap();
-	private final Map<String, Class<? extends Streamer>> streams = Maps.newConcurrentMap();
-	private final Map<String, Class<? extends Chain<Filer>>> chains = Maps.newConcurrentMap();
-	private final Map<Class<?>, Provider<?>> providers = Maps.newConcurrentMap();
+	private final Map<String, Class<? extends Filer>> schemes = new ConcurrentHashMap<>();
+	private final Map<String, Class<? extends Streamer>> streams = new ConcurrentHashMap<>();
+	private final Map<String, Class<? extends Chain<Filer>>> chains = new ConcurrentHashMap<>();
+	private final Map<Class<?>, Provider<?>> providers = new ConcurrentHashMap<>();
 
 	@Nonnull
 	public FilerFactory addScheme(@Nonnull String scheme, @Nonnull Class<? extends Filer> type) {

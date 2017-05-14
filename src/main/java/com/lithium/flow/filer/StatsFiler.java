@@ -25,6 +25,7 @@ import com.lithium.flow.util.LoopThread;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,8 +35,6 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
-
 /**
  * @author Matt Ayres
  */
@@ -43,7 +42,7 @@ public class StatsFiler extends DecoratedFiler {
 	private static final Logger log = Logs.getLogger();
 
 	private final Filer delegate;
-	private final List<Stat> stats = Lists.newArrayList();
+	private final List<Stat> stats = new ArrayList<>();
 	private final Stat getUriStat = new Stat("getUri");
 	private final Stat listRecordsStat = new Stat("listRecords");
 	private final Stat getRecordStat = new Stat("getRecord");

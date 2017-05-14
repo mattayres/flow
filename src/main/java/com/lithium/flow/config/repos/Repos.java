@@ -37,10 +37,12 @@ import com.lithium.flow.svn.SvnProvider;
 import com.lithium.flow.util.Checker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -48,9 +50,6 @@ import javax.annotation.Nonnull;
 
 import org.tmatesoft.svn.core.SVNException;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -83,7 +82,7 @@ public class Repos {
 		checkNotNull(supplier);
 		checkNotNull(checker);
 
-		List<Filer> filers = Lists.newArrayList();
+		List<Filer> filers = new ArrayList<>();
 		for (String url : config.getList("configs.url")) {
 			filers.add(buildFiler(config, access, url));
 		}
@@ -125,7 +124,7 @@ public class Repos {
 			filer = new CachedFiler(filer, config.prefix("configs"));
 			filer = new CachedReadFiler(filer);
 			if (config.containsKey("configs.exclude")) {
-				Predicate<Record> predicate = Predicates.not(new RegexPathPredicate(config.getList("configs.exclude")));
+				Predicate<Record> predicate = new RegexPathPredicate(config.getList("configs.exclude")).negate();
 				filer = new FilteredFiler(filer, predicate);
 			}
 			return filer;

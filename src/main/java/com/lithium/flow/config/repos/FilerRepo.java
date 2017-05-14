@@ -27,6 +27,8 @@ import com.lithium.flow.filer.Record;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -35,9 +37,6 @@ import java.util.function.UnaryOperator;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.io.IOUtils;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
@@ -69,7 +68,7 @@ public class FilerRepo implements Repo {
 	@Override
 	@Nonnull
 	public List<String> getNames() throws IOException {
-		List<String> names = Lists.newArrayList();
+		List<String> names = new ArrayList<>();
 		for (Filer filer : filers) {
 			for (String path : paths) {
 				for (Record record : filer.listRecords(path)) {
@@ -86,7 +85,7 @@ public class FilerRepo implements Repo {
 	@Override
 	@Nonnull
 	public Config getConfig(@Nonnull String name) throws IOException {
-		Set<String> fullPaths = Sets.newHashSet();
+		Set<String> fullPaths = new HashSet<>();
 
 		String fullPath = null;
 		Record record = null;

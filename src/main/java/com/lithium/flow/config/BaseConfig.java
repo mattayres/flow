@@ -21,13 +21,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.config.exception.IllegalConfigException;
 import com.lithium.flow.store.Store;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 
 /**
  * Base immutable implementation of {@link Config}.
@@ -119,7 +119,7 @@ public final class BaseConfig extends AbstractConfig {
 
 				String subKey = value.substring(index1 + 2, index2);
 				if (usedKeys == null) {
-					usedKeys = Sets.newHashSet();
+					usedKeys = new HashSet<>();
 				}
 				if (usedKeys.add(subKey)) {
 					String subValue = varConfig.getValue(subKey, null, true, varConfig, usedKeys);

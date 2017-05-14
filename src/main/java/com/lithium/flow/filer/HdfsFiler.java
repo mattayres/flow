@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -36,8 +37,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.AccessControlException;
-
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -68,7 +67,7 @@ public class HdfsFiler implements Filer {
 	@Override
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
-		List<Record> records = Lists.newArrayList();
+		List<Record> records = new ArrayList<>();
 
 		Path hdfsPath = new Path(path);
 		if (fileSystem.exists(hdfsPath)) {

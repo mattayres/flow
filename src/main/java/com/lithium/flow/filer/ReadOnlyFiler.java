@@ -20,11 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
-
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 
 /**
  * Decorates an instance of {@link Filer} to prevent writes.
@@ -35,7 +33,7 @@ public class ReadOnlyFiler extends DecoratedFiler {
 	private final Predicate<Filer> predicate;
 
 	public ReadOnlyFiler(@Nonnull Filer delegate) {
-		this(delegate, Predicates.alwaysTrue());
+		this(delegate, filer -> true);
 	}
 
 	public ReadOnlyFiler(@Nonnull Filer delegate, @Nonnull Predicate<Filer> predicate) {
@@ -46,7 +44,7 @@ public class ReadOnlyFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
-		if (predicate.apply(this)) {
+		if (predicate.test(this)) {
 			throw new IOException("read only: " + path);
 		} else {
 			return super.writeFile(path);
@@ -56,7 +54,7 @@ public class ReadOnlyFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public OutputStream appendFile(@Nonnull String path) throws IOException {
-		if (predicate.apply(this)) {
+		if (predicate.test(this)) {
 			throw new IOException("read only: " + path);
 		} else {
 			return super.appendFile(path);
@@ -65,7 +63,7 @@ public class ReadOnlyFiler extends DecoratedFiler {
 
 	@Override
 	public void setFileTime(@Nonnull String path, long time) throws IOException {
-		if (predicate.apply(this)) {
+		if (predicate.test(this)) {
 			throw new IOException("read only: " + path);
 		} else {
 			super.setFileTime(path, time);
@@ -74,7 +72,7 @@ public class ReadOnlyFiler extends DecoratedFiler {
 
 	@Override
 	public void deleteFile(@Nonnull String path) throws IOException {
-		if (predicate.apply(this)) {
+		if (predicate.test(this)) {
 			throw new IOException("read only: " + path);
 		} else {
 			super.deleteFile(path);
@@ -83,7 +81,7 @@ public class ReadOnlyFiler extends DecoratedFiler {
 
 	@Override
 	public void createDirs(@Nonnull String path) throws IOException {
-		if (predicate.apply(this)) {
+		if (predicate.test(this)) {
 			throw new IOException("read only: " + path);
 		} else {
 			super.createDirs(path);
@@ -92,7 +90,7 @@ public class ReadOnlyFiler extends DecoratedFiler {
 
 	@Override
 	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) throws IOException {
-		if (predicate.apply(this)) {
+		if (predicate.test(this)) {
 			throw new IOException("read only: " + oldPath);
 		} else {
 			super.renameFile(oldPath, newPath);

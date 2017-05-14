@@ -23,10 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
-
-import com.google.common.base.Predicate;
 
 /**
  * Decorates an instance of {@link Filer} to filter available records by specified predicate.
@@ -44,14 +43,14 @@ public class FilteredFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
-		return super.listRecords(path).stream().filter(predicate::apply).collect(toList());
+		return super.listRecords(path).stream().filter(predicate).collect(toList());
 	}
 
 	@Override
 	@Nonnull
 	public Record getRecord(@Nonnull String path) throws IOException {
 		Record record = super.getRecord(path);
-		if (predicate.apply(record)) {
+		if (predicate.test(record)) {
 			return record;
 		} else {
 			return record.withSize(Record.NO_EXIST_SIZE);
@@ -62,7 +61,7 @@ public class FilteredFiler extends DecoratedFiler {
 	@Nonnull
 	public InputStream readFile(@Nonnull String path) throws IOException {
 		Record record = super.getRecord(path);
-		if (predicate.apply(record)) {
+		if (predicate.test(record)) {
 			return super.readFile(path);
 		} else {
 			throw new IOException("path is filtered: " + path);
@@ -73,7 +72,7 @@ public class FilteredFiler extends DecoratedFiler {
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
 		Record record = super.getRecord(path);
-		if (predicate.apply(record)) {
+		if (predicate.test(record)) {
 			return super.writeFile(path);
 		} else {
 			throw new IOException("path is filtered: " + path);
@@ -83,7 +82,7 @@ public class FilteredFiler extends DecoratedFiler {
 	@Override
 	public void setFileTime(@Nonnull String path, long time) throws IOException {
 		Record record = super.getRecord(path);
-		if (predicate.apply(record)) {
+		if (predicate.test(record)) {
 			super.setFileTime(path, time);
 		}
 	}
@@ -91,7 +90,7 @@ public class FilteredFiler extends DecoratedFiler {
 	@Override
 	public void deleteFile(@Nonnull String path) throws IOException {
 		Record record = super.getRecord(path);
-		if (predicate.apply(record)) {
+		if (predicate.test(record)) {
 			super.deleteFile(path);
 		}
 	}

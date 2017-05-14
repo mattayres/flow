@@ -18,12 +18,11 @@ package com.lithium.flow.config;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
-
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -37,7 +36,7 @@ public interface Repo extends Closeable {
 
 	@Nonnull
 	default List<Config> getConfigs() throws IOException {
-		List<Config> configs = Lists.newArrayList();
+		List<Config> configs = new ArrayList<>();
 		for (String name : getNames()) {
 			configs.add(getConfig(name));
 		}

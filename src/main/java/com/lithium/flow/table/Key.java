@@ -18,6 +18,7 @@ package com.lithium.flow.table;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -85,7 +86,7 @@ public class Key {
 			checkNotNull(value);
 		}
 
-		List<Object> values = Lists.newArrayList();
+		List<Object> values = new ArrayList<>();
 		values.add(firstValue);
 		Collections.addAll(values, moreValues);
 		return new Key(values, false);

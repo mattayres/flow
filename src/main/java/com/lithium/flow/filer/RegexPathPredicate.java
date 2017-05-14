@@ -20,12 +20,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.google.common.base.Predicate;
 
 /**
  * @author Matt Ayres
@@ -39,7 +39,7 @@ public class RegexPathPredicate implements Predicate<Record> {
 	}
 
 	@Override
-	public boolean apply(@Nullable Record record) {
+	public boolean test(@Nullable Record record) {
 		if (record != null) {
 			String path = record.getPath();
 			for (Pattern pattern : patterns) {

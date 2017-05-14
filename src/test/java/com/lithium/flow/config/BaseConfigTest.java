@@ -26,13 +26,13 @@ import com.lithium.flow.store.MemoryStore;
 import com.lithium.flow.store.Store;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 /**
  * @author Matt Ayres
@@ -238,7 +238,7 @@ public class BaseConfigTest {
 
 	@Test
 	public void testInterpolation() {
-		Map<String, String> map = Maps.newHashMap();
+		Map<String, String> map = new HashMap<>();
 		map.put("key", "${foo}");
 		map.put("foo", "${bar}");
 		map.put("bar", "value");
@@ -299,7 +299,7 @@ public class BaseConfigTest {
 	}
 
 	private Map<String, String> map(String... keyValues) {
-		Map<String, String> map = Maps.newHashMap();
+		Map<String, String> map = new HashMap<>();
 		for (int i = 0; i < keyValues.length; i += 2) {
 			map.put(keyValues[i], keyValues[i + 1]);
 		}
@@ -307,7 +307,7 @@ public class BaseConfigTest {
 	}
 
 	private Map<String, String> toMap(Config config) {
-		Map<String, String> map = Maps.newHashMap();
+		Map<String, String> map = new HashMap<>();
 		for (String key : config.asRawMap().keySet()) {
 			map.put(key, config.getString(key));
 		}

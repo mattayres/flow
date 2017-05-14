@@ -27,6 +27,7 @@ import com.lithium.flow.shell.Tunneler;
 import com.lithium.flow.util.Logs;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +39,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -49,7 +49,7 @@ public class ShellTunneler implements Tunneler {
 	private final Config config;
 	private final Access access;
 	private final Shore shore;
-	private final List<Tunnel> tunnels = Lists.newCopyOnWriteArrayList();
+	private final List<Tunnel> tunnels = Collections.synchronizedList(new ArrayList<>());
 
 	public ShellTunneler(@Nonnull Config config, @Nonnull Access access, @Nonnull Shore shore) {
 		this.config = checkNotNull(config);
@@ -59,7 +59,7 @@ public class ShellTunneler implements Tunneler {
 
 	@Nonnull
 	public Tunnel getTunnel(@Nonnull String host, int port, @Nullable String through) throws IOException {
-		List<Login> logins = Lists.newArrayList();
+		List<Login> logins = new ArrayList<>();
 
 		Login endLogin = access.getLogin(host);
 		logins.add(endLogin);

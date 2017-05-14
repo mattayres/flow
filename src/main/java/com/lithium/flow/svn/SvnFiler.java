@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -40,8 +41,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.SVNRepository;
-
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -101,7 +100,7 @@ public class SvnFiler implements Filer {
 	@Override
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
-		List<Record> records = Lists.newArrayList();
+		List<Record> records = new ArrayList<>();
 		if (getRecord(path).exists()) {
 			SVNRepository repository = svnProvider.getRepository();
 			try {

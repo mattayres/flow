@@ -24,12 +24,11 @@ import com.lithium.flow.replacer.StringReplacer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
-
-import com.google.common.collect.Lists;
 
 /**
  * Decorates an instance of {@link Filer} to transparently renameFile files.
@@ -65,7 +64,7 @@ public class RenameFiler implements Filer {
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
 		path = toReplacer.replace(path);
-		List<Record> records = Lists.newArrayList();
+		List<Record> records = new ArrayList<>();
 		for (Record record : delegate.listRecords(path)) {
 			records.add(adjustRecord(record));
 		}

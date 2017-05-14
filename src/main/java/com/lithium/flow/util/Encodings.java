@@ -18,18 +18,18 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.Maps;
 import com.google.common.io.BaseEncoding;
 
 /**
  * @author Matt Ayres
  */
 public class Encodings {
-	private static final Map<String, BaseEncoding> map = Maps.newHashMap();
+	private static final Map<String, BaseEncoding> map = new HashMap<>();
 
 	static {
 		map.put("base16", BaseEncoding.base16());

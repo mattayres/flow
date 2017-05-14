@@ -25,6 +25,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,10 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 /**
  * @author Matt Ayres
@@ -81,7 +80,7 @@ public abstract class AbstractSchema implements Schema {
 			Object... parameters) throws SQLException {
 		checkNotNull(query);
 		checkNotNull(consumer);
-		List<T> list = Lists.newArrayList();
+		List<T> list = new ArrayList<>();
 		queryRows(query, rs -> consumer.accept(rs, list), parameters);
 		return list;
 	}
@@ -93,7 +92,7 @@ public abstract class AbstractSchema implements Schema {
 			Object... parameters) throws SQLException {
 		checkNotNull(query);
 		checkNotNull(consumer);
-		Set<T> set = Sets.newHashSet();
+		Set<T> set = new HashSet<>();
 		queryRows(query, rs -> consumer.accept(rs, set), parameters);
 		return set;
 	}
@@ -105,7 +104,7 @@ public abstract class AbstractSchema implements Schema {
 			Object... parameters) throws SQLException {
 		checkNotNull(query);
 		checkNotNull(consumer);
-		Map<K, V> map = Maps.newHashMap();
+		Map<K, V> map = new HashMap<>();
 		queryRows(query, rs -> consumer.accept(rs, map), parameters);
 		return map;
 	}
