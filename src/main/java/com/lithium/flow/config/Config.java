@@ -105,7 +105,7 @@ public interface Config {
 	default Map<String, String> asMap() {
 		Map<String, String> map = new LinkedHashMap<>();
 		Config config = toBuilder().allowUndefined(true).build();
-		keySet().stream().forEach(key -> map.put(key, config.getString(key)));
+		keySet().forEach(key -> map.put(key, config.getString(key)));
 		return ImmutableMap.copyOf(map);
 	}
 

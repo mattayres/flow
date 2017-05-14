@@ -33,7 +33,7 @@ public interface Vault extends Store {
 
 	void lock();
 
-	public enum State {
+	enum State {
 		NEW, LOCKED, UNLOCKED
 	}
 }

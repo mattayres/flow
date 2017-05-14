@@ -58,14 +58,14 @@ public class BaseConfigBuilder implements ConfigBuilder {
 	private final Set<String> requiredKeys = new HashSet<>();
 	private final Deque<String> pathDeque = new ArrayDeque<>();
 	private final Deque<String> prefixDeque = new ArrayDeque<>();
-	private List<ConfigLoader> loaders = new ArrayList<>();
-	private List<ConfigParser> parsers = new ArrayList<>();
-	private List<ConfigWatcher> watchers = new ArrayList<>();
+	private final List<ConfigLoader> loaders = new ArrayList<>();
+	private final List<ConfigParser> parsers = new ArrayList<>();
+	private final List<ConfigWatcher> watchers = new ArrayList<>();
 	private String name = "unknown";
 	private boolean allowFileNotFound;
 	private boolean allowUndefined;
 	private boolean allowRequiredKeys;
-	private Config defaults;
+	private final Config defaults;
 
 	public BaseConfigBuilder() {
 		this(null);
@@ -105,7 +105,7 @@ public class BaseConfigBuilder implements ConfigBuilder {
 	@Nonnull
 	private String getPrefixed(@Nonnull String key) {
 		StringBuilder sb = new StringBuilder();
-		prefixDeque.stream().forEach(prefix -> sb.append(prefix).append('.'));
+		prefixDeque.forEach(prefix -> sb.append(prefix).append('.'));
 		sb.append(key);
 		return sb.toString();
 	}
@@ -202,7 +202,7 @@ public class BaseConfigBuilder implements ConfigBuilder {
 	@Override
 	@Nonnull
 	public final BaseConfigBuilder setAll(@Nonnull Map<String, String> configValues) {
-		configValues.entrySet().stream().forEach(entry -> setString(entry.getKey(), entry.getValue()));
+		configValues.forEach(this::setString);
 		return this;
 	}
 

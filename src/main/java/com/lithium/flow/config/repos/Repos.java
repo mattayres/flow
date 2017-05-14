@@ -38,7 +38,7 @@ import com.lithium.flow.util.Checker;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.function.BiFunction;
@@ -87,7 +87,7 @@ public class Repos {
 			filers.add(buildFiler(config, access, url));
 		}
 
-		List<String> paths = config.getList("configs.path", Arrays.asList("prod"));
+		List<String> paths = config.getList("configs.path", Collections.singletonList("prod"));
 		long scheduleInterval = config.getTime("configs.scheduleInterval", "1h");
 		long cacheTime = config.getTime("configs.cacheTime", "5m");
 

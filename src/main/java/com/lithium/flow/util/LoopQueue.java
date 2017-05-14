@@ -43,13 +43,13 @@ public class LoopQueue<T> {
 	}
 
 	public LoopQueue(int capacity) {
-		this(capacity, (Comparator<T>) null);
+		this(capacity, null);
 	}
 
 	public LoopQueue(int capacity, @Nullable Comparator<T> comparator) {
 		this.capacity = capacity;
 		queue = comparator == null
-				? new LinkedBlockingQueue<T>(capacity)
+				? new LinkedBlockingQueue<>(capacity)
 				: new PriorityBlockingQueue<>(capacity, comparator);
 	}
 

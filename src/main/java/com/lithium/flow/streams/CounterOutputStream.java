@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author Matt Ayres
  */
@@ -39,13 +41,13 @@ public class CounterOutputStream extends FilterOutputStream {
 	}
 
 	@Override
-	public void write(byte[] b) throws IOException {
+	public void write(@Nonnull byte[] b) throws IOException {
 		out.write(b);
 		counter.addAndGet(b.length);
 	}
 
 	@Override
-	public void write(byte[] b, int off, int len) throws IOException {
+	public void write(@Nonnull byte[] b, int off, int len) throws IOException {
 		out.write(b, off, len);
 		counter.addAndGet(len);
 	}

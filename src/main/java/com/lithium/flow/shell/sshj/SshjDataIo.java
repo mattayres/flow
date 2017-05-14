@@ -37,10 +37,10 @@ public class SshjDataIo implements DataIo {
 	private final RemoteFile file;
 	private long fp;
 
-	private byte[] b1 = new byte[1];
-	private byte[] b2 = new byte[2];
-	private byte[] b4 = new byte[4];
-	private byte[] b8 = new byte[8];
+	private final byte[] b1 = new byte[1];
+	private final byte[] b2 = new byte[2];
+	private final byte[] b4 = new byte[4];
+	private final byte[] b8 = new byte[8];
 
 	public SshjDataIo(@Nonnull RemoteFile file) {
 		this.file = checkNotNull(file);
@@ -200,12 +200,12 @@ public class SshjDataIo implements DataIo {
 	}
 
 	@Override
-	public void write(byte[] b) throws IOException {
+	public void write(@Nonnull byte[] b) throws IOException {
 		write(b, 0, b.length);
 	}
 
 	@Override
-	public void write(byte[] b, int off, int len) throws IOException {
+	public void write(@Nonnull byte[] b, int off, int len) throws IOException {
 		if (off == 0) {
 			file.write(fp, b, off, len);
 		} else {
@@ -272,19 +272,19 @@ public class SshjDataIo implements DataIo {
 	}
 
 	@Override
-	public void writeBytes(String s) throws IOException {
+	public void writeBytes(@Nonnull String s) throws IOException {
 		write(s.getBytes());
 	}
 
 	@Override
-	public void writeChars(String s) throws IOException {
+	public void writeChars(@Nonnull String s) throws IOException {
 		for (char c : s.toCharArray()) {
 			writeChar(c);
 		}
 	}
 
 	@Override
-	public void writeUTF(String s) throws IOException {
+	public void writeUTF(@Nonnull String s) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		new DataOutputStream(baos).writeUTF(s);
 		write(baos.toByteArray());

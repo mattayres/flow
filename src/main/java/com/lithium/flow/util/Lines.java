@@ -49,7 +49,7 @@ public class Lines {
 	}
 
 	@Nonnull
-	public static Stream<String> stream(@Nonnull InputStream in, @Nonnull Charset charset) throws IOException {
+	public static Stream<String> stream(@Nonnull InputStream in, @Nonnull Charset charset) {
 		checkNotNull(in);
 		checkNotNull(charset);
 		return StreamSupport.stream(new InputStreamSpliterator(in, charset), false);

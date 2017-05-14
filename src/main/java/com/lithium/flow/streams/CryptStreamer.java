@@ -101,7 +101,6 @@ public class CryptStreamer implements Streamer {
 	@Nonnull
 	public InputStream filterIn(@Nonnull InputStream in, @Nullable String name) throws IOException {
 		checkArgument(name != null, "name must be specified for key lookup");
-		assert name != null;
 
 		try {
 			for (Key key : keySource.getKeys(replacer.replace(name))) {

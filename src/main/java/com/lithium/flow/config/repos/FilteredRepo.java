@@ -34,8 +34,6 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
-
 /**
  * @author Matt Ayres
  */

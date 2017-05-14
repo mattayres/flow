@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -74,7 +73,7 @@ public class RunnerMain {
 	private Exec runExec;
 
 	public RunnerMain(@Nonnull Config config, @Nonnull Config deployConfig, @Nonnull RunnerContext context)
-			throws IOException, SQLException {
+			throws IOException {
 		checkNotNull(config);
 		checkNotNull(deployConfig);
 		this.context = checkNotNull(context);

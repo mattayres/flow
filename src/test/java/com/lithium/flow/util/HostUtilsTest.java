@@ -19,6 +19,7 @@ package com.lithium.flow.util;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
@@ -29,7 +30,7 @@ import org.junit.Test;
 public class HostUtilsTest {
 	@Test
 	public void testNone() {
-		List<String> expected = Arrays.asList("http://foo.li");
+		List<String> expected = Collections.singletonList("http://foo.li");
 		List<String> expanded = HostUtils.expand("http://foo.li");
 		assertEquals(expected, expanded);
 	}

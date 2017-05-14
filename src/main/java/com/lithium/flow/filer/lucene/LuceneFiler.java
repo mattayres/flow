@@ -52,7 +52,6 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NRTCachingDirectory;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 
 /**
@@ -76,7 +75,6 @@ public class LuceneFiler extends DecoratedFiler {
 		long targetMaxStale = config.getTime("index.targetMaxStale", "5s");
 		long targetMinStale = config.getTime("index.targetMinStale", "1s");
 
-		Version version = Version.LATEST;
 		Directory dir = FSDirectory.open(new File(path).toPath());
 		NRTCachingDirectory cachingDir = new NRTCachingDirectory(dir, maxMergeMb, maxCachedMb);
 		IndexWriterConfig writerConfig = new IndexWriterConfig(null);

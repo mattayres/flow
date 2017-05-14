@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
@@ -135,7 +136,7 @@ public class StringMatchers {
 		int index2 = input.indexOf("]:");
 		String cond = input.substring(index1 + 1, index2);
 		String regex = input.substring(index2 + 2);
-		StringMatcher condMatcher = fromList(Arrays.asList(cond));
+		StringMatcher condMatcher = fromList(Collections.singletonList(cond));
 		StringMatcher funcMatcher = function.apply(regex);
 		return new CompositeAndStringMatcher(Arrays.asList(condMatcher, funcMatcher), false);
 	}

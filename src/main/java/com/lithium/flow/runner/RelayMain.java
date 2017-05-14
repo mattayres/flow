@@ -133,7 +133,7 @@ public class RelayMain {
 	}
 
 	@Nonnull
-	private CheckedSupplier<String, IOException> buildVaultPassword(@Nonnull Config config) throws IOException {
+	private CheckedSupplier<String, IOException> buildVaultPassword(@Nonnull Config config) {
 		File file = new File(config.getString("vault.path"));
 		Vault memoryVault = new SecureVault(Configs.empty(), new MemoryStore(new FileStore(file)));
 		memoryVault.unlock(System.getenv("VAULT_PASSWORD"));

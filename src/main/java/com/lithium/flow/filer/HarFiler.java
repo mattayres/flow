@@ -149,7 +149,7 @@ public class HarFiler implements Filer {
 	}
 
 	@Nonnull
-	private Filer getFiler(@Nonnull String path) throws IOException {
+	private Filer getFiler(@Nonnull String path) {
 		checkNotNull(path);
 		String harPath = harFunction.apply(path);
 		return harPath != null ? harFilers.getUnchecked(harPath) : hdfsFiler;

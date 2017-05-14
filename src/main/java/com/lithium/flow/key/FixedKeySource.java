@@ -18,10 +18,10 @@ package com.lithium.flow.key;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.BaseEncoding.base16;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
 import java.security.Key;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -35,7 +35,7 @@ public class FixedKeySource implements KeySource {
 
 	public FixedKeySource(@Nonnull String... hexKeys) {
 		checkNotNull(hexKeys);
-		keys = asList(hexKeys).stream().map(hex -> new SecretKeySpec(base16().decode(hex), "AES")).collect(toList());
+		keys = Arrays.stream(hexKeys).map(hex -> new SecretKeySpec(base16().decode(hex), "AES")).collect(toList());
 	}
 
 	@Override

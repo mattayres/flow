@@ -88,7 +88,7 @@ public class FilerFactory {
 		Locator locator = new PicoLocator();
 		locator.addInstance(config);
 		Arrays.asList(provided).forEach(locator::addInstance);
-		providers.entrySet().stream().forEach(entry -> locator.addProvider(entry.getKey(), entry.getValue()));
+		providers.forEach(locator::addProvider);
 
 		String url = config.getString("url");
 		URI uri = URI.create(url);

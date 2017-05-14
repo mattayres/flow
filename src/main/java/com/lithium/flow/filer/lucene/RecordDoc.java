@@ -19,10 +19,9 @@ package com.lithium.flow.filer.lucene;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.lucene.document.Field.Store;
 
-import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.filer.Record;
+import com.lithium.flow.filer.RecordPath;
 
-import java.io.IOException;
 import java.net.URI;
 
 import javax.annotation.Nonnull;
@@ -94,7 +93,7 @@ public class RecordDoc {
 	}
 
 	@Nonnull
-	public static RecordDoc create(@Nonnull Document doc) throws IOException {
+	public static RecordDoc create(@Nonnull Document doc) {
 		checkNotNull(doc);
 
 		URI uri = URI.create(doc.get(RECORD_URI));

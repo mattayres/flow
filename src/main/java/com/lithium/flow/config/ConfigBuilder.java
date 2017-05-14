@@ -16,10 +16,6 @@
 
 package com.lithium.flow.config;
 
-/**
- * @author Matt Ayres
- */
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -28,6 +24,8 @@ import javax.annotation.Nullable;
 
 /**
  * Builder for {@link Config} instances.
+ *
+ * @author Matt Ayres
  */
 public interface ConfigBuilder {
 	/**

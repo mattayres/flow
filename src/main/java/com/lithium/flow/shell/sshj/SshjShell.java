@@ -41,7 +41,7 @@ public class SshjShell implements Shell {
 	private final Sshj ssh;
 	private final URI uri;
 
-	public SshjShell(@Nonnull Sshj ssh, @Nonnull URI uri) throws IOException {
+	public SshjShell(@Nonnull Sshj ssh, @Nonnull URI uri) {
 		this.ssh = checkNotNull(ssh);
 		this.uri = checkNotNull(uri);
 	}

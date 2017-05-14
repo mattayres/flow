@@ -54,7 +54,7 @@ public class LoaderConfigParser implements ConfigParser {
 		}
 	}
 
-	public static interface Callback {
+	public interface Callback {
 		void onLoader(ConfigLoader loader);
 	}
 }

@@ -27,7 +27,7 @@ import javax.annotation.Nonnull;
 public class LongArray {
 	private long[] array;
 	private int pos;
-	private float grow;
+	private final float grow;
 
 	public LongArray() {
 		this(1024, 1.5f);

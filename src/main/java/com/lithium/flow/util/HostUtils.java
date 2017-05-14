@@ -21,7 +21,7 @@ import static java.lang.Integer.parseInt;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -64,7 +64,7 @@ public class HostUtils {
 			includes.removeAll(excludes);
 			return includes;
 		} else {
-			return Arrays.asList(expression);
+			return Collections.singletonList(expression);
 		}
 	}
 

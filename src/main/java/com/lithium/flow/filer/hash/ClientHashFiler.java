@@ -39,7 +39,7 @@ public class ClientHashFiler extends DecoratedFiler {
 
 	private final JettyClient client;
 
-	public ClientHashFiler(@Nonnull Filer delegate, @Nonnull Config config) throws Exception {
+	public ClientHashFiler(@Nonnull Filer delegate, @Nonnull Config config) {
 		super(delegate);
 		client = new JettyClient(config.prefix("hash"));
 	}

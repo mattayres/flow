@@ -19,7 +19,6 @@ package com.lithium.flow.filer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -31,7 +30,7 @@ import javax.annotation.Nonnull;
  * @author Matt Ayres
  */
 public class SortedFiler extends DecoratedFiler {
-	public static final Comparator<Record> NAME_ASC = (d1, d2) -> d1.getName().compareTo(d2.getName());
+	public static final Comparator<Record> NAME_ASC = Comparator.comparing(Record::getName);
 
 	public static final Comparator<Record> NAME_DESC = (d1, d2) -> d2.getName().compareTo(d1.getName());
 
@@ -50,7 +49,7 @@ public class SortedFiler extends DecoratedFiler {
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
 		List<Record> records = super.listRecords(path);
-		Collections.sort(records, comparator);
+		records.sort(comparator);
 		return records;
 	}
 }

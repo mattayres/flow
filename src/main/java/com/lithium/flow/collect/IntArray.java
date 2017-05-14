@@ -27,7 +27,7 @@ import javax.annotation.Nonnull;
 public class IntArray {
 	private int[] array;
 	private int pos;
-	private float grow;
+	private final float grow;
 
 	public IntArray() {
 		this(1024, 1.5f);

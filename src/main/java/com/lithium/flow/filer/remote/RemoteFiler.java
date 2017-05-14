@@ -24,5 +24,5 @@ import java.rmi.Remote;
  * @author Matt Ayres
  */
 public interface RemoteFiler extends Remote, Filer {
-	public static final String BIND = "RemoteFiler";
+	String BIND = "RemoteFiler";
 }

@@ -46,7 +46,7 @@ public class JsonUtils {
 		checkNotNull(path);
 
 		JSONObject current = json;
-		String prefix = "";
+		StringBuilder prefix = new StringBuilder();
 		int len = 1;
 
 		for (String part : Splitter.on('.').split(path)) {
@@ -75,7 +75,7 @@ public class JsonUtils {
 					if (array instanceof JSONArray) {
 						object = ((JSONArray) array).get(index);
 						part = tryPart;
-						prefix = "";
+						prefix = new StringBuilder();
 					} else {
 						index = -1;
 					}
@@ -124,7 +124,7 @@ public class JsonUtils {
 				}
 				return;
 			} else {
-				prefix += part + ".";
+				prefix.append(part).append(".");
 			}
 		}
 
@@ -168,7 +168,7 @@ public class JsonUtils {
 		}
 	}
 
-	public static interface Visitor {
+	public interface Visitor {
 		void visit(@Nonnull String path, @Nonnull String value);
 	}
 }

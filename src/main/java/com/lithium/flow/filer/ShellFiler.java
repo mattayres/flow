@@ -23,14 +23,11 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.shell.Shore;
 import com.lithium.flow.util.BaseEncodings;
-import com.lithium.flow.util.Logs;
 
 import java.io.IOException;
 import java.net.URI;
 
 import javax.annotation.Nonnull;
-
-import org.slf4j.Logger;
 
 /**
  * Remote shell implementation of {@link Filer}.
@@ -38,8 +35,6 @@ import org.slf4j.Logger;
  * @author Matt Ayres
  */
 public class ShellFiler extends DecoratedFiler {
-	private static final Logger log = Logs.getLogger();
-
 	private final Shell shell;
 
 	public ShellFiler(@Nonnull Shell shell) throws IOException {

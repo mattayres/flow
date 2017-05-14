@@ -39,7 +39,7 @@ public class MavenJarProvider implements JarProvider {
 
 	private final Filer srcFiler;
 
-	public MavenJarProvider(@Nonnull Config config, @Nonnull Filer srcFiler) throws IOException {
+	public MavenJarProvider(@Nonnull Config config, @Nonnull Filer srcFiler) {
 		checkNotNull(config);
 		this.srcFiler = checkNotNull(srcFiler);
 	}

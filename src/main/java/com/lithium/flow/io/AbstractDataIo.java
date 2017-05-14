@@ -118,12 +118,12 @@ public abstract class AbstractDataIo implements DataIo {
 	}
 
 	@Override
-	public void write(byte[] b) throws IOException {
+	public void write(@Nonnull byte[] b) throws IOException {
 		dataOut.write(b);
 	}
 
 	@Override
-	public void write(byte[] b, int off, int len) throws IOException {
+	public void write(@Nonnull byte[] b, int off, int len) throws IOException {
 		dataOut.write(b, off, len);
 	}
 
@@ -168,17 +168,17 @@ public abstract class AbstractDataIo implements DataIo {
 	}
 
 	@Override
-	public void writeBytes(String s) throws IOException {
+	public void writeBytes(@Nonnull String s) throws IOException {
 		dataOut.writeBytes(s);
 	}
 
 	@Override
-	public void writeChars(String s) throws IOException {
+	public void writeChars(@Nonnull String s) throws IOException {
 		dataOut.writeChars(s);
 	}
 
 	@Override
-	public void writeUTF(String s) throws IOException {
+	public void writeUTF(@Nonnull String s) throws IOException {
 		dataOut.writeUTF(s);
 	}
 }

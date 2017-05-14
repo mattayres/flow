@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +53,7 @@ public class SvnFiler implements Filer {
 	private final long revision;
 	private final URI uri;
 
-	public SvnFiler(@Nonnull SvnProvider svnProvider) throws SVNException, URISyntaxException {
+	public SvnFiler(@Nonnull SvnProvider svnProvider) {
 		this(svnProvider, -1);
 	}
 

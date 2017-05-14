@@ -24,7 +24,6 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Repo;
 import com.lithium.flow.ioc.Locator;
 
-import java.io.IOException;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -34,7 +33,7 @@ import javax.annotation.Nonnull;
  */
 public class Keys {
 	@Nonnull
-	public static KeySource buildKeySource(@Nonnull Locator locator) throws IOException {
+	public static KeySource buildKeySource(@Nonnull Locator locator) {
 		checkNotNull(locator);
 		List<KeySource> sources = locator.getInstance(Config.class).getList("key.source").stream()
 				.map(provider -> buildKeySource(locator, provider)).collect(toList());
