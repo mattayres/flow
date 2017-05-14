@@ -23,6 +23,7 @@ import com.lithium.flow.config.Config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,7 +54,8 @@ public class StringMatchers {
 	@Nonnull
 	public static StringMatcher fromInputStream(@Nonnull InputStream in) {
 		try (InputStream tryIn = checkNotNull(in)) {
-			return fromList(IOUtils.readLines(tryIn).stream().filter(line -> !line.startsWith("#")).collect(toList()));
+			return fromList(IOUtils.readLines(tryIn, StandardCharsets.UTF_8).stream()
+					.filter(line -> !line.startsWith("#")).collect(toList()));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

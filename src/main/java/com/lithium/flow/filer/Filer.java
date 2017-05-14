@@ -81,13 +81,16 @@ public interface Filer extends Closeable {
 	@Override
 	void close() throws IOException;
 
+	default void createFolder(@Nonnull String path) throws IOException {
+		createDirs(RecordPath.getFolder(path));
+	}
 
 	default void copy(@Nonnull String srcPath, @Nonnull Filer destFiler, @Nonnull String destPath) throws IOException {
-		destFiler.createDirs(RecordPath.getFolder(destPath));
+		destFiler.createFolder(destPath);
 
 		try (InputStream in = readFile(srcPath)) {
 			OutputStream out = destFiler.writeFile(destPath);
-			IOUtils.copy(in, out);
+			IOUtils.copy(in, out, 65536);
 			out.close();
 		}
 	}
