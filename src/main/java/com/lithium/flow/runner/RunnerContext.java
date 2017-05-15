@@ -110,7 +110,7 @@ public class RunnerContext {
 		shore = Shells.buildShore(config, access);
 		syncThreader = new Threader(config.getInt("sync.threads"));
 		runThreader = new Threader(config.getInt("run.threads"));
-		srcDir = config.getString("src.dir");
+		srcDir = new File(config.getString("src.dir")).getCanonicalPath();
 		normalizedSrcDir = normalize(srcDir);
 		jarProvider = JarProvider.build(config, access, filer);
 
@@ -202,7 +202,7 @@ public class RunnerContext {
 		for (String path : paths) {
 			log.debug("path: {}", path);
 
-			Record record = filer.getRecord(path);
+			Record record = filer.getRecord(new File(path).getCanonicalPath());
 			if (record.isDir()) {
 				filer.findRecords(path, 1).filter(Record::isFile).forEach(records::add);
 			} else {
