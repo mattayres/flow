@@ -18,9 +18,11 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
@@ -29,8 +31,14 @@ import javax.annotation.Nonnull;
  * @author Matt Ayres
  */
 public class Execute {
-	private static final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-	private static final Threader threader = new Threader();
+	private static final ThreadFactory FACTORY = r -> {
+		Thread thread = Executors.defaultThreadFactory().newThread(r);
+		thread.setDaemon(true);
+		return thread;
+	};
+
+	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(FACTORY);
+	private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(FACTORY);
 
 	@Nonnull
 	public static ScheduledFuture<?> at(long time, @Nonnull Executable executable) {
@@ -46,6 +54,6 @@ public class Execute {
 	public static ScheduledFuture<?> in(long time, @Nonnull TimeUnit unit, @Nonnull Executable executable) {
 		checkNotNull(unit);
 		checkNotNull(executable);
-		return service.schedule(() -> threader.execute("execute@" + time, executable), time, unit);
+		return SCHEDULER.schedule(() -> EXECUTOR.submit(executable), time, unit);
 	}
 }
