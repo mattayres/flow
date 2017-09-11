@@ -117,4 +117,21 @@ public class Lines {
 			};
 		};
 	}
+
+	@Nonnull
+	public static String first(@Nonnull InputStream in) throws IOException {
+		checkNotNull(in);
+		return first(in, DEFAULT_CHARSET);
+	}
+
+	@Nonnull
+	public static String first(@Nonnull InputStream in, @Nonnull Charset charset) throws IOException {
+		checkNotNull(in);
+
+		LineIterator it = IOUtils.lineIterator(in, charset);
+		String line = it.hasNext() ? it.nextLine() : "";
+		it.close();
+
+		return line;
+	}
 }
