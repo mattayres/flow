@@ -116,7 +116,7 @@ public class Threader {
 					submit(name, callable, retriesLeft - 1);
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 
 		return future;
 	}

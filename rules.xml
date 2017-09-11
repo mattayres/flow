@@ -8,9 +8,13 @@
 		<ignoreVersion type="regex">.*alpha.*</ignoreVersion>
 		<ignoreVersion type="regex">.*beta.*</ignoreVersion>
 		<ignoreVersion type="regex">.*rc[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">.*RC[\d].*</ignoreVersion>
 		<ignoreVersion type="regex">.*pr[\d].*</ignoreVersion>
 		<ignoreVersion type="regex">.*b[\d].*</ignoreVersion>
 		<ignoreVersion type="regex">.*M[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">.*atlassian.*</ignoreVersion>
+		<ignoreVersion type="regex">.*android.*</ignoreVersion>
+		<ignoreVersion type="regex">.*kohsuke.*</ignoreVersion>
 	</ignoreVersions>
 
 	<rules>

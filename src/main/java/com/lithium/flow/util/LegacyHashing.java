@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Lithium Technologies, Inc.
+ * Copyright 2017 Lithium Technologies, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package com.lithium.flow.util;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import javax.annotation.Nonnull;
 
 import com.google.common.hash.HashFunction;
@@ -26,31 +24,16 @@ import com.google.common.hash.Hashing;
 /**
  * @author Matt Ayres
  */
-public class HashFunctions {
+public class LegacyHashing {
 	@Nonnull
-	public static HashFunction of(@Nonnull String name) {
-		checkNotNull(name);
-		switch (name) {
-			case "adler32":
-				return Hashing.adler32();
-			case "crc32":
-				return Hashing.crc32();
-			case "md5":
-				return LegacyHashing.md5();
-			case "sha1":
-				return LegacyHashing.sha1();
-			case "sha256":
-				return Hashing.sha256();
-			case "sha512":
-				return Hashing.sha512();
-			case "sipHash24":
-				return Hashing.sipHash24();
-			case "murmur3_32":
-				return Hashing.murmur3_32();
-			case "murmur3_128":
-				return Hashing.murmur3_128();
-			default:
-				throw new RuntimeException("unknown hash: " + name);
-		}
+	@SuppressWarnings("deprecation")
+	public static HashFunction md5() {
+		return Hashing.md5();
+	}
+
+	@Nonnull
+	@SuppressWarnings("deprecation")
+	public static HashFunction sha1() {
+		return Hashing.sha1();
 	}
 }
