@@ -135,15 +135,12 @@ public class HdfsFiler implements Filer {
 		return new DecoratedOutputStream(fsOut) {
 			@Override
 			public void flush() throws IOException {
-				try {
-					if (hflush) {
-						fsOut.hflush();
-					}
-					if (hsync) {
-						fsOut.hsync();
-					}
-				} finally {
-					out.flush();
+				out.flush();
+				if (hflush) {
+					fsOut.hflush();
+				}
+				if (hsync) {
+					fsOut.hsync();
 				}
 			}
 
