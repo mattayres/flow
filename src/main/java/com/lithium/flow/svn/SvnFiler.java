@@ -92,7 +92,7 @@ public class SvnFiler implements Filer {
 	private Record getRecord(@Nonnull SVNDirEntry entry, @Nonnull String folder) {
 		boolean dir = SVNNodeKind.DIR.equals(entry.getKind());
 		long size = dir ? 0 : entry.getSize();
-		String name = entry.getName().equals("/") ? "" : entry.getName();
+		String name = entry.getName().replace("/", "");
 		return new Record(getUri(), RecordPath.from(folder, name), entry.getDate().getTime(), size, dir);
 	}
 
