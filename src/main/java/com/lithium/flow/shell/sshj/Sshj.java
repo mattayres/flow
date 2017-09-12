@@ -29,6 +29,8 @@ import java.io.IOException;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.io.IOUtils;
+
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.SecurityUtils;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -122,8 +124,6 @@ public class Sshj extends SSHClient {
 						return;
 					} catch (UserAuthException e) {
 						exception = e;
-						key.reject();
-						pass.reject();
 					}
 				}
 			} else {
@@ -140,6 +140,7 @@ public class Sshj extends SSHClient {
 		}
 
 		if (exception != null) {
+			IOUtils.closeQuietly(this);
 			throw exception;
 		}
 	}
