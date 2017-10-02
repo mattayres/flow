@@ -89,10 +89,12 @@ public class SvnFiler implements Filer {
 			if (entry != null) {
 				return getRecord(entry, recordPath.getFolder());
 			} else {
-				long lastRevision = getLastRevision(repository, path);
-				if (findLast && lastRevision > -1) {
-					entry = repository.info(path, lastRevision);
-					return getRecord(entry, recordPath.getFolder());
+				if (findLast) {
+					long lastRevision = getLastRevision(repository, path);
+					if (lastRevision > -1) {
+						entry = repository.info(path, lastRevision);
+						return getRecord(entry, recordPath.getFolder());
+					}
 				}
 				return new Record(getUri(), recordPath, 0, Record.NO_EXIST_SIZE, false);
 			}
