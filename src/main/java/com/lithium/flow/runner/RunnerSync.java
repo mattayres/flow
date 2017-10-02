@@ -119,7 +119,7 @@ public class RunnerSync {
 
 				if (!sameSize || !sameTime) {
 					context.getCopiedMeasure().addTodo(srcRecord.getSize());
-					needle.execute("path:" + srcRecord.getPath(), () -> copyFile(srcRecord));
+					needle.execute(srcPath + " to " + destPath, () -> copyFile(srcRecord));
 				} else {
 					context.getFilesMeasure().incDone();
 				}
