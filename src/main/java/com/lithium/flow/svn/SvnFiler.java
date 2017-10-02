@@ -30,12 +30,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -52,14 +55,21 @@ public class SvnFiler implements Filer {
 	private final SvnProvider svnProvider;
 	private final long revision;
 	private final URI uri;
+	private final boolean findLast;
+	private final Map<String, List<SVNLogEntry>> pathEntries = new HashMap<>();
 
 	public SvnFiler(@Nonnull SvnProvider svnProvider) {
 		this(svnProvider, -1);
 	}
 
 	public SvnFiler(@Nonnull SvnProvider svnProvider, long revision) {
+		this(svnProvider, revision, false);
+	}
+
+	public SvnFiler(@Nonnull SvnProvider svnProvider, long revision, boolean findLast) {
 		this.svnProvider = checkNotNull(svnProvider);
 		this.revision = revision;
+		this.findLast = findLast;
 		uri = URI.create(svnProvider.getLocation().getURIEncodedPath());
 	}
 
@@ -79,6 +89,11 @@ public class SvnFiler implements Filer {
 			if (entry != null) {
 				return getRecord(entry, recordPath.getFolder());
 			} else {
+				long lastRevision = getLastRevision(repository, path);
+				if (findLast && lastRevision > -1) {
+					entry = repository.info(path, lastRevision);
+					return getRecord(entry, recordPath.getFolder());
+				}
 				return new Record(getUri(), recordPath, 0, Record.NO_EXIST_SIZE, false);
 			}
 		} catch (SVNException e) {
@@ -119,13 +134,41 @@ public class SvnFiler implements Filer {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		SVNRepository repository = svnProvider.getRepository();
 		try {
-			repository.getFile(path, revision, new SVNProperties(), out);
+			long useRevision = revision;
+			if (findLast && repository.checkPath(path, revision) == SVNNodeKind.NONE) {
+				useRevision = getLastRevision(repository, path);
+			}
+			repository.getFile(path, useRevision, new SVNProperties(), out);
 		} catch (SVNException e) {
 			throw new IOException("failed to read file: " + getFullPath(path), e);
 		} finally {
 			svnProvider.releaseRepository(repository);
 		}
 		return new ByteArrayInputStream(out.toByteArray());
+	}
+
+	private long getLastRevision(@Nonnull SVNRepository repository, @Nonnull String path) throws SVNException {
+		String folder = RecordPath.from(path).getFolder();
+		List<SVNLogEntry> entries;
+
+		synchronized (pathEntries) {
+			entries = pathEntries.get(folder);
+			if (entries == null) {
+				entries = new ArrayList<>();
+				repository.log(new String[] { folder }, 0, revision, true, false, entries::add);
+				pathEntries.put(folder, entries);
+			}
+		}
+
+		long last = -1;
+		for (SVNLogEntry entry : entries) {
+			for (String changedPath : entry.getChangedPaths().keySet()) {
+				if (changedPath.endsWith(path)) {
+					last = entry.getRevision() - 1;
+				}
+			}
+		}
+		return last;
 	}
 
 	@Nonnull

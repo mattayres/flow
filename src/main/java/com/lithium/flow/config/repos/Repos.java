@@ -120,7 +120,9 @@ public class Repos {
 			SvnProvider svnProvider = new LoginSvnProvider(config, access, url);
 			svnProvider = new PoolSvnProvider(svnProvider, config);
 
-			Filer filer = new SvnFiler(svnProvider, config.getLong("configs.revision", -1));
+			long revision = config.getLong("configs.revision", -1);
+			boolean findLast = config.getBoolean("configs.findLast", false);
+			Filer filer = new SvnFiler(svnProvider, revision, findLast);
 			filer = new CachedFiler(filer, config.prefix("configs"));
 			filer = new CachedReadFiler(filer);
 			if (config.containsKey("configs.exclude")) {
