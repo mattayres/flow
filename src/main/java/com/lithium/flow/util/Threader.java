@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
@@ -148,5 +149,27 @@ public class Threader {
 	@Nonnull
 	public static Threader forCompute() {
 		return new Threader(Runtime.getRuntime().availableProcessors());
+	}
+
+	@Nonnull
+	public static Threader forDaemon() {
+		return forDaemon(-1);
+	}
+
+	@Nonnull
+	public static Threader forDaemon(int threads) {
+		ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+
+		ThreadFactory daemonFactory = runnable -> {
+			Thread thread = defaultFactory.newThread(runnable);
+			thread.setDaemon(true);
+			return thread;
+		};
+
+		ExecutorService service = threads == -1
+				? Executors.newCachedThreadPool(daemonFactory)
+				: Executors.newFixedThreadPool(threads, daemonFactory);
+
+		return new Threader(service);
 	}
 }
