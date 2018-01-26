@@ -18,6 +18,8 @@ package com.lithium.flow.ioc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.util.CheckedLazy;
+
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashSet;
@@ -104,19 +106,19 @@ public class PicoLocator implements Locator {
 	}
 
 	public class Adapter extends AbstractAdapter {
-		private final Provider<?> provider;
+		private final CheckedLazy<?, Exception> lazy;
 
 		public Adapter(@Nonnull Class<?> type, @Nonnull Provider<?> provider) {
 			super(type, type);
-			this.provider = provider;
+			lazy = new CheckedLazy<>(() -> provider.provide(PicoLocator.this));
 		}
 
 		@Override
 		@Nonnull
-		public Object getComponentInstance(@Nonnull PicoContainer container, @Nonnull Type into)
+		public Object getComponentInstance(@Nonnull PicoContainer container, @Nullable Type into)
 				throws PicoCompositionException {
 			try {
-				return provider.provide(PicoLocator.this);
+				return lazy.get();
 			} catch (Exception e) {
 				throw new PicoCompositionException("failed to provide type: " + into, e);
 			}
