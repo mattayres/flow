@@ -16,21 +16,33 @@
 
 package com.lithium.flow.ioc;
 
+import java.util.List;
+
 import javax.annotation.Nonnull;
 
 /**
  * @author Matt Ayres
  */
 public interface Locator {
-	@Nonnull
-	Locator addType(@Nonnull Class<?> type);
+	void addType(@Nonnull Class<?> type);
 
-	@Nonnull
-	Locator addProvider(@Nonnull Class<?> type, @Nonnull Provider<?> provider);
+	void addProvider(@Nonnull Class<?> type, @Nonnull Provider<?> provider);
 
-	@Nonnull
-	Locator addInstance(@Nonnull Object object);
+	void addInstance(@Nonnull Object object);
+
+	void addInstance(@Nonnull Object key, @Nonnull Object object);
 
 	@Nonnull
 	<T> T getInstance(@Nonnull Class<T> type);
+
+	@Nonnull
+	List<Object> getInstances();
+
+	@Nonnull
+	Locator createChild();
+
+	@Nonnull
+	static Locator create() {
+		return new PicoLocator();
+	}
 }

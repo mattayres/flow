@@ -19,9 +19,13 @@ package com.lithium.flow.ioc;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.picocontainer.DefaultPicoContainer;
 import org.picocontainer.MutablePicoContainer;
@@ -29,43 +33,51 @@ import org.picocontainer.PicoCompositionException;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.adapters.AbstractAdapter;
 
-import com.google.common.collect.Sets;
-
 /**
  * @author Matt Ayres
  */
 public class PicoLocator implements Locator {
-	private final MutablePicoContainer pico = new DefaultPicoContainer();
-	private final Set<Class<?>> types = Sets.newConcurrentHashSet();
+	private final MutablePicoContainer pico;
+	private final Set<Class<?>> types = Collections.synchronizedSet(new HashSet<>());
 
-	@Override
-	@Nonnull
-	public Locator addType(@Nonnull Class<?> type) {
-		checkNotNull(type);
-		pico.addComponent(type);
-		types.add(type);
-		return this;
+	public PicoLocator() {
+		this(null);
+	}
+
+	public PicoLocator(@Nullable PicoContainer parentPico) {
+		pico = new DefaultPicoContainer(parentPico);
 	}
 
 	@Override
-	@Nonnull
-	public Locator addProvider(@Nonnull Class<?> type, @Nonnull Provider<?> provider) {
+	public void addType(@Nonnull Class<?> type) {
+		checkNotNull(type);
+		pico.addComponent(type);
+		types.add(type);
+	}
+
+	@Override
+	public void addProvider(@Nonnull Class<?> type, @Nonnull Provider<?> provider) {
 		checkNotNull(type);
 		checkNotNull(provider);
 		if (types.stream().noneMatch(type::isAssignableFrom)) {
 			pico.addAdapter(new Adapter(type, provider));
 			types.add(type);
 		}
-		return this;
 	}
 
 	@Override
-	@Nonnull
-	public Locator addInstance(@Nonnull Object object) {
+	public void addInstance(@Nonnull Object object) {
 		checkNotNull(object);
 		pico.addComponent(object);
 		types.add(object.getClass());
-		return this;
+	}
+
+	@Override
+	public void addInstance(@Nonnull Object key, @Nonnull Object object) {
+		checkNotNull(key);
+		checkNotNull(object);
+		pico.addComponent(key, object);
+		types.add(object.getClass());
 	}
 
 	@Override
@@ -77,6 +89,18 @@ public class PicoLocator implements Locator {
 			throw new RuntimeException("no instance for type: " + type);
 		}
 		return instance;
+	}
+
+	@Override
+	@Nonnull
+	public List<Object> getInstances() {
+		return pico.getComponents();
+	}
+
+	@Override
+	@Nonnull
+	public Locator createChild() {
+		return new PicoLocator(pico);
 	}
 
 	public class Adapter extends AbstractAdapter {
