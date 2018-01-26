@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -50,14 +51,15 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
+import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PartETag;
-import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.UploadPartRequest;
+import com.amazonaws.util.IOUtils;
 
 /**
  * @author Matt Ayres
@@ -68,6 +70,7 @@ public class S3Filer implements Filer {
 	private final String bucket;
 	private final long partSize;
 	private final File tempDir;
+	private final boolean drainOnClose;
 	private final ExecutorService service;
 
 	public S3Filer(@Nonnull Config config, @Nonnull Access access) {
@@ -87,6 +90,7 @@ public class S3Filer implements Filer {
 		bucket = uri.getHost();
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
 		tempDir = new File(config.getString("s3.tempDir", System.getProperty("java.io.tmpdir")));
+		drainOnClose = config.getBoolean("s3.drainOnClose", false);
 		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
 
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
@@ -108,7 +112,7 @@ public class S3Filer implements Filer {
 					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
 
 					AmazonS3 testS3 = builder.build();
-					testS3.listObjects(new ListObjectsRequest().withBucketName(bucket));
+					testS3.listObjects(listObjectsRequest());
 					response.accept();
 					break;
 				} catch (AmazonS3Exception e) {
@@ -127,21 +131,20 @@ public class S3Filer implements Filer {
 
 	@Override
 	@Nonnull
-	public URI getUri() throws IOException {
+	public URI getUri() {
 		return uri;
 	}
 
 	@Override
 	@Nonnull
-	public List<Record> listRecords(@Nonnull String path) throws IOException {
-		String s3Path = path.isEmpty() || path.equals("/") ? "" : path.substring(1) + "/";
-		ObjectListing listing = s3.listObjects(new ListObjectsRequest()
-				.withBucketName(bucket).withPrefix(s3Path).withDelimiter("/"));
+	public List<Record> listRecords(@Nonnull String path) {
+		String prefix = path.isEmpty() || path.equals("/") ? "" : keyForPath(path) + "/";
+		ObjectListing listing = s3.listObjects(listObjectsRequest().withPrefix(prefix).withDelimiter("/"));
 
 		List<Record> records = new ArrayList<>();
 
 		for (String dir : listing.getCommonPrefixes()) {
-			String name = dir.replaceFirst(s3Path, "").replace("/", "");
+			String name = dir.replaceFirst(prefix, "").replace("/", "");
 			records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
 		}
 
@@ -159,31 +162,41 @@ public class S3Filer implements Filer {
 
 	@Override
 	@Nonnull
-	public Record getRecord(@Nonnull String path) throws IOException {
-		ObjectListing listing = s3.listObjects(
-				new ListObjectsRequest().withBucketName(bucket).withPrefix(path.substring(1)));
-
+	public Record getRecord(@Nonnull String path) {
+		ObjectListing listing = s3.listObjects(listObjectsRequest().withPrefix(keyForPath(path)));
 		S3ObjectSummary summary = listing.getObjectSummaries().stream().findFirst().orElse(null);
-		if (summary == null) {
+
+		if (summary == null || !path.equals("/" + summary.getKey())) {
 			return Record.noFile(uri, path);
 		}
 
 		long time = summary.getLastModified().getTime();
 		long size = summary.getSize();
 		boolean directory = summary.getKey().endsWith("/");
-		return new Record(uri, RecordPath.from("/" + summary.getKey()), time, size, directory);
+		return new Record(uri, RecordPath.from(path), time, size, directory);
 	}
 
 	@Override
 	@Nonnull
-	public InputStream readFile(@Nonnull String path) throws IOException {
-		return s3.getObject(bucket, path.substring(1)).getObjectContent();
+	public InputStream readFile(@Nonnull String path) {
+		InputStream in = s3.getObject(bucket, keyForPath(path)).getObjectContent();
+		if (drainOnClose) {
+			return new FilterInputStream(in) {
+				@Override
+				public void close() throws IOException {
+					IOUtils.drainInputStream(in);
+					super.close();
+				}
+			};
+		} else {
+			return in;
+		}
 	}
 
 	@Override
 	@Nonnull
-	public OutputStream writeFile(@Nonnull String path) throws IOException {
-		String key = path.substring(1);
+	public OutputStream writeFile(@Nonnull String path) {
+		String key = keyForPath(path);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		List<Future<PartETag>> futureTags = new ArrayList<>();
 		Lazy<String> uploadId = new Lazy<>(
@@ -267,43 +280,53 @@ public class S3Filer implements Filer {
 
 	@Override
 	@Nonnull
-	public OutputStream appendFile(@Nonnull String path) throws IOException {
+	public OutputStream appendFile(@Nonnull String path) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	@Nonnull
-	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
+	public DataIo openFile(@Nonnull String path, boolean write) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void setFileTime(@Nonnull String path, long time) throws IOException {
-		S3Object object = s3.getObject(bucket, path.substring(1));
-		ObjectMetadata metadata = object.getObjectMetadata();
+	public void setFileTime(@Nonnull String path, long time) {
+		String key = keyForPath(path);
+		ObjectMetadata metadata = s3.getObjectMetadata(bucket, key);
 		metadata.setLastModified(new Date(time));
-		object.setObjectMetadata(metadata);
+		s3.copyObject(new CopyObjectRequest(bucket, key, bucket, key).withNewObjectMetadata(metadata));
 	}
 
 	@Override
-	public void deleteFile(@Nonnull String path) throws IOException {
-		s3.deleteObject(bucket, path.substring(1));
+	public void deleteFile(@Nonnull String path) {
+		s3.deleteObject(bucket, keyForPath(path));
 	}
 
 	@Override
-	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) throws IOException {
+	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void createDirs(@Nonnull String path) throws IOException {
+	public void createDirs(@Nonnull String path) {
 		InputStream in = new ByteArrayInputStream(new byte[0]);
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
-		s3.putObject(bucket, path.substring(1) + "/", in, metadata);
+		s3.putObject(bucket, keyForPath(path) + "/", in, metadata);
+	}
+
+	@Nonnull
+	private String keyForPath(@Nonnull String path) {
+		return path.startsWith("/") ? path.substring(1) : path;
+	}
+
+	@Nonnull
+	private ListObjectsRequest listObjectsRequest() {
+		return new ListObjectsRequest().withBucketName(bucket);
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 	}
 }
