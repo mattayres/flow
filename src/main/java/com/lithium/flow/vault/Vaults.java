@@ -34,7 +34,6 @@ import com.lithium.flow.store.Store;
 import com.lithium.flow.util.Logs;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -57,7 +56,7 @@ public class Vaults {
 	}
 
 	@Nonnull
-	public static Access buildAccess(@Nonnull Config config) throws IOException {
+	public static Access buildAccess(@Nonnull Config config) {
 		return buildAccess(config, buildVault(config));
 	}
 
@@ -81,13 +80,13 @@ public class Vaults {
 	}
 
 	@Nonnull
-	public static Vault buildVault(@Nonnull Locator locator) throws IOException {
+	public static Vault buildVault(@Nonnull Locator locator) {
 		checkNotNull(locator);
 		return buildVault(locator.getInstance(Config.class));
 	}
 
 	@Nonnull
-	public static Vault buildVault(@Nonnull Config config) throws IOException {
+	public static Vault buildVault(@Nonnull Config config)  {
 		checkNotNull(config);
 
 		String path = config.getString("vault.path", System.getProperty("user.home") + "/.vault");
@@ -101,7 +100,7 @@ public class Vaults {
 				log.info("deleting vault");
 				store = new MemoryStore(store);
 				if (!file.delete()) {
-					throw new IOException("failed to delete vault");
+					throw new RuntimeException("failed to delete vault");
 				}
 				if (config.getBoolean("vault.memory", false)) {
 					stores.put(path, store);
@@ -120,12 +119,12 @@ public class Vaults {
 		}
 		if (config.getBoolean("vault.env", false)) {
 			if (!vault.unlock(System.getenv("VAULT_PASSWORD"))) {
-				throw new IOException("failed to unlock vault with env: VAULT_PASSWORD");
+				throw new RuntimeException("failed to unlock vault with env: VAULT_PASSWORD");
 			}
 		}
 		if (config.getBoolean("vault.property", false)) {
 			if (!vault.unlock(System.getProperty("vault.password"))) {
-				throw new IOException("failed to unlock vault with property: vault.password");
+				throw new RuntimeException("failed to unlock vault with property: vault.password");
 			}
 		}
 		return vault;
