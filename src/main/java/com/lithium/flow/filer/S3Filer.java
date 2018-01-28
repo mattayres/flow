@@ -112,7 +112,7 @@ public class S3Filer implements Filer {
 					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
 
 					AmazonS3 testS3 = builder.build();
-					testS3.listObjects(listObjectsRequest());
+					testS3.listObjects(listObjectsRequest().withMaxKeys(1));
 					response.accept();
 					break;
 				} catch (AmazonS3Exception e) {
@@ -143,19 +143,23 @@ public class S3Filer implements Filer {
 
 		List<Record> records = new ArrayList<>();
 
-		for (String dir : listing.getCommonPrefixes()) {
-			String name = dir.replaceFirst(prefix, "").replace("/", "");
-			records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
-		}
-
-		for (S3ObjectSummary summary : listing.getObjectSummaries()) {
-			if (!summary.getKey().endsWith("/")) {
-				String name = RecordPath.getName(summary.getKey());
-				long time = summary.getLastModified().getTime();
-				long size = summary.getSize();
-				records.add(new Record(uri, RecordPath.from(path, name), time, size, false));
+		do {
+			for (String dir : listing.getCommonPrefixes()) {
+				String name = dir.replaceFirst(prefix, "").replace("/", "");
+				records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
 			}
-		}
+
+			for (S3ObjectSummary summary : listing.getObjectSummaries()) {
+				if (!summary.getKey().endsWith("/")) {
+					String name = RecordPath.getName(summary.getKey());
+					long time = summary.getLastModified().getTime();
+					long size = summary.getSize();
+					records.add(new Record(uri, RecordPath.from(path, name), time, size, false));
+				}
+			}
+
+			listing = s3.listNextBatchOfObjects(listing);
+		} while (listing.isTruncated());
 
 		return records;
 	}
