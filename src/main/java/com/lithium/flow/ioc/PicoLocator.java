@@ -17,10 +17,10 @@
 package com.lithium.flow.ioc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.lithium.flow.util.CheckedLazy;
+import static org.picocontainer.Characteristics.CACHE;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +47,7 @@ public class PicoLocator implements Locator {
 	}
 
 	public PicoLocator(@Nullable PicoContainer parentPico) {
-		pico = new DefaultPicoContainer(parentPico);
+		pico = new DefaultPicoContainer(parentPico).as(CACHE);
 	}
 
 	@Override
@@ -96,7 +96,15 @@ public class PicoLocator implements Locator {
 	@Override
 	@Nonnull
 	public List<Object> getInstances() {
-		return pico.getComponents();
+		List<Object> objects = new ArrayList<>();
+
+		PicoContainer nextPico = pico;
+		do {
+			objects.addAll(nextPico.getComponents());
+			nextPico = nextPico.getParent();
+		} while (nextPico != null);
+
+		return objects;
 	}
 
 	@Override
@@ -106,11 +114,11 @@ public class PicoLocator implements Locator {
 	}
 
 	public class Adapter extends AbstractAdapter {
-		private final CheckedLazy<?, Exception> lazy;
+		private final Provider<?> provider;
 
 		public Adapter(@Nonnull Class<?> type, @Nonnull Provider<?> provider) {
 			super(type, type);
-			lazy = new CheckedLazy<>(() -> provider.provide(PicoLocator.this));
+			this.provider = provider;
 		}
 
 		@Override
@@ -118,7 +126,7 @@ public class PicoLocator implements Locator {
 		public Object getComponentInstance(@Nonnull PicoContainer container, @Nullable Type into)
 				throws PicoCompositionException {
 			try {
-				return lazy.get();
+				return provider.provide(PicoLocator.this);
 			} catch (Exception e) {
 				throw new PicoCompositionException("failed to provide type: " + into, e);
 			}
