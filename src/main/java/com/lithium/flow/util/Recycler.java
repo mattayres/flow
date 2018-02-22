@@ -19,6 +19,7 @@ package com.lithium.flow.util;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
+import com.lithium.flow.io.Swallower;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -28,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import com.google.common.cache.LoadingCache;
@@ -51,7 +51,7 @@ public class Recycler<K, V extends Closeable> implements Closeable {
 
 		cache = Caches.buildWithListener(key -> new Bin(key, function.apply(key)),
 				builder -> builder.expireAfterAccess(time, TimeUnit.MILLISECONDS),
-				notification -> IOUtils.closeQuietly(notification.getValue()));
+				notification -> Swallower.close(notification.getValue()));
 	}
 
 	@Nonnull

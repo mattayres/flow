@@ -26,6 +26,7 @@ import com.lithium.flow.config.Configs;
 import com.lithium.flow.config.loaders.FileConfigLoader;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.RecordPath;
+import com.lithium.flow.io.Swallower;
 import com.lithium.flow.shell.Exec;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.util.HostUtils;
@@ -52,7 +53,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -170,7 +170,7 @@ public class RunnerMain {
 	private void finish() {
 		if (runNeedle != null) {
 			runNeedle.finish();
-			IOUtils.closeQuietly(runExec);
+			Swallower.close(runExec);
 		}
 		log.debug("finished");
 	}

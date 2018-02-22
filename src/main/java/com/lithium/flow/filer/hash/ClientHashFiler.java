@@ -19,6 +19,7 @@ package com.lithium.flow.filer.hash;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.filer.DecoratedFiler;
 import com.lithium.flow.filer.Filer;
+import com.lithium.flow.io.Swallower;
 import com.lithium.flow.jetty.JettyClient;
 import com.lithium.flow.util.BaseEncodings;
 
@@ -26,8 +27,6 @@ import java.io.IOException;
 import java.util.Scanner;
 
 import javax.annotation.Nonnull;
-
-import org.apache.commons.io.IOUtils;
 
 import com.google.common.io.BaseEncoding;
 
@@ -58,7 +57,7 @@ public class ClientHashFiler extends DecoratedFiler {
 
 	@Override
 	public void close() throws IOException {
-		IOUtils.closeQuietly(client);
+		Swallower.close(client);
 		super.close();
 	}
 }

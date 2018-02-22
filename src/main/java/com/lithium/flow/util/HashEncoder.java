@@ -50,7 +50,7 @@ public class HashEncoder {
 			IOUtils.copy(hashIn, ByteStreams.nullOutputStream());
 			return encoding.encode(hashIn.hash().asBytes());
 		} finally {
-			IOUtils.closeQuietly(in);
+			in.close();
 		}
 	}
 }

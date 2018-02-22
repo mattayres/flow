@@ -21,6 +21,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.schmizz.sshj.connection.channel.direct.Session.Command;
 
 import com.lithium.flow.io.InputStreamSpliterator;
+import com.lithium.flow.io.Swallower;
 import com.lithium.flow.shell.Exec;
 
 import java.io.IOException;
@@ -30,8 +31,6 @@ import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.apache.commons.io.IOUtils;
 
 import net.schmizz.sshj.connection.channel.direct.Session;
 
@@ -82,9 +81,9 @@ public class SshjExec implements Exec {
 		if (pty) {
 			command.close();
 		} else {
-			IOUtils.closeQuietly(command.getOutputStream());
-			IOUtils.closeQuietly(command.getInputStream());
-			IOUtils.closeQuietly(command.getErrorStream());
+			Swallower.close(command.getOutputStream());
+			Swallower.close(command.getInputStream());
+			Swallower.close(command.getErrorStream());
 		}
 	}
 }

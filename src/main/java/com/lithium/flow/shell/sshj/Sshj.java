@@ -23,13 +23,12 @@ import com.lithium.flow.access.Prompt;
 import com.lithium.flow.access.Prompt.Response;
 import com.lithium.flow.access.Prompt.Type;
 import com.lithium.flow.config.Config;
+import com.lithium.flow.io.Swallower;
 
 import java.io.File;
 import java.io.IOException;
 
 import javax.annotation.Nonnull;
-
-import org.apache.commons.io.IOUtils;
 
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.SecurityUtils;
@@ -140,7 +139,7 @@ public class Sshj extends SSHClient {
 		}
 
 		if (exception != null) {
-			IOUtils.closeQuietly(this);
+			Swallower.close(this);
 			throw exception;
 		}
 	}
