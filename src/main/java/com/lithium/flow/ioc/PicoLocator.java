@@ -19,6 +19,8 @@ package com.lithium.flow.ioc;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.picocontainer.Characteristics.CACHE;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +36,8 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoCompositionException;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.adapters.AbstractAdapter;
+
+import com.google.common.io.Closer;
 
 /**
  * @author Matt Ayres
@@ -111,6 +115,16 @@ public class PicoLocator implements Locator {
 	@Nonnull
 	public Locator createChild() {
 		return new PicoLocator(pico);
+	}
+
+	@Override
+	public void close() throws IOException {
+		try (Closer closer = Closer.create()) {
+			getInstances().stream()
+					.filter(object -> Closeable.class.isAssignableFrom(object.getClass()))
+					.map(object -> (Closeable) object)
+					.forEach(closer::register);
+		}
 	}
 
 	public class Adapter extends AbstractAdapter {

@@ -16,6 +16,7 @@
 
 package com.lithium.flow.ioc;
 
+import java.io.Closeable;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -23,7 +24,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Matt Ayres
  */
-public interface Locator {
+public interface Locator extends Closeable {
 	void addType(@Nonnull Class<?> type);
 
 	void addProvider(@Nonnull Class<?> type, @Nonnull Provider<?> provider);
