@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 
@@ -54,9 +55,9 @@ public class SshjShell implements Shell {
 
 	@Override
 	@Nonnull
-	public synchronized Exec exec(@Nonnull String command) throws IOException {
+	public synchronized Exec exec(@Nonnull String command, @Nullable Boolean pty) throws IOException {
 		checkNotNull(command);
-		return new SshjExec(ssh, command);
+		return new SshjExec(ssh, command, pty);
 	}
 
 	@Override

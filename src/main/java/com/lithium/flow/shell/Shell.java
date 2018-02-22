@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.google.common.base.Joiner;
 
@@ -35,11 +36,21 @@ public interface Shell extends Closeable {
 	URI getUri();
 
 	@Nonnull
-	Exec exec(@Nonnull String command) throws IOException;
+	default Exec exec(@Nonnull String command) throws IOException {
+		return exec(command, null);
+	}
+
+	@Nonnull
+	Exec exec(@Nonnull String command, @Nullable Boolean pty) throws IOException;
 
 	@Nonnull
 	default Exec exec(@Nonnull List<String> commands) throws IOException {
-		return exec(Joiner.on('\n').join(commands));
+		return exec(commands, null);
+	}
+
+	@Nonnull
+	default Exec exec(@Nonnull List<String> commands, @Nullable Boolean pty) throws IOException {
+		return exec(Joiner.on('\n').join(commands), pty);
 	}
 
 	@Nonnull

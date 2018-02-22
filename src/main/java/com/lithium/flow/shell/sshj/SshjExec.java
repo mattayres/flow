@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 
@@ -41,13 +42,13 @@ public class SshjExec implements Exec {
 	private final Command command;
 	private final boolean pty;
 
-	public SshjExec(@Nonnull Sshj ssh, @Nonnull String command) throws IOException {
+	public SshjExec(@Nonnull Sshj ssh, @Nonnull String command, @Nullable Boolean pty) throws IOException {
 		checkNotNull(ssh);
 		checkNotNull(command);
 
 		Session session = ssh.startSession();
-		pty = ssh.isPty();
-		if (pty) {
+		this.pty = pty != null ? pty : ssh.isPty();
+		if (this.pty) {
 			session.allocateDefaultPTY();
 		}
 

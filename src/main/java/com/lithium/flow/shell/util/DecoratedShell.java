@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author Matt Ayres
@@ -47,8 +48,8 @@ public class DecoratedShell implements Shell {
 
 	@Override
 	@Nonnull
-	public Exec exec(@Nonnull String command) throws IOException {
-		return delegate.exec(command);
+	public Exec exec(@Nonnull String command, @Nullable Boolean pty) throws IOException {
+		return delegate.exec(command, pty);
 	}
 
 	@Override

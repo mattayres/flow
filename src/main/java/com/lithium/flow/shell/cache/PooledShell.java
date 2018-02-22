@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 
@@ -70,11 +71,11 @@ public class PooledShell implements Shell {
 
 	@Override
 	@Nonnull
-	public Exec exec(@Nonnull String command) throws IOException {
+	public Exec exec(@Nonnull String command, @Nullable Boolean pty) throws IOException {
 		checkNotNull(command);
 
 		Token token = createToken();
-		Exec exec = token.getShell().exec(command);
+		Exec exec = token.getShell().exec(command, pty);
 		return new Exec() {
 			@Nonnull
 			@Override

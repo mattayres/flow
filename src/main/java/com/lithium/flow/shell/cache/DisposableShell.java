@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author Matt Ayres
@@ -56,9 +57,9 @@ public class DisposableShell implements Shell {
 
 	@Override
 	@Nonnull
-	public Exec exec(@Nonnull String command) throws IOException {
+	public Exec exec(@Nonnull String command, @Nullable Boolean pty) throws IOException {
 		checkNotNull(command);
-		return reusable.get(this).exec(command);
+		return reusable.get(this).exec(command, pty);
 	}
 
 	@Override
