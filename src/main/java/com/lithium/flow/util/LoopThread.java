@@ -18,6 +18,8 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.config.Config;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -100,6 +102,14 @@ public class LoopThread extends Thread {
 	public void finish() {
 		doFinish = true;
 		Sleep.until(() -> finished);
+	}
+
+	@Nonnull
+	public static LoopThread from(@Nonnull Config config, @Nonnull Executable executable) {
+		long interval = config.getTime("loopInterval");
+		long offset = config.getTime("loopOffset", "0");
+		boolean round = config.getBoolean("loopRound", false);
+		return new LoopThread(interval, offset, round, executable);
 	}
 
 	@Nonnull
