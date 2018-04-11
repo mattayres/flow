@@ -17,6 +17,7 @@
 package com.lithium.flow.runner;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 
 import com.lithium.flow.config.Config;
@@ -42,8 +43,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -113,7 +112,7 @@ public class RunnerMain {
 
 		String configOut = runnerConfig.getString("config.out");
 		destFiler.createDirs(RecordPath.getFolder(configOut));
-		writeConfig(deployConfig, destFiler.writeFile(configOut), StandardCharsets.UTF_8);
+		writeConfig(deployConfig, destFiler.writeFile(configOut));
 		log.debug("wrote: {}", configOut);
 
 		String classpath = Joiner.on(":").join(context.getClasspath(runnerConfig.getString("dest.dir")));
@@ -122,6 +121,8 @@ public class RunnerMain {
 		installJava();
 
 		destFiler.close();
+
+		context.getHostsMeasure().incDone();
 
 		if (!runnerConfig.getBoolean("run", true)) {
 			return;
@@ -175,15 +176,14 @@ public class RunnerMain {
 		log.debug("finished");
 	}
 
-	private void writeConfig(@Nonnull Config config, @Nonnull OutputStream out, @Nonnull Charset charset)
-			throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, charset));
-		Map<String, String> map = runnerConfig.getBoolean("config.sorted", true)
-				? config.asSortedMap() : config.asMap();
-		for (Map.Entry<String, String> entry : map.entrySet()) {
-			writer.write(entry.getKey() + " = " + entry.getValue() + "\r\n");
+	private void writeConfig(@Nonnull Config config, @Nonnull OutputStream out) throws IOException {
+		boolean sorted = runnerConfig.getBoolean("config.sorted", true);
+		Map<String, String> map = sorted ? config.asSortedMap() : config.asMap();
+		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, UTF_8))) {
+			for (Map.Entry<String, String> entry : map.entrySet()) {
+				writer.write(entry.getKey() + " = " + entry.getValue() + "\r\n");
+			}
 		}
-		writer.close();
 	}
 
 	private void installJava() throws IOException {
@@ -227,7 +227,7 @@ public class RunnerMain {
 		if (runnerConfig.getBoolean("kill", false)) {
 			killPid(pid, false);
 			log.debug("killing pid {}", pid);
-			if (!Sleep.softly(5000)) {
+			if (!Sleep.softly(runnerConfig.getTime("kill.sleepTime", "5s"))) {
 				return;
 			}
 		} else {
@@ -241,7 +241,7 @@ public class RunnerMain {
 			if (runnerConfig.getBoolean("kill.force", false)) {
 				killPid(pid, true);
 				log.debug("force killing pid {}", pid);
-				Sleep.softly(2000);
+				Sleep.softly(runnerConfig.getTime("kill.force.sleepTime", "2s"));
 			} else {
 				log.debug("aborting");
 			}

@@ -144,7 +144,6 @@ public class RunnerSync {
 		});
 
 		needle.finish();
-		context.getHostsMeasure().incDone();
 	}
 
 	private void copyJar(@Nonnull Record srcRecord, @Nonnull String destPath) throws IOException {
