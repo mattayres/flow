@@ -28,8 +28,9 @@ import javax.annotation.Nonnull;
  */
 public class CounterInputStream extends FilterInputStream {
 	private final AtomicLong counter;
+	private long mark;
 
-	public CounterInputStream(InputStream in, AtomicLong counter) {
+	public CounterInputStream(@Nonnull InputStream in, @Nonnull AtomicLong counter) {
 		super(in);
 		this.counter = counter;
 	}
@@ -37,21 +38,46 @@ public class CounterInputStream extends FilterInputStream {
 	@Override
 	public int read() throws IOException {
 		int read = in.read();
-		counter.incrementAndGet();
+		if (read != -1) {
+			counter.incrementAndGet();
+		}
 		return read;
 	}
 
 	@Override
 	public int read(@Nonnull byte[] b) throws IOException {
 		int read = in.read(b);
-		counter.addAndGet(read);
+		if (read != -1) {
+			counter.addAndGet(read);
+		}
 		return read;
 	}
 
 	@Override
 	public int read(@Nonnull byte[] b, int off, int len) throws IOException {
 		int read = in.read(b, off, len);
+		if (read != -1) {
+			counter.addAndGet(read);
+		}
+		return read;
+	}
+
+	@Override
+	public long skip(long n) throws IOException {
+		long read = in.skip(n);
 		counter.addAndGet(read);
 		return read;
+	}
+
+	@Override
+	public void mark(int limit) {
+		in.mark(limit);
+		mark = counter.get();
+	}
+
+	@Override
+	public void reset() throws IOException {
+		in.reset();
+		counter.set(mark);
 	}
 }
