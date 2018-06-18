@@ -174,6 +174,7 @@ public class RunnerMain {
 
 			if (readyString != null) {
 				Sleep.until(ready::get);
+				Sleep.softly(runnerConfig.getTime("run.readySleep", "0"));
 			}
 		} catch (IOException e) {
 			log.warn("exec failed", e);
