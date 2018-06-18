@@ -21,7 +21,7 @@ public class Swallower {
 				if (closeable != null) {
 					closeable.close();
 				}
-			} catch (IOException e) {
+			} catch (IOException | RuntimeException e) {
 				//
 			}
 		}
