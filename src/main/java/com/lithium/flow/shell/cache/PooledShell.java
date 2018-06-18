@@ -22,6 +22,7 @@ import com.lithium.flow.access.Login;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.filer.DecoratedFiler;
 import com.lithium.flow.filer.Filer;
+import com.lithium.flow.io.Swallower;
 import com.lithium.flow.shell.Exec;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.shell.Shore;
@@ -41,8 +42,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.apache.commons.io.IOUtils;
 
 /**
  * @author Matt Ayres
@@ -135,7 +134,7 @@ public class PooledShell implements Shell {
 	@Override
 	public void close() throws IOException {
 		synchronized (slots) {
-			slots.forEach(IOUtils::closeQuietly);
+			slots.forEach(Swallower::close);
 		}
 	}
 

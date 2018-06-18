@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.access.Access;
 import com.lithium.flow.access.Login;
 import com.lithium.flow.config.Config;
+import com.lithium.flow.io.Swallower;
 import com.lithium.flow.shell.Shore;
 import com.lithium.flow.shell.Tunnel;
 import com.lithium.flow.shell.Tunneler;
@@ -35,7 +36,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import com.google.common.base.Splitter;
@@ -104,7 +104,7 @@ public class ShellTunneler implements Tunneler {
 
 	@Override
 	public void close() throws IOException {
-		tunnels.forEach(IOUtils::closeQuietly);
+		tunnels.forEach(Swallower::close);
 		shore.close();
 	}
 }

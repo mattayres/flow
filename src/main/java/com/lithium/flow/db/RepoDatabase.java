@@ -20,14 +20,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Repo;
+import com.lithium.flow.io.Swallower;
 import com.lithium.flow.util.Caches;
 
 import java.io.IOException;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
-
-import org.apache.commons.io.IOUtils;
 
 import com.google.common.cache.LoadingCache;
 
@@ -51,6 +50,6 @@ public class RepoDatabase implements Database {
 
 	@Override
 	public void close() throws IOException {
-		schemas.asMap().values().forEach(IOUtils::closeQuietly);
+		schemas.asMap().values().forEach(Swallower::close);
 	}
 }

@@ -24,6 +24,7 @@ import com.lithium.flow.config.Configs;
 import com.lithium.flow.config.Repo;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Record;
+import com.lithium.flow.io.Swallower;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,8 +36,6 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import javax.annotation.Nonnull;
-
-import org.apache.commons.io.IOUtils;
 
 /**
  * @author Matt Ayres
@@ -128,6 +127,6 @@ public class FilerRepo implements Repo {
 
 	@Override
 	public void close() throws IOException {
-		filers.forEach(IOUtils::closeQuietly);
+		filers.forEach(Swallower::close);
 	}
 }

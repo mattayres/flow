@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.lithium.flow.access.Access;
 import com.lithium.flow.access.Login;
 import com.lithium.flow.config.Config;
+import com.lithium.flow.io.Swallower;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.shell.Shore;
 import com.lithium.flow.shell.util.DecoratedShell;
@@ -28,14 +29,12 @@ import com.lithium.flow.util.Mutex;
 import com.lithium.flow.util.Mutexes;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
-import java.net.URI;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
-
-import org.apache.commons.io.IOUtils;
 
 /**
  * @author Matt Ayres
@@ -83,6 +82,6 @@ public class SshjShore implements Shore {
 
 	@Override
 	public void close() throws IOException {
-		shells.forEach(IOUtils::closeQuietly);
+		shells.forEach(Swallower::close);
 	}
 }
