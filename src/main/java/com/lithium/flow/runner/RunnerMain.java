@@ -218,34 +218,47 @@ public class RunnerMain {
 	}
 
 	private void kill(@Nonnull String key) throws IOException {
+		String name = runnerConfig.getString("name");
 		Integer pid = getPid(key);
 		if (pid == null) {
 			return;
 		}
 
-		log.debug("found existing pid {}", pid);
-		if (runnerConfig.getBoolean("kill", false)) {
-			killPid(pid, false);
-			log.debug("killing pid {}", pid);
-			if (!Sleep.softly(runnerConfig.getTime("kill.sleepTime", "5s"))) {
-				return;
-			}
-		} else {
-			log.debug("aborting");
-			return;
+		if (!runnerConfig.getBoolean("kill", false)) {
+			throw new IOException(Logs.message("pid {} already exists for {}={}", pid, key, name));
 		}
 
-		pid = getPid(key);
-		if (pid != null) {
-			log.debug("failed to kill pid {}", pid);
-			if (runnerConfig.getBoolean("kill.force", false)) {
-				killPid(pid, true);
-				log.debug("force killing pid {}", pid);
-				Sleep.softly(runnerConfig.getTime("kill.force.sleepTime", "2s"));
-			} else {
-				log.debug("aborting");
+		log.info("killing existing pid {} for {}={}", pid, key, name);
+		killPid(pid, false);
+
+		long maxTime = runnerConfig.getTime("kill.maxTime", "10s");
+		long endTime = System.currentTimeMillis() + maxTime;
+
+		while (System.currentTimeMillis() < endTime) {
+			Sleep.softly(500);
+			if (getPid(key) == null) {
+				log.info("killed existing pid {} for {}={}", pid, key, name);
+				return;
 			}
 		}
+
+		if (!runnerConfig.getBoolean("kill.force", false)) {
+			throw new IOException(Logs.message("failed to kill existing pid {} for {}={}", pid, key, name));
+		}
+
+		log.info("force killing existing pid {} for {}={}", pid, key, name);
+		killPid(pid, true);
+
+		endTime = System.currentTimeMillis() + maxTime;
+		while (System.currentTimeMillis() < endTime) {
+			Sleep.softly(500);
+			if (getPid(key) == null) {
+				log.info("force killed existing pid {} for {}={}", pid, key, name);
+				return;
+			}
+		}
+
+		throw new IOException(Logs.message("failed to force kill existing pid {} for {}={}", pid, key, name));
 	}
 
 	@Nonnull
