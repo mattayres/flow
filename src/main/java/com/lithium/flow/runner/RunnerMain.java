@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -158,11 +159,22 @@ public class RunnerMain {
 				commands.add(command);
 			}
 
+			String readyString = runnerConfig.getString("run.readyString", null);
+			AtomicBoolean ready = new AtomicBoolean();
+
 			commands.forEach(run -> log.debug("running: {}", run));
 			runExec = getShell().exec(commands);
-			runNeedle.execute("out@" + host, () -> runExec.out().forEach(line -> System.out.println(prefix + line)));
+			runNeedle.execute("out@" + host, () -> runExec.out().forEach(line -> {
+				System.out.println(prefix + line);
+				if (readyString != null && line.contains(readyString)) {
+					ready.set(true);
+				}
+			}));
 			runNeedle.execute("err@" + host, () -> runExec.err().forEach(line -> System.err.println(prefix + line)));
 
+			if (readyString != null) {
+				Sleep.until(ready::get);
+			}
 		} catch (IOException e) {
 			log.warn("exec failed", e);
 		}
