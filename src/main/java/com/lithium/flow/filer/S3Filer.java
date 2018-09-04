@@ -43,9 +43,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
@@ -72,6 +74,7 @@ public class S3Filer implements Filer {
 	private final File tempDir;
 	private final boolean drainOnClose;
 	private final ExecutorService service;
+	private final boolean bypassCreateDirs;
 
 	public S3Filer(@Nonnull Config config, @Nonnull Access access) {
 		checkNotNull(config);
@@ -92,13 +95,21 @@ public class S3Filer implements Filer {
 		tempDir = new File(config.getString("s3.tempDir", System.getProperty("java.io.tmpdir")));
 		drainOnClose = config.getBoolean("s3.drainOnClose", false);
 		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
+		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
 
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 
 		String region = config.getString("aws.region", null);
-		if (region != null) {
+		String endpoint = config.getString("aws.endpoint", null);
+
+		if (endpoint != null) {
+			builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region));
+		} else if (region != null) {
 			builder.withRegion(region);
 		}
+
+		builder.withChunkedEncodingDisabled(getBooleanOrNull(config, "s3.chunkedEncodingDisabled"));
+		builder.withPathStyleAccessEnabled(getBooleanOrNull(config, "s3.pathStyleAccessEnabled"));
 
 		String key = config.getString("aws.key", null);
 		if (key != null) {
@@ -127,6 +138,11 @@ public class S3Filer implements Filer {
 		}
 
 		s3 = builder.build();
+	}
+
+	@Nullable
+	private Boolean getBooleanOrNull(@Nonnull Config config, @Nonnull String key) {
+		return config.containsKey(key) ? config.getBoolean(key) : null;
 	}
 
 	@Override
@@ -314,10 +330,12 @@ public class S3Filer implements Filer {
 
 	@Override
 	public void createDirs(@Nonnull String path) {
-		InputStream in = new ByteArrayInputStream(new byte[0]);
-		ObjectMetadata metadata = new ObjectMetadata();
-		metadata.setContentLength(0);
-		s3.putObject(bucket, keyForPath(path) + "/", in, metadata);
+		if (!bypassCreateDirs) {
+			InputStream in = new ByteArrayInputStream(new byte[0]);
+			ObjectMetadata metadata = new ObjectMetadata();
+			metadata.setContentLength(0);
+			s3.putObject(bucket, keyForPath(path) + "/", in, metadata);
+		}
 	}
 
 	@Nonnull
