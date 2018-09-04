@@ -69,4 +69,11 @@ public class HostUtilsTest {
 		List<String> expanded = HostUtils.expand("foo[1-5,!3]");
 		assertEquals(expected, expanded);
 	}
+
+	@Test
+	public void testMultiple() {
+		List<String> expected = Arrays.asList("foo13", "foo14", "foo23", "foo24");
+		List<String> expanded = HostUtils.expand("foo[1-2][3-4]");
+		assertEquals(expected, expanded);
+	}
 }

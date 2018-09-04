@@ -62,7 +62,7 @@ public class HostUtils {
 			}
 
 			includes.removeAll(excludes);
-			return includes;
+			return expand(includes);
 		} else {
 			return Collections.singletonList(expression);
 		}
