@@ -47,31 +47,32 @@ public class MavenJarProvider implements JarProvider {
 	@Override
 	public boolean copy(@Nonnull String path, @Nonnull Shell shell, @Nonnull Filer destFiler, @Nonnull String destDir)
 			throws IOException {
+
 		String name = RecordPath.getName(path);
 		String destPath = destDir + "/" + name;
-
 		Record srcRecord = srcFiler.getRecord(path);
+
 		long srcSize = srcRecord.getSize();
 		long destSize = destFiler.getRecord(destPath).getSize();
-		if (srcSize != destSize) {
-			log.debug("jar: ({} <-> {}) {} -> {}", srcSize, destSize, path, destPath);
-
-			String m2Marker = "/.m2/repository/";
-			int index = path.indexOf(m2Marker);
-			if (index > -1) {
-				String m2Path = path.substring(index + m2Marker.length());
-				String libPath = destDir + "/" + name;
-				String command = "curl -sL http://search.maven.org/remotecontent?filepath=" + m2Path + " > " + libPath;
-
-				log.debug("maven download: {}", destPath);
-				shell.exec(command).exit();
-
-				return true;
-			} else {
-				return false;
-			}
-		} else {
+		if (srcSize == destSize) {
 			return true;
 		}
+
+		log.debug("jar: ({} <-> {}) {} -> {}", srcSize, destSize, path, destPath);
+
+		String m2Marker = "/.m2/repository/";
+		int index = path.indexOf(m2Marker);
+		if (index == -1) {
+			return false;
+		}
+
+		String m2Path = path.substring(index + m2Marker.length());
+		String libPath = destDir + "/" + name;
+		String command = "curl -sL http://search.maven.org/remotecontent?filepath=" + m2Path + " > " + libPath;
+
+		log.debug("maven download: {}", destPath);
+		shell.exec(command).exit();
+
+		return srcSize == destFiler.getRecord(destPath).getSize();
 	}
 }
