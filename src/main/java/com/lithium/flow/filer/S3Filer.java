@@ -325,7 +325,10 @@ public class S3Filer implements Filer {
 
 	@Override
 	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) {
-		throw new UnsupportedOperationException();
+		String oldKey = keyForPath(oldPath);
+		String newKey = keyForPath(newPath);
+		s3.copyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
+		s3.deleteObject(bucket, oldKey);
 	}
 
 	@Override
