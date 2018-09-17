@@ -54,13 +54,13 @@ public class ParallelCoder implements Coder {
 
 	@Override
 	@Nonnull
-	public InputStream wrapIn(@Nonnull InputStream in) throws IOException {
+	public InputStream wrapIn(@Nonnull InputStream in) {
 		return in;
 	}
 
 	@Override
 	@Nonnull
-	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
+	public OutputStream wrapOut(@Nonnull OutputStream out, int option) {
 		return new FilterOutputStream(out) {
 			private ByteArrayOutputStream buf = new ByteArrayOutputStream();
 			private volatile boolean running;
@@ -70,7 +70,7 @@ public class ParallelCoder implements Coder {
 			private Exception exception;
 
 			@Override
-			public void write(int b) throws IOException {
+			public void write(int b) {
 				buf.write(b);
 				if (buf.size() > chunkSize) {
 					cycle();
@@ -86,7 +86,7 @@ public class ParallelCoder implements Coder {
 			}
 
 			@Override
-			public void write(@Nonnull byte b[], int off, int len) throws IOException {
+			public void write(@Nonnull byte b[], int off, int len) {
 				buf.write(b, off, len);
 				if (buf.size() > chunkSize) {
 					cycle();

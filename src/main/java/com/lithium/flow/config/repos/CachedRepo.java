@@ -62,7 +62,7 @@ public class CachedRepo implements Repo {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		namesCache.invalidateAll();
 		configCache.invalidateAll();
 	}

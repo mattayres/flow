@@ -40,7 +40,7 @@ public class RemoteFilerMain {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		Main.run();
 	}
 }

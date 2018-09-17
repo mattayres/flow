@@ -23,8 +23,6 @@ import com.lithium.flow.access.Login;
 import com.lithium.flow.access.Prompt;
 import com.lithium.flow.config.Config;
 
-import java.io.IOException;
-
 import javax.annotation.Nonnull;
 
 /**
@@ -47,7 +45,7 @@ public class ShellAccess implements Access {
 
 	@Override
 	@Nonnull
-	public Login getLogin(@Nonnull String spec) throws IOException {
+	public Login getLogin(@Nonnull String spec) {
 		checkNotNull(spec);
 
 		Login login = Login.from(spec);

@@ -19,8 +19,6 @@ package com.lithium.flow.runner;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.shell.Shell;
 
-import java.io.IOException;
-
 import javax.annotation.Nonnull;
 
 /**
@@ -28,8 +26,7 @@ import javax.annotation.Nonnull;
  */
 public class NoJarProvider implements JarProvider {
 	@Override
-	public boolean copy(@Nonnull String path, @Nonnull Shell shell, @Nonnull Filer destFiler, @Nonnull String destDir)
-			throws IOException {
+	public boolean copy(@Nonnull String path, @Nonnull Shell shell, @Nonnull Filer destFiler, @Nonnull String destDir) {
 		return false;
 	}
 }

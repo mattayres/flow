@@ -47,12 +47,12 @@ public class SshjDataIo implements DataIo {
 	}
 
 	@Override
-	public long getFilePointer() throws IOException {
+	public long getFilePointer() {
 		return fp;
 	}
 
 	@Override
-	public void seek(long pos) throws IOException {
+	public void seek(long pos) {
 		fp = pos;
 	}
 
@@ -79,8 +79,8 @@ public class SshjDataIo implements DataIo {
 		}
 	}
 
-	private int readFile(@Nonnull byte[] b) throws IOException {
-		return readFile(b, 0, b.length);
+	private void readFile(@Nonnull byte[] b) throws IOException {
+		readFile(b, 0, b.length);
 	}
 
 	private int readFile(@Nonnull byte[] b, int off, int len) throws IOException {

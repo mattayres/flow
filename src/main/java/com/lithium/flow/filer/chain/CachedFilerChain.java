@@ -35,7 +35,7 @@ public class CachedFilerChain implements Chain<Filer> {
 
 	@Override
 	@Nonnull
-	public Filer chain(@Nonnull Filer input) throws Exception {
+	public Filer chain(@Nonnull Filer input) {
 		return new CachedFiler(input, config);
 	}
 }

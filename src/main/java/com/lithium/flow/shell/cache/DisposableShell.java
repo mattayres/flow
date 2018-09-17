@@ -76,14 +76,14 @@ public class DisposableShell implements Shell {
 		Reusable<Filer> reusableFiler = filers.get(this);
 		return new DecoratedFiler(reusableFiler.get(this)) {
 			@Override
-			public void close() throws IOException {
+			public void close() {
 				reusableFiler.recycle(this);
 			}
 		};
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		tunnels.close();
 		filers.close();
 		reusable.recycle(this);

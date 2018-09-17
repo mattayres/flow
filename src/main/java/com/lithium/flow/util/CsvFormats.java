@@ -47,7 +47,7 @@ public class CsvFormats {
 			case "tdf":
 				return CSVFormat.TDF;
 			case "custom":
-				return CSVFormat.newFormat(getChar(config, "csv.delimiter", ','))
+				return CSVFormat.newFormat(getChar(config))
 						.withAllowMissingColumnNames(getBoolean(config, "csv.allowMissingColumnNames"))
 						.withCommentMarker(getChar(config, "csv.commentMarker"))
 						.withEscape(getChar(config, "csv.escape"))
@@ -56,7 +56,7 @@ public class CsvFormats {
 						.withIgnoreSurroundingSpaces(getBoolean(config, "csv.ignoreSurroundingSpaces"))
 						.withNullString(getString(config, "csv.nullString"))
 						.withQuote(getChar(config, "csv.quote"))
-						.withQuoteMode(getQuoteMode(config, "csv.quoteMode"))
+						.withQuoteMode(getQuoteMode(config))
 						.withRecordSeparator(getString(config, "csv.recordSeparator"))
 						.withSkipHeaderRecord(getBoolean(config, "csv.skipHeaderRecord"));
 			default:
@@ -64,9 +64,9 @@ public class CsvFormats {
 		}
 	}
 
-	private static char getChar(@Nonnull Config config, @Nonnull String key, char def) {
-		String value = config.getString(key);
-		return value.isEmpty() ? def : value.charAt(0);
+	private static char getChar(@Nonnull Config config) {
+		String value = config.getString("csv.delimiter");
+		return value.isEmpty() ? ',' : value.charAt(0);
 	}
 
 	private static Character getChar(@Nonnull Config config, @Nonnull String key) {
@@ -84,7 +84,7 @@ public class CsvFormats {
 			return null;
 		} else {
 			List<String> headers = config.getList(key);
-			return headers.toArray(new String[headers.size()]);
+			return headers.toArray(new String[0]);
 		}
 	}
 
@@ -94,8 +94,8 @@ public class CsvFormats {
 	}
 
 	@Nullable
-	private static QuoteMode getQuoteMode(@Nonnull Config config, @Nonnull String key) {
-		switch (config.getString(key, "default")) {
+	private static QuoteMode getQuoteMode(@Nonnull Config config) {
+		switch (config.getString("csv.quoteMode", "default")) {
 			case "default":
 				return null;
 			case "all":

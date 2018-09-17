@@ -43,7 +43,7 @@ public class ClasspathConfigLoaderTest {
 	}
 
 	@Test
-	public void testInvalidPath() throws IOException {
+	public void testInvalidPath() {
 		InputStream in = new ClasspathConfigLoader("/foo/bar").getInputStream("test.config");
 		assertNull(in);
 	}

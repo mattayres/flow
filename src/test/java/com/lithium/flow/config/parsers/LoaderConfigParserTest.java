@@ -26,8 +26,6 @@ import static org.junit.Assert.assertTrue;
 import com.lithium.flow.config.ConfigBuilder;
 import com.lithium.flow.config.loaders.FileConfigLoader;
 
-import java.io.IOException;
-
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -36,14 +34,14 @@ import org.junit.Test;
  */
 public class LoaderConfigParserTest {
 	@Test
-	public void testLoader() throws IOException {
+	public void testLoader() {
 		testLoader("!loader dir1", "dir1");
 		testLoader("!loader\tdir1/dir2", "dir1/dir2");
 		testLoader("!loader  dir1/dir2/dir3", "dir1/dir2/dir3");
 		testLoader("!loader dir1 ", "dir1");
 	}
 
-	private void testLoader(String line, String loader) throws IOException {
+	private void testLoader(String line, String loader) {
 		ConfigBuilder builder = createMock(ConfigBuilder.class);
 		LoaderConfigParser.Callback callback = createMock(LoaderConfigParser.Callback.class);
 		callback.onLoader(EasyMock.isA(FileConfigLoader.class));
@@ -54,12 +52,12 @@ public class LoaderConfigParserTest {
 	}
 
 	@Test
-	public void testNoLoader() throws IOException {
+	public void testNoLoader() {
 		testNoLoader("#loader dir1");
 		testNoLoader(" !loader dir1/dir2");
 	}
 
-	private void testNoLoader(String line) throws IOException {
+	private void testNoLoader(String line) {
 		ConfigBuilder builder = createMock(ConfigBuilder.class);
 		LoaderConfigParser.Callback callback = createMock(LoaderConfigParser.Callback.class);
 		replay(builder);

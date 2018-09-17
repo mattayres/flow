@@ -20,8 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.shell.Tunnel;
 
-import java.io.IOException;
-
 import javax.annotation.Nonnull;
 
 /**
@@ -48,6 +46,6 @@ public class NoTunnel implements Tunnel {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 	}
 }

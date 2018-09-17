@@ -75,7 +75,7 @@ public class ScheduledRepo implements Repo {
 
 	@Override
 	@Nonnull
-	public List<String> getNames() throws IOException {
+	public List<String> getNames() {
 		return new ArrayList<>(getConfigMap().keySet());
 	}
 
@@ -92,13 +92,13 @@ public class ScheduledRepo implements Repo {
 
 	@Override
 	@Nonnull
-	public List<Config> getConfigs() throws IOException {
+	public List<Config> getConfigs() {
 		return Lists.newArrayList(getConfigMap().values());
 	}
 
 	@Nonnull
 	@Override
-	public Stream<Config> streamConfigs() throws IOException {
+	public Stream<Config> streamConfigs() {
 		return getConfigMap().values().stream();
 	}
 
@@ -108,7 +108,7 @@ public class ScheduledRepo implements Repo {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		thread.interrupt();
 	}
 }

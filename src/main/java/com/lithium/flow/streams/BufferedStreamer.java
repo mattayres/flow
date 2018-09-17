@@ -22,7 +22,6 @@ import com.lithium.flow.config.Config;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -43,13 +42,13 @@ public final class BufferedStreamer implements Streamer {
 
 	@Override
 	@Nonnull
-	public final OutputStream filterOut(@Nonnull OutputStream out, String name) throws IOException {
+	public final OutputStream filterOut(@Nonnull OutputStream out, String name) {
 		return new BufferedOutputStream(out, size);
 	}
 
 	@Override
 	@Nonnull
-	public final InputStream filterIn(@Nonnull InputStream in, String name) throws IOException {
+	public final InputStream filterIn(@Nonnull InputStream in, String name) {
 		return new BufferedInputStream(in, size);
 	}
 }

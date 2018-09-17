@@ -79,7 +79,7 @@ public class PoolSvnProvider extends BasePooledObjectFactory<SVNRepository> impl
 	}
 
 	@Override
-	public void destroyObject(@Nonnull PooledObject<SVNRepository> pooled) throws Exception {
+	public void destroyObject(@Nonnull PooledObject<SVNRepository> pooled) {
 		SVNRepository repository = pooled.getObject();
 		delegate.releaseRepository(repository);
 	}

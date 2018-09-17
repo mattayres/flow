@@ -16,7 +16,6 @@
 
 package com.lithium.flow.compress;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -28,13 +27,13 @@ import javax.annotation.Nonnull;
 public class NoCoder implements Coder {
 	@Override
 	@Nonnull
-	public InputStream wrapIn(@Nonnull InputStream in) throws IOException {
+	public InputStream wrapIn(@Nonnull InputStream in) {
 		return in;
 	}
 
 	@Override
 	@Nonnull
-	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
+	public OutputStream wrapOut(@Nonnull OutputStream out, int option) {
 		return out;
 	}
 

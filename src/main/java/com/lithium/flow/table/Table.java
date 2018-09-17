@@ -73,10 +73,7 @@ public interface Table extends Closeable {
 
 	default long copyTo(@Nonnull Table table) {
 		checkNotNull(table);
-		return rows().map(row -> {
-			table.putRow(row);
-			return row;
-		}).count();
+		return rows().peek(table::putRow).count();
 	}
 
 	default void close() throws IOException {

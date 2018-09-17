@@ -37,7 +37,7 @@ public class LzfCoder implements Coder {
 
 	@Override
 	@Nonnull
-	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
+	public OutputStream wrapOut(@Nonnull OutputStream out, int option) {
 		return new LZFOutputStream(out);
 	}
 

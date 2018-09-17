@@ -81,7 +81,7 @@ public class SshjShore implements Shore {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		shells.forEach(Swallower::close);
 	}
 }

@@ -28,7 +28,6 @@ import com.lithium.flow.shell.Exec;
 import com.lithium.flow.shell.Shell;
 import com.lithium.flow.util.BaseEncodings;
 import com.lithium.flow.util.CheckedSupplier;
-import com.lithium.flow.util.Logs;
 
 import java.io.IOException;
 import java.net.URI;
@@ -37,14 +36,10 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
-import org.slf4j.Logger;
-
 /**
  * @author Matt Ayres
  */
 public class FasterShellFiler extends DecoratedFiler {
-	private static final Logger log = Logs.getLogger();
-
 	private final CheckedSupplier<Shell, IOException> supplier;
 
 	public FasterShellFiler(@Nonnull Filer filer, @Nonnull CheckedSupplier<Shell, IOException> supplier) {

@@ -17,7 +17,6 @@
 package com.lithium.flow.vault;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.store.Store;
@@ -32,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -212,7 +212,8 @@ public class SecureVault implements Vault {
 	@Override
 	@Nonnull
 	public Set<String> getKeys() {
-		return new LinkedHashSet<>(store.getKeys().stream().filter(k -> !k.startsWith("vault.")).collect(toList()));
+		return store.getKeys().stream().filter(k -> !k.startsWith("vault."))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Nonnull

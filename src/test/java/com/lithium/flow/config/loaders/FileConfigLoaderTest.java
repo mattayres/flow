@@ -42,7 +42,7 @@ public class FileConfigLoaderTest {
 	}
 
 	@AfterClass
-	public static void tearDown() throws Exception {
+	public static void tearDown() {
 		file.delete();
 	}
 

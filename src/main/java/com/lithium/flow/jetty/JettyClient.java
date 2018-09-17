@@ -91,7 +91,7 @@ public class JettyClient extends BasePooledObjectFactory<Session> implements Clo
 	}
 
 	@Override
-	public void destroyObject(@Nonnull PooledObject<Session> pooled) throws Exception {
+	public void destroyObject(@Nonnull PooledObject<Session> pooled) {
 		Session session = pooled.getObject();
 		session.close();
 	}

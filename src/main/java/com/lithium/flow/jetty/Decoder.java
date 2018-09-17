@@ -16,6 +16,8 @@
 
 package com.lithium.flow.jetty;
 
+import java.io.IOException;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -23,5 +25,5 @@ import javax.annotation.Nonnull;
  */
 public interface Decoder<T> {
 	@Nonnull
-	T decode(@Nonnull String input) throws Exception;
+	T decode(@Nonnull String input) throws IOException;
 }

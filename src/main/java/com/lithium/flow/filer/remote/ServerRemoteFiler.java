@@ -66,12 +66,12 @@ public class ServerRemoteFiler extends DecoratedFiler implements RemoteFiler, Se
 
 	@Override
 	@Nonnull
-	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
+	public DataIo openFile(@Nonnull String path, boolean write) {
 		throw new UnsupportedOperationException("openFile not implemented yet");
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		// ignore
 	}
 }

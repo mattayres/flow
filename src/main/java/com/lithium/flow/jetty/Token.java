@@ -51,7 +51,7 @@ public class Token<T> {
 		}
 	}
 
-	public void set(@Nonnull String result) throws Exception {
+	public void set(@Nonnull String result) throws IOException {
 		object = decoder.decode(result);
 		latch.countDown();
 	}

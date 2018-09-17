@@ -25,8 +25,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.lithium.flow.config.ConfigBuilder;
 
-import java.io.IOException;
-
 import org.junit.Test;
 
 /**
@@ -34,12 +32,12 @@ import org.junit.Test;
  */
 public class SetNullConfigParserTest {
 	@Test
-	public void testSetNull() throws IOException {
+	public void testSetNull() {
 		testSetNull("foo 0=", "foo");
 		testSetNull("foo 0= bar", "foo");
 	}
 
-	private void testSetNull(String line, String key) throws IOException {
+	private void testSetNull(String line, String key) {
 		ConfigBuilder builder = createMock(ConfigBuilder.class);
 		expect(builder.removeKey(key)).andReturn(builder);
 		replay(builder);
@@ -48,13 +46,13 @@ public class SetNullConfigParserTest {
 	}
 
 	@Test
-	public void testNoSetNull() throws IOException {
+	public void testNoSetNull() {
 		testNoSetNull("foo = bar");
 		testNoSetNull("foo !=");
 		testNoSetNull("foo =0");
 	}
 
-	private void testNoSetNull(String line) throws IOException {
+	private void testNoSetNull(String line) {
 		ConfigBuilder builder = createMock(ConfigBuilder.class);
 		replay(builder);
 		assertFalse(new SetNullConfigParser().parseLine(line, builder));

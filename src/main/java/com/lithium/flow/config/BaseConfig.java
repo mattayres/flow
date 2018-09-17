@@ -115,7 +115,7 @@ public final class BaseConfig extends AbstractConfig {
 					break;
 				}
 
-				sb.append(value.substring(index, index1));
+				sb.append(value, index, index1);
 
 				String subKey = value.substring(index1 + 2, index2);
 				if (usedKeys == null) {

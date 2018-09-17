@@ -186,13 +186,13 @@ public class SvnFiler implements Filer {
 
 	@Override
 	@Nonnull
-	public OutputStream appendFile(@Nonnull String path) throws IOException {
+	public OutputStream appendFile(@Nonnull String path) {
 		throw new UnsupportedOperationException("appendFile not implemented yet");
 	}
 
 	@Override
 	@Nonnull
-	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
+	public DataIo openFile(@Nonnull String path, boolean write) {
 		throw new UnsupportedOperationException("openFile not implemented yet");
 	}
 

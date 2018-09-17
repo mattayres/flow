@@ -71,7 +71,7 @@ public class LocalFiler implements Filer {
 
 	@Override
 	@Nonnull
-	public Record getRecord(@Nonnull String path) throws IOException {
+	public Record getRecord(@Nonnull String path) {
 		checkNotNull(path);
 
 		File file = new File(path);
@@ -173,6 +173,6 @@ public class LocalFiler implements Filer {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 	}
 }

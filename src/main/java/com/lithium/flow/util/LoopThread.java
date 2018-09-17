@@ -51,9 +51,7 @@ public class LoopThread extends Thread {
 	}
 
 	public LoopThread(long interval, long offset, boolean round, @Nonnull Executable executable) {
-		this(null, interval, offset, round, executable, exception -> {
-			log.warn("loop iteration failed", exception);
-		});
+		this(null, interval, offset, round, executable, exception -> log.warn("loop iteration failed", exception));
 	}
 
 	public LoopThread(@Nullable String name, long interval, long offset, boolean round,

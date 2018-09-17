@@ -62,7 +62,7 @@ public class SshjFiler implements Filer {
 
 	@Override
 	@Nonnull
-	public URI getUri() throws IOException {
+	public URI getUri() {
 		return uri;
 	}
 
@@ -87,7 +87,7 @@ public class SshjFiler implements Filer {
 
 	@Override
 	@Nonnull
-	public Record getRecord(@Nonnull String path) throws IOException {
+	public Record getRecord(@Nonnull String path) {
 		try {
 			FileAttributes attributes = sftp.stat(path);
 			return new Record(uri, RecordPath.from(path), attributes.getMtime() * 1000,

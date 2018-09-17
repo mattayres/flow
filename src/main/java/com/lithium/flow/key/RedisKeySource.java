@@ -18,13 +18,13 @@ package com.lithium.flow.key;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.BaseEncoding.base16;
-import static java.util.Arrays.asList;
 
 import com.lithium.flow.config.Config;
 import com.lithium.flow.util.JedisUtils;
 
 import java.security.Key;
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -62,7 +62,7 @@ public class RedisKeySource implements KeySource {
 					throw new IllegalArgumentException("no key for name: " + name);
 				}
 			}
-			return asList(new SecretKeySpec(base16().decode(hexKey), "AES"));
+			return Collections.singletonList(new SecretKeySpec(base16().decode(hexKey), "AES"));
 		}
 	}
 

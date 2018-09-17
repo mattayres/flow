@@ -19,8 +19,6 @@ package com.lithium.flow.shell.tunnel;
 import com.lithium.flow.shell.Tunnel;
 import com.lithium.flow.shell.Tunneler;
 
-import java.io.IOException;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -30,11 +28,11 @@ import javax.annotation.Nullable;
 public class NoTunneler implements Tunneler {
 	@Override
 	@Nonnull
-	public Tunnel getTunnel(@Nonnull String host, int port, @Nullable String through) throws IOException {
+	public Tunnel getTunnel(@Nonnull String host, int port, @Nullable String through) {
 		return new NoTunnel(host, port);
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 	}
 }

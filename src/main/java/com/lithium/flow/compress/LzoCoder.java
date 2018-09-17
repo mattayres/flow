@@ -35,7 +35,7 @@ import com.hadoop.compression.lzo.LzoCodec;
 public class LzoCoder implements Coder {
 	@Override
 	@Nonnull
-	public InputStream wrapIn(@Nonnull InputStream in) throws IOException {
+	public InputStream wrapIn(@Nonnull InputStream in) {
 		return new LzoInputStream(in, new LzoDecompressor1x());
 	}
 

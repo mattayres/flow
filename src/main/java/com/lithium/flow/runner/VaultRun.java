@@ -54,7 +54,7 @@ public class VaultRun {
 
 	private String env;
 
-	public VaultRun(@Nonnull Vault vault, @Nonnull Prompt prompt, @Nonnull Config runnerConfig) throws IOException {
+	public VaultRun(@Nonnull Vault vault, @Nonnull Prompt prompt, @Nonnull Config runnerConfig) {
 		this.runnerConfig = checkNotNull(runnerConfig);
 
 		Vault memoryVault = new SecureVault(Configs.empty(), new MemoryStore(map));

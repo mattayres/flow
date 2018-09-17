@@ -23,7 +23,6 @@ import com.lithium.flow.config.ConfigLoader;
 import com.lithium.flow.config.ConfigParser;
 import com.lithium.flow.config.loaders.FileConfigLoader;
 
-import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +40,7 @@ public class LoaderConfigParser implements ConfigParser {
 	}
 
 	@Override
-	public boolean parseLine(@Nonnull String line, @Nonnull ConfigBuilder builder) throws IOException {
+	public boolean parseLine(@Nonnull String line, @Nonnull ConfigBuilder builder) {
 		checkNotNull(line);
 		checkNotNull(builder);
 

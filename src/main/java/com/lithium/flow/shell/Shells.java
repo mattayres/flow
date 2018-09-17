@@ -30,8 +30,6 @@ import com.lithium.flow.shell.tunnel.AutoTunneler;
 import com.lithium.flow.shell.tunnel.CachedTunneler;
 import com.lithium.flow.shell.tunnel.ShellTunneler;
 
-import java.io.IOException;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -68,7 +66,7 @@ public class Shells {
 
 			@Override
 			@Nonnull
-			public Login getLogin(@Nonnull String spec) throws IOException {
+			public Login getLogin(@Nonnull String spec) {
 				return Login.from(spec).toBuilder().setUser(user).setKeyPath(keyPath).build();
 			}
 		};

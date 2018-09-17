@@ -23,7 +23,6 @@ import com.lithium.flow.config.Repo;
 import com.lithium.flow.io.Swallower;
 import com.lithium.flow.util.Caches;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
@@ -49,7 +48,7 @@ public class RepoDatabase implements Database {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		schemas.asMap().values().forEach(Swallower::close);
 	}
 }

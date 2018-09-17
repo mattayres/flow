@@ -74,7 +74,7 @@ public class TempWriteFiler extends DecoratedFiler {
 	private String getTempPath(@Nonnull String path) {
 		String tempPath = dirPath + "/" + path.replace('/', '_') + '_' + num.incrementAndGet() + extension;
 		if (tempPath.length() > 255) {
-			tempPath = tempPath.substring(tempPath.length() - 255, tempPath.length());
+			tempPath = tempPath.substring(tempPath.length() - 255);
 		}
 		return tempPath;
 	}

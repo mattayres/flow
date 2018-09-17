@@ -36,7 +36,7 @@ import com.google.common.collect.Lists;
  * @author Matt Ayres
  */
 public abstract class AbstractConfig implements Config {
-	private static final Splitter defaultSplitter = Splitter.on(Pattern.compile(" *( |,) *"));
+	private static final Splitter DEFAULT_SPLITTER = Splitter.on(Pattern.compile(" *([ ,]) *"));
 
 	protected AbstractConfig() {
 	}
@@ -150,7 +150,7 @@ public abstract class AbstractConfig implements Config {
 	@Override
 	@Nonnull
 	public final List<String> getList(@Nonnull String key, @Nonnull List<String> def) {
-		return getList(key, def, defaultSplitter);
+		return getList(key, def, DEFAULT_SPLITTER);
 	}
 
 	@Override

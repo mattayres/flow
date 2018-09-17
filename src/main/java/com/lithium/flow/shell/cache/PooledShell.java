@@ -132,7 +132,7 @@ public class PooledShell implements Shell {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		synchronized (slots) {
 			slots.forEach(Swallower::close);
 		}
@@ -173,7 +173,7 @@ public class PooledShell implements Shell {
 		}
 
 		@Override
-		public void close() throws IOException {
+		public void close() {
 			if (!closed.getAndSet(true)) {
 				slot.release();
 			}

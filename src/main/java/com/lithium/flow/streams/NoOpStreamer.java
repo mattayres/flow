@@ -16,7 +16,6 @@
 
 package com.lithium.flow.streams;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -29,13 +28,13 @@ import javax.annotation.Nullable;
 public class NoOpStreamer implements Streamer {
 	@Override
 	@Nonnull
-	public OutputStream filterOut(@Nonnull OutputStream out, @Nullable String name) throws IOException {
+	public OutputStream filterOut(@Nonnull OutputStream out, @Nullable String name) {
 		return out;
 	}
 
 	@Override
 	@Nonnull
-	public InputStream filterIn(@Nonnull InputStream in, @Nullable String name) throws IOException {
+	public InputStream filterIn(@Nonnull InputStream in, @Nullable String name) {
 		return in;
 	}
 }

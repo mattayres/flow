@@ -44,7 +44,7 @@ public class Lines {
 	private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
 	@Nonnull
-	public static Stream<String> stream(@Nonnull InputStream in) throws IOException {
+	public static Stream<String> stream(@Nonnull InputStream in) {
 		checkNotNull(in);
 		return stream(in, DEFAULT_CHARSET);
 	}
@@ -69,16 +69,13 @@ public class Lines {
 		checkNotNull(charset);
 		checkNotNull(consumer);
 
-		LineIterator it = IOUtils.lineIterator(in, charset);
-		try {
+		try (LineIterator it = IOUtils.lineIterator(in, charset)) {
 			while (it.hasNext()) {
 				consumer.accept(it.nextLine());
 			}
 		} catch (IllegalStateException e) {
 			Throwables.throwIfInstanceOf(e.getCause(), IOException.class);
 			throw new IOException(e);
-		} finally {
-			it.close();
 		}
 	}
 

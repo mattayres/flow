@@ -23,7 +23,6 @@ import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.util.Logs;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -83,7 +82,7 @@ public class TomcatSchema extends AbstractSchema {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		dataSource.close();
 	}
 }

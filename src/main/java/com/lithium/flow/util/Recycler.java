@@ -61,7 +61,7 @@ public class Recycler<K, V extends Closeable> implements Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		closing = true;
 		cache.invalidateAll();
 	}

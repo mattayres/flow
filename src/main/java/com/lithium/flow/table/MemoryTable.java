@@ -18,7 +18,6 @@ package com.lithium.flow.table;
 
 import com.lithium.flow.util.Caches;
 
-import java.io.IOException;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -60,7 +59,7 @@ public class MemoryTable implements Table {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		cache.invalidateAll();
 	}
 }

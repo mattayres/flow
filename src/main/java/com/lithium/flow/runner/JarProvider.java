@@ -35,7 +35,7 @@ public interface JarProvider {
 			throws IOException;
 
 	@Nonnull
-	static JarProvider build(@Nonnull Config config, @Nonnull Access access, @Nonnull Filer filer) throws IOException {
+	static JarProvider build(@Nonnull Config config, @Nonnull Access access, @Nonnull Filer filer) {
 		checkNotNull(config);
 		checkNotNull(access);
 		checkNotNull(filer);

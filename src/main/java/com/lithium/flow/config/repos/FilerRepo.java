@@ -126,7 +126,7 @@ public class FilerRepo implements Repo {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		filers.forEach(Swallower::close);
 	}
 }

@@ -36,7 +36,7 @@ public class HashFilerChain implements Chain<Filer> {
 
 	@Override
 	@Nonnull
-	public Filer chain(@Nonnull Filer filer) throws Exception {
+	public Filer chain(@Nonnull Filer filer) {
 		filer = new ClientHashFiler(filer, config);
 		filer = new RedisHashFiler(filer, config);
 		return filer;

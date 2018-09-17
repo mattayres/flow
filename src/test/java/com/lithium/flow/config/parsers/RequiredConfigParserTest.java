@@ -39,7 +39,7 @@ public class RequiredConfigParserTest {
 		testRequired("foo != bar", "foo");
 	}
 
-	private void testRequired(String line, String key) throws IOException {
+	private void testRequired(String line, String key) {
 		ConfigBuilder builder = createMock(ConfigBuilder.class);
 		expect(builder.requireKey(key)).andReturn(builder);
 		replay(builder);
@@ -53,7 +53,7 @@ public class RequiredConfigParserTest {
 		testNoRequired("foo %=");
 	}
 
-	private void testNoRequired(String line) throws IOException {
+	private void testNoRequired(String line) {
 		ConfigBuilder builder = createMock(ConfigBuilder.class);
 		replay(builder);
 		assertFalse(new RequiredConfigParser().parseLine(line, builder));

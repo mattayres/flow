@@ -16,7 +16,6 @@
 
 package com.lithium.flow.compress;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -31,13 +30,13 @@ import net.jpountz.lz4.LZ4BlockOutputStream;
 public class Lz4Coder implements Coder {
 	@Override
 	@Nonnull
-	public InputStream wrapIn(@Nonnull InputStream in) throws IOException {
+	public InputStream wrapIn(@Nonnull InputStream in) {
 		return new LZ4BlockInputStream(in);
 	}
 
 	@Override
 	@Nonnull
-	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
+	public OutputStream wrapOut(@Nonnull OutputStream out, int option) {
 		return option == -1 ? new LZ4BlockOutputStream(out) : new LZ4BlockOutputStream(out, option);
 	}
 
