@@ -45,6 +45,7 @@ import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
@@ -98,6 +99,13 @@ public class S3Filer implements Filer {
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
 
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
+
+		ClientConfiguration cc = new ClientConfiguration();
+		cc.setMaxErrorRetry(config.getInt("s3.maxErrorRetry", 3));
+		cc.setConnectionTimeout((int) config.getTime("s3.connectionTimeout", "10s"));
+		cc.setRequestTimeout((int) config.getTime("s3.requestTimeout", "0"));
+		cc.setSocketTimeout((int) config.getTime("s3.socketTimeout", "50s"));
+		builder.withClientConfiguration(cc);
 
 		String region = config.getString("aws.region", null);
 		String endpoint = config.getString("aws.endpoint", null);
