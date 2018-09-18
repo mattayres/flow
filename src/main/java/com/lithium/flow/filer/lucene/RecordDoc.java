@@ -29,7 +29,6 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.Term;
 
@@ -84,10 +83,10 @@ public class RecordDoc {
 		doc.add(new StringField(RECORD_PATH, record.getPath(), Store.YES));
 		doc.add(new StringField(RECORD_PARENT, record.getFolder(), Store.YES));
 		doc.add(new StringField(RECORD_NAME, record.getName(), Store.YES));
-		doc.add(new LongField(RECORD_TIME, record.getTime(), Store.YES));
-		doc.add(new LongField(RECORD_SIZE, record.getSize(), Store.YES));
+		doc.add(new StringField(RECORD_TIME, String.valueOf(record.getTime()), Store.YES));
+		doc.add(new StringField(RECORD_SIZE, String.valueOf(record.getSize()), Store.YES));
 		doc.add(new StringField(RECORD_DIR, String.valueOf(record.isDir()), Store.YES));
-		doc.add(new LongField(INDEX_TIME, indexTime, Store.YES));
+		doc.add(new StringField(INDEX_TIME, String.valueOf(indexTime), Store.YES));
 
 		return new RecordDoc(record, doc, indexTime);
 	}

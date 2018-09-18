@@ -40,7 +40,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TrackingIndexWriter;
 import org.apache.lucene.search.ControlledRealTimeReopenThread;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ReferenceManager;
@@ -60,7 +59,7 @@ import org.slf4j.Logger;
 public class LuceneFiler extends DecoratedFiler {
 	private static final Logger log = Logs.getLogger();
 
-	private final TrackingIndexWriter writer;
+	private final IndexWriter writer;
 	private final ReferenceManager<IndexSearcher> manager;
 	private final ControlledRealTimeReopenThread thread;
 	private final long maxAge;
@@ -80,8 +79,8 @@ public class LuceneFiler extends DecoratedFiler {
 		IndexWriterConfig writerConfig = new IndexWriterConfig(null);
 		writerConfig.setOpenMode(OpenMode.CREATE_OR_APPEND);
 
-		writer = new TrackingIndexWriter(new IndexWriter(cachingDir, writerConfig));
-		manager = new SearcherManager(writer.getIndexWriter(), true, new SearcherFactory());
+		writer = new IndexWriter(cachingDir, writerConfig);
+		manager = new SearcherManager(writer, true, true, new SearcherFactory());
 		thread = new ControlledRealTimeReopenThread<>(writer, manager, targetMaxStale, targetMinStale);
 		thread.start();
 	}
@@ -202,6 +201,6 @@ public class LuceneFiler extends DecoratedFiler {
 	public void close() throws IOException {
 		super.close();
 		thread.close();
-		writer.getIndexWriter().close();
+		writer.close();
 	}
 }

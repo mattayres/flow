@@ -56,8 +56,8 @@ public class ElasticTable implements Table {
 				.execute().actionGet().getHits();
 
 		Row row = new Row(key);
-		if (hits.totalHits() > 0) {
-			row.putAll(hits.getAt(0).getSource());
+		if (hits.getTotalHits() > 0) {
+			row.putAll(hits.getAt(0).getSourceAsMap());
 		}
 		return row;
 	}

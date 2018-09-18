@@ -30,8 +30,8 @@ import javax.annotation.Nonnull;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 
 import com.google.common.base.Splitter;
@@ -47,26 +47,25 @@ public class ElasticUtils {
 		checkNotNull(config);
 
 		String name = config.getString("elastic.name");
-		if (config.getBoolean("elastic.node", false)) {
-			return NodeBuilder.nodeBuilder().client(true).clusterName(name).node().client();
-		} else {
-			Settings.Builder settings = Settings.settingsBuilder();
-			settings.put("cluster.name", name);
+		Settings.Builder settings = Settings.builder();
+		settings.put("cluster.name", name);
 
-			config.keySet().stream()
-					.filter(key -> key.startsWith("elastic:"))
-					.forEach(key -> settings.put(key.replaceFirst("^elastic:", ""), config.getString(key)));
+		config.keySet().stream()
+				.filter(key -> key.startsWith("elastic:"))
+				.forEach(key -> settings.put(key.replaceFirst("^elastic:", ""), config.getString(key)));
 
-			List<String> hosts = config.getList("elastic.hosts", Splitter.on(' '));
-			int port = config.getInt("elastic.port", 9300);
-			TransportClient client = TransportClient.builder().settings(settings).build();
-			for (String host : HostUtils.expand(hosts)) {
-				log.debug("adding host: {}", host);
-				InetAddress address = Unchecked.get(() -> InetAddress.getByName(host));
-				client.addTransportAddress(new InetSocketTransportAddress(address, port));
-			}
-			return client;
+		TransportClient client = new PreBuiltTransportClient(settings.build());
+
+		List<String> hosts = config.getList("elastic.hosts", Splitter.on(' '));
+		int port = config.getInt("elastic.port", 9300);
+
+		for (String host : HostUtils.expand(hosts)) {
+			log.debug("adding host: {}", host);
+			InetAddress address = Unchecked.get(() -> InetAddress.getByName(host));
+			client.addTransportAddress(new TransportAddress(address, port));
 		}
+
+		return client;
 	}
 
 	@Nonnull

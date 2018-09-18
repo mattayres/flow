@@ -24,11 +24,6 @@
 				<ignoreVersion type="regex">[^5]..*</ignoreVersion>
 			</ignoreVersions>
 		</rule>
-		<rule groupId="org.elasticsearch" comparisonMethod="maven">
-			<ignoreVersions>
-				<ignoreVersion type="regex">[^2]..*</ignoreVersion>
-			</ignoreVersions>
-		</rule>
 		<rule groupId="org.apache.tomcat" comparisonMethod="maven">
 			<ignoreVersions>
 				<ignoreVersion type="regex">[^8]..*</ignoreVersion>
