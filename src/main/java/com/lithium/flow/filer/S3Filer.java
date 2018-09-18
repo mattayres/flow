@@ -23,13 +23,13 @@ import com.lithium.flow.access.Prompt.Response;
 import com.lithium.flow.access.Prompt.Type;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.io.DataIo;
+import com.lithium.flow.streams.CounterInputStream;
 import com.lithium.flow.util.Lazy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -60,6 +61,8 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PartETag;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.util.IOUtils;
@@ -73,7 +76,7 @@ public class S3Filer implements Filer {
 	private final String bucket;
 	private final long partSize;
 	private final File tempDir;
-	private final boolean drainOnClose;
+	private final long maxDrainBytes;
 	private final ExecutorService service;
 	private final boolean bypassCreateDirs;
 
@@ -94,7 +97,7 @@ public class S3Filer implements Filer {
 		bucket = uri.getHost();
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
 		tempDir = new File(config.getString("s3.tempDir", System.getProperty("java.io.tmpdir")));
-		drainOnClose = config.getBoolean("s3.drainOnClose", false);
+		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
 		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
 
@@ -207,18 +210,24 @@ public class S3Filer implements Filer {
 	@Override
 	@Nonnull
 	public InputStream readFile(@Nonnull String path) {
-		InputStream in = s3.getObject(bucket, keyForPath(path)).getObjectContent();
-		if (drainOnClose) {
-			return new FilterInputStream(in) {
-				@Override
-				public void close() throws IOException {
+		S3Object object = s3.getObject(bucket, keyForPath(path));
+		S3ObjectInputStream s3In = object.getObjectContent();
+		long length = object.getObjectMetadata().getContentLength();
+		AtomicLong counter = new AtomicLong();
+
+		return new CounterInputStream(s3In, counter) {
+			@Override
+			public void close() throws IOException {
+				long drainBytes = length - counter.get();
+				if (drainBytes > maxDrainBytes) {
+					s3In.abort();
+				} else {
+					// drain to allow S3 connection reuse
 					IOUtils.drainInputStream(in);
-					super.close();
 				}
-			};
-		} else {
-			return in;
-		}
+				super.close();
+			}
+		};
 	}
 
 	@Override
