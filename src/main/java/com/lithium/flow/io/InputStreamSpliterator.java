@@ -47,7 +47,7 @@ public class InputStreamSpliterator extends IndefiniteSpliterator<String> {
 			action.accept(it.nextLine());
 			return true;
 		} else {
-			it.close();
+			Swallower.close(it);
 			return false;
 		}
 	}

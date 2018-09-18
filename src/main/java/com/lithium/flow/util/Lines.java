@@ -19,6 +19,7 @@ package com.lithium.flow.util;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.io.InputStreamSpliterator;
+import com.lithium.flow.io.Swallower;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,7 +106,7 @@ public class Lines {
 				public boolean hasNext() {
 					boolean next = it.hasNext();
 					if (!next) {
-						it.close();
+						Swallower.close(it);
 					}
 					return next;
 				}

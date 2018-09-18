@@ -12,16 +12,12 @@
 		<ignoreVersion type="regex">.*pr[\d].*</ignoreVersion>
 		<ignoreVersion type="regex">.*b[\d].*</ignoreVersion>
 		<ignoreVersion type="regex">.*M[\d].*</ignoreVersion>
-		<ignoreVersion type="regex">.*atlassian.*</ignoreVersion>
-		<ignoreVersion type="regex">.*android.*</ignoreVersion>
-		<ignoreVersion type="regex">.*kohsuke.*</ignoreVersion>
-		<ignoreVersion type="regex">.*jre.*</ignoreVersion>
 	</ignoreVersions>
 
 	<rules>
-		<rule groupId="org.apache.lucene" comparisonMethod="maven">
+		<rule groupId="org.apache.hadoop" comparisonMethod="maven">
 			<ignoreVersions>
-				<ignoreVersion type="regex">[^5]..*</ignoreVersion>
+				<ignoreVersion type="regex">[^2]..*</ignoreVersion>
 			</ignoreVersions>
 		</rule>
 		<rule groupId="org.apache.tomcat" comparisonMethod="maven">
