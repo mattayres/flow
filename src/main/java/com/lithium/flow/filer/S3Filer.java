@@ -81,76 +81,14 @@ public class S3Filer implements Filer {
 		checkNotNull(config);
 		checkNotNull(access);
 
-		String url = config.getString("url");
-		int index = url.indexOf("://");
-		if (index > -1) {
-			index = url.indexOf("/", index + 3);
-			if (index > -1) {
-				url = url.substring(0, index);
-			}
-		}
-		uri = URI.create(url);
-
+		s3 = buildS3(config, access);
+		uri = getBaseURI(config.getString("url"));
 		bucket = uri.getHost();
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
 		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
 		limiter = RateLimiter.create(config.getDouble("s3.rateLimit", 3400));
 		threader = new Threader(config.getInt("s3.threads", 8));
-
-		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
-
-		ClientConfiguration cc = new ClientConfiguration();
-		cc.setMaxErrorRetry(config.getInt("s3.maxErrorRetry", 3));
-		cc.setConnectionTimeout((int) config.getTime("s3.connectionTimeout", "10s"));
-		cc.setRequestTimeout((int) config.getTime("s3.requestTimeout", "0"));
-		cc.setSocketTimeout((int) config.getTime("s3.socketTimeout", "50s"));
-		builder.withClientConfiguration(cc);
-
-		String region = config.getString("aws.region", null);
-		String endpoint = config.getString("aws.endpoint", null);
-
-		if (endpoint != null) {
-			builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region));
-		} else if (region != null) {
-			builder.withRegion(region);
-		}
-
-		builder.withChunkedEncodingDisabled(getBooleanOrNull(config, "s3.chunkedEncodingDisabled"));
-		builder.withPathStyleAccessEnabled(getBooleanOrNull(config, "s3.pathStyleAccessEnabled"));
-
-		String key = config.getString("aws.key", null);
-		if (key != null) {
-			AmazonS3Exception exception = null;
-			int retries = config.getInt("aws.retries", 3);
-
-			for (int i = 0; i < retries + 1; i++) {
-				Response response = access.prompt(key + ".secret", key + ".secret: ", Type.MASKED);
-				try {
-					String secret = response.value();
-					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
-
-					AmazonS3 testS3 = builder.build();
-					testS3.listObjects(listObjectsRequest().withMaxKeys(1));
-					response.accept();
-					break;
-				} catch (AmazonS3Exception e) {
-					exception = e;
-					response.reject();
-				}
-			}
-
-			if (exception != null) {
-				throw exception;
-			}
-		}
-
-		s3 = builder.build();
-	}
-
-	@Nullable
-	private Boolean getBooleanOrNull(@Nonnull Config config, @Nonnull String key) {
-		return config.containsKey(key) ? config.getBoolean(key) : null;
 	}
 
 	@Override
@@ -365,5 +303,76 @@ public class S3Filer implements Filer {
 	private AmazonS3 s3() {
 		limiter.acquire();
 		return s3;
+	}
+
+	@Nonnull
+	public static AmazonS3 buildS3(@Nonnull Config config, @Nonnull Access access) {
+		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
+
+		ClientConfiguration cc = new ClientConfiguration();
+		cc.setMaxErrorRetry(config.getInt("s3.maxErrorRetry", 3));
+		cc.setConnectionTimeout((int) config.getTime("s3.connectionTimeout", "10s"));
+		cc.setRequestTimeout((int) config.getTime("s3.requestTimeout", "0"));
+		cc.setSocketTimeout((int) config.getTime("s3.socketTimeout", "50s"));
+		builder.withClientConfiguration(cc);
+
+		String region = config.getString("aws.region", null);
+		String endpoint = config.getString("aws.endpoint", null);
+
+		if (endpoint != null) {
+			builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region));
+		} else if (region != null) {
+			builder.withRegion(region);
+		}
+
+		builder.withChunkedEncodingDisabled(getBooleanOrNull(config, "s3.chunkedEncodingDisabled"));
+		builder.withPathStyleAccessEnabled(getBooleanOrNull(config, "s3.pathStyleAccessEnabled"));
+
+		String key = config.getString("aws.key", null);
+		if (key != null) {
+			AmazonS3Exception exception = null;
+			int retries = config.getInt("aws.retries", 3);
+			String bucket = getBaseURI(config.getString("url")).getHost();
+
+			for (int i = 0; i < retries + 1; i++) {
+				Response response = access.prompt(key + ".secret", key + ".secret: ", Type.MASKED);
+				try {
+					String secret = response.value();
+					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
+
+					AmazonS3 testS3 = builder.build();
+					testS3.listObjects(new ListObjectsRequest().withBucketName(bucket).withMaxKeys(1));
+					response.accept();
+					break;
+				} catch (AmazonS3Exception e) {
+					exception = e;
+					response.reject();
+				}
+			}
+
+			if (exception != null) {
+				throw exception;
+			}
+		}
+
+		return builder.build();
+	}
+
+	@Nonnull
+	private static URI getBaseURI(@Nonnull String url) {
+		int index = url.indexOf("://");
+		if (index > -1) {
+			index = url.indexOf("/", index + 3);
+			if (index > -1) {
+				url = url.substring(0, index);
+			}
+		}
+
+		return URI.create(url);
+	}
+
+	@Nullable
+	private static Boolean getBooleanOrNull(@Nonnull Config config, @Nonnull String key) {
+		return config.containsKey(key) ? config.getBoolean(key) : null;
 	}
 }
