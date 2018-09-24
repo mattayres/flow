@@ -28,8 +28,6 @@ import com.lithium.flow.util.Lazy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,7 +35,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -76,7 +73,6 @@ public class S3Filer implements Filer {
 	private final URI uri;
 	private final String bucket;
 	private final long partSize;
-	private final File tempDir;
 	private final long maxDrainBytes;
 	private final ExecutorService service;
 	private final boolean bypassCreateDirs;
@@ -98,7 +94,6 @@ public class S3Filer implements Filer {
 
 		bucket = uri.getHost();
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
-		tempDir = new File(config.getString("s3.tempDir", System.getProperty("java.io.tmpdir")));
 		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
 		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
@@ -244,19 +239,18 @@ public class S3Filer implements Filer {
 
 		return new OutputStream() {
 			@Override
-			public void write(int b) throws IOException {
+			public void write(int b) {
 				baos.write(b);
 				flip(partSize);
 			}
 
 			@Override
-			public void write(@Nonnull byte[] b) throws IOException {
-				baos.write(b);
-				flip(partSize);
+			public void write(@Nonnull byte[] b) {
+				write(b, 0, b.length);
 			}
 
 			@Override
-			public void write(@Nonnull byte[] b, int off, int len) throws IOException {
+			public void write(@Nonnull byte[] b, int off, int len) {
 				baos.write(b, off, len);
 				flip(partSize);
 			}
@@ -285,35 +279,23 @@ public class S3Filer implements Filer {
 				}
 			}
 
-			private void flip(long minSize) throws IOException {
+			private void flip(long minSize) {
 				if (baos.size() < minSize) {
 					return;
 				}
 
-				File file = new File(tempDir, UUID.randomUUID().toString());
-				file.deleteOnExit();
-
-				OutputStream out = new FileOutputStream(file);
-				out.write(baos.toByteArray());
-				out.close();
-
-				baos.reset();
-
+				InputStream in = new ByteArrayInputStream(baos.toByteArray());
 				UploadPartRequest uploadRequest = new UploadPartRequest()
 						.withUploadId(uploadId.get())
 						.withBucketName(bucket)
 						.withKey(key)
 						.withPartNumber(futureTags.size() + 1)
-						.withPartSize(file.length())
-						.withFile(file);
+						.withPartSize(baos.size())
+						.withInputStream(in);
 
-				futureTags.add(service.submit(() -> {
-					PartETag tag = s3().uploadPart(uploadRequest).getPartETag();
-					if (!file.delete()) {
-						throw new IOException("failed to delete: " + file.getPath());
-					}
-					return tag;
-				}));
+				futureTags.add(service.submit(() -> s3().uploadPart(uploadRequest).getPartETag()));
+
+				baos.reset();
 			}
 		};
 	}
