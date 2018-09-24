@@ -71,4 +71,8 @@ public class Needle<T> {
 
 		return values;
 	}
+
+	public int size() {
+		return queue.size();
+	}
 }

@@ -24,7 +24,9 @@ import com.lithium.flow.access.Prompt.Type;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.io.DataIo;
 import com.lithium.flow.streams.CounterInputStream;
-import com.lithium.flow.util.Lazy;
+import com.lithium.flow.util.Needle;
+import com.lithium.flow.util.Threader;
+import com.lithium.flow.util.UncheckedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -35,9 +37,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nonnull;
@@ -74,9 +73,9 @@ public class S3Filer implements Filer {
 	private final String bucket;
 	private final long partSize;
 	private final long maxDrainBytes;
-	private final ExecutorService service;
 	private final boolean bypassCreateDirs;
 	private final RateLimiter limiter;
+	private final Threader threader;
 
 	public S3Filer(@Nonnull Config config, @Nonnull Access access) {
 		checkNotNull(config);
@@ -95,9 +94,9 @@ public class S3Filer implements Filer {
 		bucket = uri.getHost();
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
 		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
-		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
 		limiter = RateLimiter.create(config.getDouble("s3.rateLimit", 3400));
+		threader = new Threader(config.getInt("s3.threads", 8));
 
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 
@@ -231,13 +230,12 @@ public class S3Filer implements Filer {
 	@Override
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) {
-		String key = keyForPath(path);
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		List<Future<PartETag>> futureTags = new ArrayList<>();
-		Lazy<String> uploadId = new Lazy<>(
-				() -> s3().initiateMultipartUpload(new InitiateMultipartUploadRequest(bucket, key)).getUploadId());
-
 		return new OutputStream() {
+			private final String key = keyForPath(path);
+			private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			private Needle<PartETag> needle;
+			private String uploadId;
+
 			@Override
 			public void write(int b) {
 				baos.write(b);
@@ -257,7 +255,7 @@ public class S3Filer implements Filer {
 
 			@Override
 			public void close() throws IOException {
-				if (futureTags.size() == 0) {
+				if (needle == null) {
 					InputStream in = new ByteArrayInputStream(baos.toByteArray());
 					ObjectMetadata metadata = new ObjectMetadata();
 					metadata.setContentLength(baos.size());
@@ -265,17 +263,13 @@ public class S3Filer implements Filer {
 				} else {
 					flip(1);
 
-					List<PartETag> tags = new ArrayList<>();
-					for (Future<PartETag> futureTag : futureTags) {
-						try {
-							tags.add(futureTag.get());
-						} catch (Exception e) {
-							s3().abortMultipartUpload(new AbortMultipartUploadRequest(bucket, key, uploadId.get()));
-							throw new IOException("failed to upload: " + path, e);
-						}
+					try {
+						List<PartETag> tags = needle.finish();
+						s3().completeMultipartUpload(new CompleteMultipartUploadRequest(bucket, key, uploadId, tags));
+					} catch (UncheckedException e) {
+						s3().abortMultipartUpload(new AbortMultipartUploadRequest(bucket, key, uploadId));
+						throw e.unwrap(IOException.class);
 					}
-
-					s3().completeMultipartUpload(new CompleteMultipartUploadRequest(bucket, key, uploadId.get(), tags));
 				}
 			}
 
@@ -284,16 +278,24 @@ public class S3Filer implements Filer {
 					return;
 				}
 
+				if (needle == null) {
+					needle = threader.needle();
+					uploadId = s3().initiateMultipartUpload(new InitiateMultipartUploadRequest(bucket, key))
+							.getUploadId();
+				}
+
 				InputStream in = new ByteArrayInputStream(baos.toByteArray());
+				int partNum = needle.size() + 1;
+
 				UploadPartRequest uploadRequest = new UploadPartRequest()
-						.withUploadId(uploadId.get())
+						.withUploadId(uploadId)
 						.withBucketName(bucket)
 						.withKey(key)
-						.withPartNumber(futureTags.size() + 1)
+						.withPartNumber(partNum)
 						.withPartSize(baos.size())
 						.withInputStream(in);
 
-				futureTags.add(service.submit(() -> s3().uploadPart(uploadRequest).getPartETag()));
+				needle.submit(uploadId + "@" + partNum, () -> s3().uploadPart(uploadRequest).getPartETag());
 
 				baos.reset();
 			}
