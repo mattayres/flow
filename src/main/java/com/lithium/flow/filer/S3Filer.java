@@ -66,6 +66,7 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.util.IOUtils;
+import com.google.common.util.concurrent.RateLimiter;
 
 /**
  * @author Matt Ayres
@@ -79,6 +80,7 @@ public class S3Filer implements Filer {
 	private final long maxDrainBytes;
 	private final ExecutorService service;
 	private final boolean bypassCreateDirs;
+	private final RateLimiter limiter;
 
 	public S3Filer(@Nonnull Config config, @Nonnull Access access) {
 		checkNotNull(config);
@@ -100,6 +102,7 @@ public class S3Filer implements Filer {
 		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
 		service = Executors.newFixedThreadPool(config.getInt("s3.threads", 1));
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
+		limiter = RateLimiter.create(config.getDouble("s3.rateLimit", 3400));
 
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 
@@ -166,7 +169,7 @@ public class S3Filer implements Filer {
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) {
 		String prefix = path.isEmpty() || path.equals("/") ? "" : keyForPath(path) + "/";
-		ObjectListing listing = s3.listObjects(listObjectsRequest().withPrefix(prefix).withDelimiter("/"));
+		ObjectListing listing = s3().listObjects(listObjectsRequest().withPrefix(prefix).withDelimiter("/"));
 
 		List<Record> records = new ArrayList<>();
 
@@ -185,7 +188,7 @@ public class S3Filer implements Filer {
 				}
 			}
 
-			listing = s3.listNextBatchOfObjects(listing);
+			listing = s3().listNextBatchOfObjects(listing);
 		} while (listing.isTruncated());
 
 		return records;
@@ -194,7 +197,7 @@ public class S3Filer implements Filer {
 	@Override
 	@Nonnull
 	public Record getRecord(@Nonnull String path) {
-		ObjectListing listing = s3.listObjects(listObjectsRequest().withPrefix(keyForPath(path)));
+		ObjectListing listing = s3().listObjects(listObjectsRequest().withPrefix(keyForPath(path)));
 		S3ObjectSummary summary = listing.getObjectSummaries().stream().findFirst().orElse(null);
 
 		if (summary == null || !path.equals("/" + summary.getKey())) {
@@ -210,7 +213,7 @@ public class S3Filer implements Filer {
 	@Override
 	@Nonnull
 	public InputStream readFile(@Nonnull String path) {
-		S3Object object = s3.getObject(bucket, keyForPath(path));
+		S3Object object = s3().getObject(bucket, keyForPath(path));
 		S3ObjectInputStream s3In = object.getObjectContent();
 		long length = object.getObjectMetadata().getContentLength();
 		AtomicLong counter = new AtomicLong();
@@ -237,7 +240,7 @@ public class S3Filer implements Filer {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		List<Future<PartETag>> futureTags = new ArrayList<>();
 		Lazy<String> uploadId = new Lazy<>(
-				() -> s3.initiateMultipartUpload(new InitiateMultipartUploadRequest(bucket, key)).getUploadId());
+				() -> s3().initiateMultipartUpload(new InitiateMultipartUploadRequest(bucket, key)).getUploadId());
 
 		return new OutputStream() {
 			@Override
@@ -264,7 +267,7 @@ public class S3Filer implements Filer {
 					InputStream in = new ByteArrayInputStream(baos.toByteArray());
 					ObjectMetadata metadata = new ObjectMetadata();
 					metadata.setContentLength(baos.size());
-					s3.putObject(bucket, key, in, metadata);
+					s3().putObject(bucket, key, in, metadata);
 				} else {
 					flip(1);
 
@@ -273,12 +276,12 @@ public class S3Filer implements Filer {
 						try {
 							tags.add(futureTag.get());
 						} catch (Exception e) {
-							s3.abortMultipartUpload(new AbortMultipartUploadRequest(bucket, key, uploadId.get()));
+							s3().abortMultipartUpload(new AbortMultipartUploadRequest(bucket, key, uploadId.get()));
 							throw new IOException("failed to upload: " + path, e);
 						}
 					}
 
-					s3.completeMultipartUpload(new CompleteMultipartUploadRequest(bucket, key, uploadId.get(), tags));
+					s3().completeMultipartUpload(new CompleteMultipartUploadRequest(bucket, key, uploadId.get(), tags));
 				}
 			}
 
@@ -305,7 +308,7 @@ public class S3Filer implements Filer {
 						.withFile(file);
 
 				futureTags.add(service.submit(() -> {
-					PartETag tag = s3.uploadPart(uploadRequest).getPartETag();
+					PartETag tag = s3().uploadPart(uploadRequest).getPartETag();
 					if (!file.delete()) {
 						throw new IOException("failed to delete: " + file.getPath());
 					}
@@ -330,22 +333,22 @@ public class S3Filer implements Filer {
 	@Override
 	public void setFileTime(@Nonnull String path, long time) {
 		String key = keyForPath(path);
-		ObjectMetadata metadata = s3.getObjectMetadata(bucket, key);
+		ObjectMetadata metadata = s3().getObjectMetadata(bucket, key);
 		metadata.setLastModified(new Date(time));
-		s3.copyObject(new CopyObjectRequest(bucket, key, bucket, key).withNewObjectMetadata(metadata));
+		s3().copyObject(new CopyObjectRequest(bucket, key, bucket, key).withNewObjectMetadata(metadata));
 	}
 
 	@Override
 	public void deleteFile(@Nonnull String path) {
-		s3.deleteObject(bucket, keyForPath(path));
+		s3().deleteObject(bucket, keyForPath(path));
 	}
 
 	@Override
 	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) {
 		String oldKey = keyForPath(oldPath);
 		String newKey = keyForPath(newPath);
-		s3.copyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
-		s3.deleteObject(bucket, oldKey);
+		s3().copyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
+		s3().deleteObject(bucket, oldKey);
 	}
 
 	@Override
@@ -354,7 +357,7 @@ public class S3Filer implements Filer {
 			InputStream in = new ByteArrayInputStream(new byte[0]);
 			ObjectMetadata metadata = new ObjectMetadata();
 			metadata.setContentLength(0);
-			s3.putObject(bucket, keyForPath(path) + "/", in, metadata);
+			s3().putObject(bucket, keyForPath(path) + "/", in, metadata);
 		}
 	}
 
@@ -366,6 +369,12 @@ public class S3Filer implements Filer {
 	@Nonnull
 	private ListObjectsRequest listObjectsRequest() {
 		return new ListObjectsRequest().withBucketName(bucket);
+	}
+
+	@Nonnull
+	private AmazonS3 s3() {
+		limiter.acquire();
+		return s3;
 	}
 
 	@Override
