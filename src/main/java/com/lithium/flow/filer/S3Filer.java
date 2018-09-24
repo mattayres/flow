@@ -345,6 +345,12 @@ public class S3Filer implements Filer {
 		}
 	}
 
+	@Override
+	public void close() {
+		threader.finish();
+		s3.shutdown();
+	}
+
 	@Nonnull
 	private String keyForPath(@Nonnull String path) {
 		return path.startsWith("/") ? path.substring(1) : path;
@@ -359,9 +365,5 @@ public class S3Filer implements Filer {
 	private AmazonS3 s3() {
 		limiter.acquire();
 		return s3;
-	}
-
-	@Override
-	public void close() {
 	}
 }
