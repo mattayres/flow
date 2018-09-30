@@ -119,6 +119,10 @@ public class RunnerMain {
 		String classpath = Joiner.on(":").join(context.getClasspath(runnerConfig.getString("dest.dir")));
 		log.debug("classpath: {}", classpath);
 
+		for (String dir : runnerConfig.getList("dirs", Configs.emptyList())) {
+			destFiler.createDirs(dir);
+		}
+
 		installJava();
 
 		destFiler.close();
