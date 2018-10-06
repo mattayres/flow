@@ -25,6 +25,8 @@ import com.lithium.flow.io.Swallower;
 import com.lithium.flow.shell.Exec;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -74,6 +76,24 @@ public class SshjExec implements Exec {
 		Integer status = command.getExitStatus();
 		close();
 		return Optional.ofNullable(status);
+	}
+
+	@Override
+	@Nonnull
+	public InputStream getInputStream() {
+		return command.getInputStream();
+	}
+
+	@Override
+	@Nonnull
+	public InputStream getErrorStream() {
+		return command.getErrorStream();
+	}
+
+	@Override
+	@Nonnull
+	public OutputStream getOutputStream() {
+		return command.getOutputStream();
 	}
 
 	@Override

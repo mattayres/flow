@@ -32,6 +32,8 @@ import com.lithium.flow.util.CheckedLazy;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -92,6 +94,24 @@ public class PooledShell implements Shell {
 			@Override
 			public Optional<Integer> exit() throws IOException {
 				return exec.exit();
+			}
+
+			@Override
+			@Nonnull
+			public InputStream getInputStream() {
+				return exec.getInputStream();
+			}
+
+			@Override
+			@Nonnull
+			public InputStream getErrorStream() {
+				return exec.getErrorStream();
+			}
+
+			@Override
+			@Nonnull
+			public OutputStream getOutputStream() {
+				return exec.getOutputStream();
 			}
 
 			@Override

@@ -20,6 +20,8 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -48,4 +50,13 @@ public interface Exec extends Closeable {
 			close();
 		}
 	}
+
+	@Nonnull
+	InputStream getInputStream();
+
+	@Nonnull
+	InputStream getErrorStream();
+
+	@Nonnull
+	OutputStream getOutputStream();
 }
