@@ -32,9 +32,9 @@ import com.google.common.primitives.Longs;
 public class Measure {
 	private final String name;
 	private final Function<Number, String> printer;
-	private final long startTime = System.currentTimeMillis();
 	private final Multiset<Object> uniques = HashMultiset.create();
 	private long[] bins = new long[1024];
+	private long startTime;
 	private long todo;
 	private long done;
 	private boolean forEta;
@@ -91,6 +91,10 @@ public class Measure {
 		addTodo(1);
 	}
 
+	public void incSkip() {
+		addSkip(1);
+	}
+
 	public void decTodo() {
 		addTodo(-1);
 	}
@@ -116,9 +120,18 @@ public class Measure {
 	}
 
 	public synchronized void addDone(long value) {
+		if (startTime == 0) {
+			startTime = System.currentTimeMillis();
+		}
+
 		int bin = getBin(System.currentTimeMillis());
 		bins = Longs.ensureCapacity(bins, bin + 1, 1024);
 		bins[bin] += value;
+		done += value;
+	}
+
+	public synchronized void addSkip(long value) {
+		todo += value;
 		done += value;
 	}
 
@@ -135,6 +148,10 @@ public class Measure {
 	}
 
 	public synchronized double avg(long interval) {
+		if (startTime == 0) {
+			return 0;
+		}
+
 		long time = System.currentTimeMillis();
 		int startBin = Math.max(0, getBin(time - interval));
 		int endBin = getBin(time);
