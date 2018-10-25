@@ -69,4 +69,9 @@ public class ShellFiler extends DecoratedFiler {
 				return super.getHash(path, hash, base);
 		}
 	}
+
+	@Override
+	public void close() throws IOException {
+		shell.close();
+	}
 }
