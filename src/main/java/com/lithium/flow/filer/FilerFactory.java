@@ -106,10 +106,12 @@ public class FilerFactory {
 				throw new IOException("failed to chain filer: " + chain.getClass().getName(), e);
 			}
 		}
-		filer = new StreamerFiler(filer, new ChainedStreamer(buildStreamers(config, locator)));
-		return filer;
+
+		List<Streamer> streamers = buildStreamers(config, locator);
+		return streamers.isEmpty() ? filer : new StreamerFiler(filer, new ChainedStreamer(streamers));
 	}
 
+	@Nonnull
 	private List<Streamer> buildStreamers(@Nonnull Config config, @Nonnull Locator locator) {
 		return config.getList("streamers", Configs.emptyList()).stream().map(stream -> {
 			Class<? extends Streamer> type = streams.get(stream);
@@ -121,6 +123,7 @@ public class FilerFactory {
 		}).collect(Collectors.toList());
 	}
 
+	@Nonnull
 	private List<Chain<Filer>> buildChains(@Nonnull Config config, @Nonnull Locator locator) {
 		return config.getList("chains", Configs.emptyList()).stream().map(chain -> {
 			Class<? extends Chain<Filer>> type = chains.get(chain);
