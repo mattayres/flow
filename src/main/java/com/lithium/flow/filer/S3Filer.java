@@ -36,7 +36,9 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nonnull;
@@ -101,14 +103,20 @@ public class S3Filer implements Filer {
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) {
 		String prefix = path.isEmpty() || path.equals("/") ? "" : keyForPath(path) + "/";
-		ObjectListing listing = s3().listObjects(listObjectsRequest().withPrefix(prefix).withDelimiter("/"));
+		ListObjectsRequest request = listObjectsRequest().withPrefix(prefix).withDelimiter("/");
 
 		List<Record> records = new ArrayList<>();
+		Set<String> names = new HashSet<>();
 
+		ObjectListing listing;
 		do {
+			listing = s3().listObjects(request);
+
 			for (String dir : listing.getCommonPrefixes()) {
 				String name = dir.replaceFirst(prefix, "").replace("/", "");
-				records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
+				if (names.add(name)) {
+					records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
+				}
 			}
 
 			for (S3ObjectSummary summary : listing.getObjectSummaries()) {
@@ -120,7 +128,7 @@ public class S3Filer implements Filer {
 				}
 			}
 
-			listing = s3().listNextBatchOfObjects(listing);
+			request.setMarker(listing.getNextMarker());
 		} while (listing.isTruncated());
 
 		return records;
