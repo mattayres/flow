@@ -65,6 +65,7 @@ public class VaultRun {
 				name = System.getProperty("user.name") + "@" + name;
 			}
 
+			prompt.prompt(name, name, Prompt.Type.MASKED).value();
 			memoryVault.putValue(name, vault.getValue(name));
 		}
 
