@@ -339,19 +339,18 @@ public class S3Filer implements Filer {
 		String key = config.getString("aws.key", null);
 		if (key != null) {
 			AmazonS3Exception exception = null;
-			int retries = config.getInt("aws.retries", 3);
-			String bucket = getBaseURI(config.getString("url")).getHost();
+			int tries = config.getInt("s3.promptTries", 3);
 
-			for (int i = 0; i < retries + 1; i++) {
+			for (int i = 0; i < tries; i++) {
 				Response response = access.prompt(key + ".secret", key + ".secret: ", Type.MASKED);
 				try {
 					String secret = response.value();
 					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
 
-					AmazonS3 testS3 = builder.build();
-					testS3.listObjects(new ListObjectsRequest().withBucketName(bucket).withMaxKeys(1));
+					AmazonS3 s3 = builder.build();
+					s3.getS3AccountOwner();
 					response.accept();
-					break;
+					return s3;
 				} catch (AmazonS3Exception e) {
 					exception = e;
 					response.reject();
