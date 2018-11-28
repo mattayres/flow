@@ -44,6 +44,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.http.HttpStatus;
+
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -55,8 +58,8 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.S3Object;
@@ -103,14 +106,15 @@ public class S3Filer implements Filer {
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) {
 		String prefix = path.isEmpty() || path.equals("/") ? "" : keyForPath(path) + "/";
-		ListObjectsRequest request = listObjectsRequest().withPrefix(prefix).withDelimiter("/");
+		ListObjectsV2Request request = new ListObjectsV2Request()
+				.withBucketName(bucket).withPrefix(prefix).withDelimiter("/");
 
 		List<Record> records = new ArrayList<>();
 		Set<String> names = new HashSet<>();
 
-		ObjectListing listing;
+		ListObjectsV2Result listing;
 		do {
-			listing = s3().listObjects(request);
+			listing = s3().listObjectsV2(request);
 
 			for (String dir : listing.getCommonPrefixes()) {
 				String name = dir.replaceFirst(prefix, "").replace("/", "");
@@ -128,7 +132,7 @@ public class S3Filer implements Filer {
 				}
 			}
 
-			request.setMarker(listing.getNextMarker());
+			request.setContinuationToken(listing.getNextContinuationToken());
 		} while (listing.isTruncated());
 
 		return records;
@@ -137,17 +141,18 @@ public class S3Filer implements Filer {
 	@Override
 	@Nonnull
 	public Record getRecord(@Nonnull String path) {
-		ObjectListing listing = s3().listObjects(listObjectsRequest().withPrefix(keyForPath(path)));
-		S3ObjectSummary summary = listing.getObjectSummaries().stream().findFirst().orElse(null);
-
-		if (summary == null || !path.equals("/" + summary.getKey())) {
-			return Record.noFile(uri, path);
+		try {
+			ObjectMetadata metadata = s3().getObjectMetadata(bucket, keyForPath(path));
+			long time = metadata.getLastModified().getTime();
+			long size = metadata.getContentLength();
+			boolean directory = path.endsWith("/");
+			return new Record(uri, RecordPath.from(path), time, size, directory);
+		} catch (AmazonServiceException e) {
+			if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+				return Record.noFile(uri, path);
+			}
+			throw e;
 		}
-
-		long time = summary.getLastModified().getTime();
-		long size = summary.getSize();
-		boolean directory = summary.getKey().endsWith("/");
-		return new Record(uri, RecordPath.from(path), time, size, directory);
 	}
 
 	@Override
@@ -300,11 +305,6 @@ public class S3Filer implements Filer {
 	@Nonnull
 	private String keyForPath(@Nonnull String path) {
 		return path.startsWith("/") ? path.substring(1) : path;
-	}
-
-	@Nonnull
-	private ListObjectsRequest listObjectsRequest() {
-		return new ListObjectsRequest().withBucketName(bucket);
 	}
 
 	@Nonnull
