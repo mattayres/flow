@@ -62,9 +62,11 @@ import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PartETag;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.util.IOUtils;
 import com.google.common.util.concurrent.RateLimiter;
@@ -79,6 +81,7 @@ public class S3Filer implements Filer {
 	private final long partSize;
 	private final long maxDrainBytes;
 	private final boolean bypassCreateDirs;
+	private final StorageClass storageClass;
 	private final RateLimiter limiter;
 	private final Threader threader;
 
@@ -92,6 +95,7 @@ public class S3Filer implements Filer {
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
 		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
+		storageClass = StorageClass.fromValue(config.getString("s3.storageClass", "STANDARD"));
 		limiter = RateLimiter.create(config.getDouble("s3.rateLimit", 3400));
 		threader = new Threader(config.getInt("s3.threads", 8));
 	}
@@ -210,7 +214,9 @@ public class S3Filer implements Filer {
 					InputStream in = new ByteArrayInputStream(baos.toByteArray());
 					ObjectMetadata metadata = new ObjectMetadata();
 					metadata.setContentLength(baos.size());
-					s3().putObject(bucket, key, in, metadata);
+					PutObjectRequest request = new PutObjectRequest(bucket, key, in, metadata)
+							.withStorageClass(storageClass);
+					s3().putObject(request);
 				} else {
 					flip(1);
 
@@ -231,8 +237,9 @@ public class S3Filer implements Filer {
 
 				if (needle == null) {
 					needle = threader.needle();
-					uploadId = s3().initiateMultipartUpload(new InitiateMultipartUploadRequest(bucket, key))
-							.getUploadId();
+					InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucket, key)
+							.withStorageClass(storageClass);
+					uploadId = s3().initiateMultipartUpload(request).getUploadId();
 				}
 
 				InputStream in = new ByteArrayInputStream(baos.toByteArray());
@@ -282,7 +289,7 @@ public class S3Filer implements Filer {
 	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) {
 		String oldKey = keyForPath(oldPath);
 		String newKey = keyForPath(newPath);
-		s3().copyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey));
+		s3().copyObject(new CopyObjectRequest(bucket, oldKey, bucket, newKey).withStorageClass(storageClass));
 		s3().deleteObject(bucket, oldKey);
 	}
 
