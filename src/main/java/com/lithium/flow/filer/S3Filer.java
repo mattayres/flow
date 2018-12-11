@@ -89,9 +89,9 @@ public class S3Filer implements Filer {
 		checkNotNull(config);
 		checkNotNull(access);
 
-		s3 = buildS3(config, access);
 		uri = getBaseURI(config.getString("url"));
 		bucket = uri.getHost();
+		s3 = buildS3(config, access, bucket);
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
 		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
@@ -321,7 +321,7 @@ public class S3Filer implements Filer {
 	}
 
 	@Nonnull
-	public static AmazonS3 buildS3(@Nonnull Config config, @Nonnull Access access) {
+	public static AmazonS3 buildS3(@Nonnull Config config, @Nonnull Access access, @Nonnull String bucket) {
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 
 		ClientConfiguration cc = new ClientConfiguration();
@@ -355,7 +355,7 @@ public class S3Filer implements Filer {
 					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
 
 					AmazonS3 s3 = builder.build();
-					s3.getS3AccountOwner();
+					s3.getBucketAcl(bucket);
 					response.accept();
 					return s3;
 				} catch (AmazonS3Exception e) {
