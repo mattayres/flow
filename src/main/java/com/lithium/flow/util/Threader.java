@@ -37,7 +37,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 /**
  * @author Matt Ayres
  */
-public class Threader {
+public class Threader implements AutoCloseable {
 	private static final Logger log = Logs.getLogger();
 
 	private final ListeningExecutorService service;
@@ -120,6 +120,11 @@ public class Threader {
 		}, MoreExecutors.directExecutor());
 
 		return future;
+	}
+
+	@Override
+	public void close() {
+		finish();
 	}
 
 	public void finish() {

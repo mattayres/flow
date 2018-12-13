@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 /**
  * @author Matt Ayres
  */
-public class LoopQueue<T> {
+public class LoopQueue<T> implements AutoCloseable {
 	private final int capacity;
 	private final BlockingQueue<T> queue;
 	private final List<LoopThread> threads = new CopyOnWriteArrayList<>();
@@ -88,6 +88,11 @@ public class LoopQueue<T> {
 
 	public int size() {
 		return queue.size();
+	}
+
+	@Override
+	public void close() {
+		finish();
 	}
 
 	public void finish() {

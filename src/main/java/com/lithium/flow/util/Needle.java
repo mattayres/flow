@@ -32,7 +32,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 /**
  * @author Matt Ayres
  */
-public class Needle<T> {
+public class Needle<T> implements AutoCloseable {
 	private final Threader threader;
 	private final BlockingQueue<ListenableFuture<T>> queue = new LinkedBlockingQueue<>();
 
@@ -57,6 +57,11 @@ public class Needle<T> {
 		ListenableFuture<T> future = threader.submit(name, callable);
 		queue.add(future);
 		return future;
+	}
+
+	@Override
+	public void close() {
+		finish();
 	}
 
 	@Nonnull

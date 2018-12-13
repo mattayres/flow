@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 /**
  * @author Matt Ayres
  */
-public class Progress {
+public class Progress implements AutoCloseable {
 	private static final Logger log = Logs.getLogger();
 
 	private final List<Measure> measures = new ArrayList<>();
@@ -92,6 +92,11 @@ public class Progress {
 
 		loop.interrupt();
 		stopped = true;
+	}
+
+	@Override
+	public void close() {
+		finish();
 	}
 
 	public void finish() {

@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 /**
  * @author Matt Ayres
  */
-public class LoopThread extends Thread {
+public class LoopThread extends Thread implements AutoCloseable {
 	private static final Logger log = Logs.getLogger();
 	private static final AtomicInteger nextId = new AtomicInteger();
 
@@ -95,6 +95,11 @@ public class LoopThread extends Thread {
 		}
 
 		finished = true;
+	}
+
+	@Override
+	public void close() {
+		finish();
 	}
 
 	public void finish() {
