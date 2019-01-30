@@ -24,9 +24,12 @@ import com.lithium.flow.access.Prompt.Response;
 import com.lithium.flow.access.Prompt.Type;
 import com.lithium.flow.config.Config;
 import com.lithium.flow.io.Swallower;
+import com.lithium.flow.util.Unchecked;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
@@ -44,6 +47,7 @@ public class Sshj extends SSHClient {
 	private final Prompt prompt;
 	private final boolean pty;
 	private final int retries;
+	private final long initTimeout;
 
 	public Sshj(@Nonnull Config config, @Nonnull Prompt prompt) throws IOException {
 		checkNotNull(config);
@@ -53,6 +57,7 @@ public class Sshj extends SSHClient {
 		getConnection().setWindowSize(config.getLong("shell.windowSize", getConnection().getWindowSize()));
 
 		long defaultTimeout = config.getTime("shell.timeout", "10s");
+		initTimeout = config.getTime("shell.timeout.init", String.valueOf(defaultTimeout));
 		getConnection().setTimeoutMs((int) config.getTime("shell.timeout.connection", String.valueOf(defaultTimeout)));
 		getTransport().setTimeoutMs((int) config.getTime("shell.timeout.transport", String.valueOf(defaultTimeout)));
 
@@ -84,8 +89,19 @@ public class Sshj extends SSHClient {
 	}
 
 	public void connect(@Nonnull Login login) throws IOException {
+		CountDownLatch latch = new CountDownLatch(1);
+		Thread thread = new Thread(() -> Unchecked.run(() -> {
+			if (!latch.await(initTimeout, TimeUnit.MILLISECONDS)) {
+				close();
+			}
+		}));
+		thread.setName("Sshj.connect:" + login.getUser() + "@" + login.getHost());
+		thread.setDaemon(true);
+		thread.start();
+
 		log.debug("connect: {}", login);
 		connect(login.getHost(), login.getPortOrDefault(22));
+		latch.countDown();
 
 		UserAuthException exception = null;
 		String keyPath = login.getKeyPath();
