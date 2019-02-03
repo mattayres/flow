@@ -17,19 +17,17 @@
 package com.lithium.flow.shell.sshj;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.schmizz.sshj.connection.channel.direct.Session.Command;
 
-import com.lithium.flow.io.InputStreamSpliterator;
 import com.lithium.flow.io.Swallower;
 import com.lithium.flow.shell.Exec;
+import com.lithium.flow.util.Lines;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -63,13 +61,13 @@ public class SshjExec implements Exec {
 	@Override
 	@Nonnull
 	public Stream<String> out() {
-		return StreamSupport.stream(new InputStreamSpliterator(command.getInputStream(), UTF_8), false);
+		return Lines.stream(command.getInputStream());
 	}
 
 	@Override
 	@Nonnull
 	public Stream<String> err() {
-		return StreamSupport.stream(new InputStreamSpliterator(command.getErrorStream(), UTF_8), false);
+		return Lines.stream(command.getErrorStream());
 	}
 
 	@Override

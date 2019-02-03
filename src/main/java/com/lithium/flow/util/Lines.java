@@ -18,15 +18,17 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.io.InputStreamSpliterator;
 import com.lithium.flow.io.Swallower;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -53,7 +55,27 @@ public class Lines {
 	public static Stream<String> stream(@Nonnull InputStream in, @Nonnull Charset charset) {
 		checkNotNull(in);
 		checkNotNull(charset);
-		return StreamSupport.stream(new InputStreamSpliterator(in, charset), false);
+
+		Spliterator<String> spliterator = new IndefiniteSpliterator<String>() {
+			private final LineIterator it = new LineIterator(new InputStreamReader(in, charset));
+
+			@Override
+			public boolean tryAdvance(Consumer<? super String> action) {
+				try {
+					if (it.hasNext()) {
+						action.accept(it.nextLine());
+						return true;
+					} else {
+						Swallower.close(it);
+						return false;
+					}
+				} catch (IllegalStateException e) {
+					return false;
+				}
+			}
+		};
+
+		return StreamSupport.stream(spliterator, false);
 	}
 
 	public static void accept(@Nonnull InputStream in,
