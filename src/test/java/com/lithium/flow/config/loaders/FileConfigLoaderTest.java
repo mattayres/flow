@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -32,18 +31,15 @@ import org.junit.Test;
  * @author Matt Ayres
  */
 public class FileConfigLoaderTest {
-	private static final File file = new File(new File("."), "test.config");
+	private static File file;
 
 	@BeforeClass
 	public static void setUp() throws Exception {
+		file = File.createTempFile("test", ".config");
+		file.deleteOnExit();
 		PrintStream ps = new PrintStream(file.getAbsolutePath());
 		ps.println("foo = bar");
 		ps.close();
-	}
-
-	@AfterClass
-	public static void tearDown() {
-		file.delete();
 	}
 
 	@Test

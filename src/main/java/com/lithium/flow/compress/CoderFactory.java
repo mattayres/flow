@@ -30,13 +30,13 @@ import javax.annotation.Nonnull;
  */
 public class CoderFactory {
 	private final Map<String, Lazy<Coder>> coders = new ConcurrentHashMap<>();
-	private final Lazy<Coder> defaultCoder = new Lazy<>(NoCoder.class::newInstance);
+	private final Lazy<Coder> defaultCoder = new Lazy<>(() -> NoCoder.class.getConstructor().newInstance());
 
 	@Nonnull
 	public CoderFactory register(@Nonnull String extension, @Nonnull Class<? extends Coder> clazz) {
 		checkNotNull(extension);
 		checkNotNull(clazz);
-		return register(extension, new Lazy<>(clazz::newInstance));
+		return register(extension, new Lazy<>(() -> clazz.getConstructor().newInstance()));
 	}
 
 	@Nonnull

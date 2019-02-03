@@ -86,7 +86,7 @@ public class ParallelCoder implements Coder {
 			}
 
 			@Override
-			public void write(@Nonnull byte b[], int off, int len) {
+			public void write(@Nonnull byte[] b, int off, int len) {
 				buf.write(b, off, len);
 				if (buf.size() > chunkSize) {
 					cycle();

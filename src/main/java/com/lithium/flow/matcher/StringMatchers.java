@@ -81,8 +81,7 @@ public class StringMatchers {
 			}
 		}
 
-		List<StringMatcher> quickMatchers = new ArrayList<>();
-		quickMatchers.addAll(buildList(multimap, "len", LenStringMatcher::new));
+		List<StringMatcher> quickMatchers = new ArrayList<>(buildList(multimap, "len", LenStringMatcher::new));
 		Collection<String> exacts = multimap.get("exact");
 		if (exacts.size() == 1) {
 			quickMatchers.add(new ExactStringMatcher(exacts.iterator().next()));

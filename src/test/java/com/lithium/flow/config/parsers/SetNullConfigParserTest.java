@@ -34,7 +34,7 @@ public class SetNullConfigParserTest {
 	@Test
 	public void testSetNull() {
 		testSetNull("foo 0=", "foo");
-		testSetNull("foo 0= bar", "foo");
+		testSetNull("bar 0= bar", "bar");
 	}
 
 	private void testSetNull(String line, String key) {

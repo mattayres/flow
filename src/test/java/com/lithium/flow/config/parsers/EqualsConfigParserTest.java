@@ -57,13 +57,9 @@ public class EqualsConfigParserTest {
 
 	@Test
 	public void testNoSet() {
-		testNoSet("key : value");
-	}
-
-	private void testNoSet(String line) {
 		ConfigBuilder builder = createMock(ConfigBuilder.class);
 		replay(builder);
-		assertFalse(new EqualsConfigParser().parseLine(line, builder));
+		assertFalse(new EqualsConfigParser().parseLine("key : value", builder));
 		verify(builder);
 	}
 }

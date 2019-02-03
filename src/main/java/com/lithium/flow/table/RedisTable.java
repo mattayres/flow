@@ -57,7 +57,7 @@ public class RedisTable implements Table {
 	public void putRow(@Nonnull Row row) {
 		Map<String, String> map = row.columns().stream().collect(toMap(c -> c, c -> {
 			Object value = row.getCell(c, Object.class);
-			return value != null ? value.toString() : null;
+			return value != null ? value.toString() : "";
 		}));
 		String id = row.getKey().id();
 		pooler.apply(j -> j.hmset(id, map));

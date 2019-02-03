@@ -167,6 +167,7 @@ public class BaseConfigBuilderTest {
 	}
 
 	@Test
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public void testLoaderParser() throws IOException {
 		File testDir = new File("target/test");
 		File file = new File(testDir, "test.config");

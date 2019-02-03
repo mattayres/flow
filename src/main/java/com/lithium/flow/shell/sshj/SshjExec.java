@@ -34,6 +34,10 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.IOUtils;
+
+import com.google.common.io.ByteStreams;
+
 import net.schmizz.sshj.connection.channel.direct.Session;
 
 /**
@@ -71,11 +75,10 @@ public class SshjExec implements Exec {
 	@Override
 	@Nonnull
 	public Optional<Integer> exit() throws IOException {
-		out().count();
-		err().count();
-		Integer status = command.getExitStatus();
+		IOUtils.copy(command.getInputStream(), ByteStreams.nullOutputStream());
+		IOUtils.copy(command.getErrorStream(), ByteStreams.nullOutputStream());
 		close();
-		return Optional.ofNullable(status);
+		return Optional.ofNullable(command.getExitStatus());
 	}
 
 	@Override

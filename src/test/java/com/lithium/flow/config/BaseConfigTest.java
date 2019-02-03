@@ -104,7 +104,7 @@ public class BaseConfigTest {
 		assertEquals("value", config.getString("key", ""));
 		assertEquals("value", config.getString("key", null));
 		assertEquals("value2", config.getString("no.key", "value2"));
-		assertEquals(null, config.getString("no.key", null));
+		assertNull(config.getString("no.key", null));
 	}
 
 	@Test

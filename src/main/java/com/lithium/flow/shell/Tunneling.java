@@ -59,7 +59,7 @@ public class Tunneling {
 
 	@Override
 	public boolean equals(Object that) {
-		return EqualsBuilder.reflectionEquals(this, that);
+		return that instanceof Tunneling && EqualsBuilder.reflectionEquals(this, that);
 	}
 
 	@Override

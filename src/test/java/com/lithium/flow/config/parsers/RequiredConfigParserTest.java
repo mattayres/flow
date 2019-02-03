@@ -36,7 +36,7 @@ public class RequiredConfigParserTest {
 	@Test
 	public void testRequired() throws IOException {
 		testRequired("foo !=", "foo");
-		testRequired("foo != bar", "foo");
+		testRequired("bar != baz", "bar");
 	}
 
 	private void testRequired(String line, String key) {

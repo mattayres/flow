@@ -36,8 +36,8 @@ public class IncludeConfigParserTest {
 	@Test
 	public void testInclude() throws IOException {
 		testInclude("!include foo/bar.config", "foo/bar.config");
-		testInclude("!include\tfoo/bar.config", "foo/bar.config");
-		testInclude("!include  foo/bar.config", "foo/bar.config");
+		testInclude("!include\tfoo/baz.config", "foo/baz.config");
+		testInclude("!include  foo/baz.config", "foo/baz.config");
 		testInclude("!include foo/bar.config ", "foo/bar.config");
 	}
 
