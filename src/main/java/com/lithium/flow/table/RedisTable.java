@@ -86,7 +86,7 @@ public class RedisTable implements Table {
 						return false;
 					}
 
-					cursorRef.set(result.getStringCursor());
+					cursorRef.set(result.getCursor());
 
 					queue = Queues.newArrayDeque(result.getResult());
 					queueRef.set(queue);
