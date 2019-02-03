@@ -18,6 +18,7 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -40,6 +41,25 @@ public class Sockets {
 			return socket.isConnected();
 		} catch (Exception e) {
 			return false;
+		}
+	}
+
+	public static void waitForConnect(@Nonnull String host, int port, long timeout) throws IOException {
+		long timeoutTime = System.currentTimeMillis() + timeout;
+		InetSocketAddress address = new InetSocketAddress(host, port);
+
+		while (true) {
+			try (Socket socket = new Socket()) {
+				socket.connect(address, (int) timeout);
+				if (socket.isConnected()) {
+					return;
+				}
+			} catch (IOException e) {
+				if (System.currentTimeMillis() > timeoutTime) {
+					throw e;
+				}
+				Sleep.softly(1000);
+			}
 		}
 	}
 }
