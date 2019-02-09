@@ -63,9 +63,9 @@ public class Sleep {
 		return until(10, checker);
 	}
 
-	public static boolean until(long interval, @Nonnull Checker check) {
+	public static boolean until(long interval, @Nonnull Checker checker) {
 		do {
-			if (check.check()) {
+			if (checker.check()) {
 				return true;
 			}
 			if (!softly(interval)) {
@@ -73,5 +73,13 @@ public class Sleep {
 			}
 		} while (!Thread.interrupted());
 		return false;
+	}
+
+	public static boolean whilst(@Nonnull Checker checker) {
+		return !until(checker);
+	}
+
+	public static boolean whilst(long interval, @Nonnull Checker checker) {
+		return !until(interval, checker);
 	}
 }
