@@ -19,6 +19,9 @@ package com.lithium.flow.ioc;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.picocontainer.Characteristics.CACHE;
 
+import com.lithium.flow.util.Mutex;
+import com.lithium.flow.util.Mutexes;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -44,14 +47,21 @@ import com.google.common.io.Closer;
  */
 public class PicoLocator implements Locator {
 	private final MutablePicoContainer pico;
+	private final Mutexes<Class<?>> mutexes;
 	private final Set<Class<?>> types = Collections.synchronizedSet(new HashSet<>());
 
 	public PicoLocator() {
 		this(null);
 	}
 
-	public PicoLocator(@Nullable PicoContainer parentPico) {
-		pico = new DefaultPicoContainer(parentPico).as(CACHE);
+	public PicoLocator(@Nullable PicoLocator parentLocator) {
+		if (parentLocator == null) {
+			pico = new DefaultPicoContainer().as(CACHE);
+			mutexes = new Mutexes<>();
+		} else {
+			pico = new DefaultPicoContainer(parentLocator.pico).as(CACHE);
+			mutexes = parentLocator.mutexes;
+		}
 	}
 
 	@Override
@@ -90,11 +100,13 @@ public class PicoLocator implements Locator {
 	@Nonnull
 	public <T> T getInstance(@Nonnull Class<T> type) {
 		checkNotNull(type);
-		T instance = pico.getComponent(type);
-		if (instance == null) {
-			throw new RuntimeException("no instance for type: " + type);
+		try (Mutex ignored = mutexes.getMutex(type)) {
+			T instance = pico.getComponent(type);
+			if (instance == null) {
+				throw new RuntimeException("no instance for type: " + type);
+			}
+			return instance;
 		}
-		return instance;
 	}
 
 	@Override
@@ -114,7 +126,7 @@ public class PicoLocator implements Locator {
 	@Override
 	@Nonnull
 	public Locator createChild() {
-		return new PicoLocator(pico);
+		return new PicoLocator(this);
 	}
 
 	@Override
