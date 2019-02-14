@@ -133,8 +133,10 @@ public class RunnerMain {
 			return;
 		}
 
-		String prefix = StringUtils.rightPad(runnerConfig.getString("name"), 15, '.') + " ";
-		run(prefix, classpath, vaultRun.getEnv());
+		String prefix = runnerConfig.getString("prefix", runnerConfig.getString("name"));
+		int pad = runnerConfig.getInt("prefixPad", 15);
+		String paddedPrefix = StringUtils.rightPad(prefix, pad, '.') + " ";
+		run(paddedPrefix, classpath, vaultRun.getEnv());
 	}
 
 	private void run(@Nonnull String prefix, @Nonnull String classpath, @Nullable String env) {
