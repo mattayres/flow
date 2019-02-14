@@ -62,7 +62,10 @@ public class LoopThread extends Thread implements AutoCloseable {
 		this.onException = checkNotNull(onException);
 
 		long time = System.currentTimeMillis();
-		nextTime = time + offset - (round && interval > 0 ? time % interval : 0);
+		nextTime = time + offset;
+		if (round && interval > 0) {
+			nextTime += interval - time % interval;
+		}
 
 		setDaemon(true);
 		start();
@@ -71,6 +74,10 @@ public class LoopThread extends Thread implements AutoCloseable {
 	@Override
 	public void run() {
 		while (!interrupted() && !doFinish) {
+			if (!Sleep.until(nextTime)) {
+				break;
+			}
+
 			try {
 				executable.call();
 			} catch (Exception e) {
@@ -86,10 +93,6 @@ public class LoopThread extends Thread implements AutoCloseable {
 						nextTime += interval;
 					}
 					nextTime -= interval;
-				}
-
-				if (!Sleep.until(nextTime)) {
-					break;
 				}
 			}
 		}
