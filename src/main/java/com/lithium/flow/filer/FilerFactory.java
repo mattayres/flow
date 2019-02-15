@@ -75,7 +75,7 @@ public class FilerFactory {
 	public FilerFactory attempt(@Nonnull UnaryOperator<FilerFactory> op) {
 		try {
 			return op.apply(this);
-		} catch (Error e) {
+		} catch (NoClassDefFoundError e) {
 			return this;
 		}
 	}

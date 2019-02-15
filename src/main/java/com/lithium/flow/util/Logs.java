@@ -19,14 +19,12 @@ package com.lithium.flow.util;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.lithium.flow.config.Config;
-import com.lithium.flow.config.ConfigBuilder;
 import com.lithium.flow.config.Configs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.Properties;
 
 import javax.annotation.Nonnull;
 
@@ -43,7 +41,7 @@ import org.slf4j.helpers.MessageFormatter;
  */
 public class Logs {
 	/**
-	 * Configure logging with specified config, using defaults from "/logj.properties" if it exists.
+	 * Configure logging with specified config, using defaults from "/log4j.properties" if it exists.
 	 */
 	public static void configure(@Nonnull Config config) throws IOException {
 		checkNotNull(config);
@@ -51,29 +49,15 @@ public class Logs {
 		InputStream in = Logs.class.getResourceAsStream("/log4j.properties");
 		if (in != null) {
 			in.close();
-			configure(config, "/log4j.properties");
-		} else {
-			configure(config.asProperties());
+			config = Configs.newBuilder().allowUndefined(true).include("/log4j.properties").addAll(config).build();
 		}
-	}
 
-	/**
-	 * Configure logging with specified config, using defaults from specified classpath that must exist.
-	 */
-	public static void configure(@Nonnull Config config, @Nonnull String classpath) throws IOException {
-		checkNotNull(config);
-		checkNotNull(classpath);
-		ConfigBuilder builder = Configs.newBuilder().allowUndefined(true);
-		configure(builder.include(classpath).addAll(config).build().asProperties());
-	}
-
-	/**
-	 * Configure logging with specified properties.
-	 */
-	public static void configure(@Nonnull Properties properties) {
-		checkNotNull(properties);
-		LogManager.resetConfiguration();
-		PropertyConfigurator.configure(properties);
+		try {
+			LogManager.resetConfiguration();
+			PropertyConfigurator.configure(config.asProperties());
+		} catch (NoClassDefFoundError e) {
+			// log4j not available
+		}
 	}
 
 	/**
