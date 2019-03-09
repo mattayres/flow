@@ -28,7 +28,6 @@ import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.LoopThread;
 import com.lithium.flow.util.Main;
 import com.lithium.flow.util.Passwords;
-import com.lithium.flow.util.Sleep;
 import com.lithium.flow.util.Threader;
 import com.lithium.flow.util.Unchecked;
 import com.lithium.flow.vault.SecureVault;
@@ -68,25 +67,24 @@ public class RelayMain {
 
 		new LoopThread(config.getTime("runner.relay"), this::destroy);
 
-		while (currentProcess.get() == null) {
+		while (!Thread.interrupted()) {
 			run();
-		}
 
-		if (config.getBoolean("runner.relay.keepAlive", false)) {
-			while (!Thread.interrupted()) {
-				run();
+			if (!config.getBoolean("runner.relay.keepAlive", false)) {
+				break;
 			}
 		}
 	}
 
 	private void run() throws IOException {
-		Sleep.until(() -> currentProcess.get() == null);
-
 		log.info("starting process");
 		ProcessBuilder pb = new ProcessBuilder(command);
 
-		Map<String, String> env = pb.environment();
-		env.put("VAULT_PASSWORD", vaultPassword.get());
+		String password = vaultPassword.get();
+		if (password != null) {
+			Map<String, String> env = pb.environment();
+			env.put("VAULT_PASSWORD", password);
+		}
 
 		Process process = pb.start();
 		currentProcess.set(process);
@@ -95,6 +93,8 @@ public class RelayMain {
 		threader.execute("out", () -> pipe(process.getInputStream(), System.out));
 		threader.execute("err", () -> pipe(process.getErrorStream(), System.err));
 		threader.finish();
+
+		log.info("exited process");
 	}
 
 	private void pipe(@Nonnull InputStream in, @Nonnull PrintStream ps) {
@@ -134,6 +134,10 @@ public class RelayMain {
 
 	@Nonnull
 	private CheckedSupplier<String, IOException> buildVaultPassword(@Nonnull Config config) {
+		if (!config.containsKey("vault.path")) {
+			return () -> null;
+		}
+
 		File file = new File(config.getString("vault.path"));
 		Vault memoryVault = new SecureVault(Configs.empty(), new MemoryStore(new FileStore(file)));
 		memoryVault.unlock(System.getenv("VAULT_PASSWORD"));
