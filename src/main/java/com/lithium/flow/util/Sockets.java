@@ -18,9 +18,16 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.config.Config;
+
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Collections;
 
 import javax.annotation.Nonnull;
 
@@ -61,5 +68,58 @@ public class Sockets {
 				Sleep.softly(1000);
 			}
 		}
+	}
+
+	@Nonnull
+	public static ServerSocket nextServerSocket(@Nonnull Config config) throws IOException {
+		int scan = config.getInt("port.scan", 1);
+		int minPort = config.getInt("port");
+		int maxPort = minPort + scan;
+
+		int port = minPort;
+		while (port < maxPort) {
+			try {
+				return new ServerSocket(port);
+			} catch (IOException e) {
+				port++;
+			}
+		}
+
+		if (scan == 1) {
+			throw new IOException("port " + minPort + " not available");
+		} else {
+			throw new IOException("no ports available between " + minPort + " and " + maxPort);
+		}
+	}
+
+	public static int nextServerPort(@Nonnull Config config) throws IOException {
+		try (ServerSocket server = nextServerSocket(config)) {
+			return server.getLocalPort();
+		}
+	}
+
+	public static int nextFreePort() throws IOException {
+		try (ServerSocket server = new ServerSocket(0)) {
+			return server.getLocalPort();
+		}
+	}
+
+	@Nonnull
+	public static String getLocalAddress() throws IOException {
+		try {
+			return InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			for (NetworkInterface network : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+				if (network.isUp() && !network.isLoopback()) {
+					for (InetAddress addr : Collections.list(network.getInetAddresses())) {
+						if (!addr.isAnyLocalAddress() && !addr.isLoopbackAddress() && !addr.isMulticastAddress()) {
+							return addr.getHostAddress();
+						}
+					}
+				}
+			}
+		}
+
+		throw new IOException("unknown local address");
 	}
 }
