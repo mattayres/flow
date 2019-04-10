@@ -190,6 +190,7 @@ public class S3Filer implements Filer {
 			private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			private Needle<PartETag> needle;
 			private String uploadId;
+			private boolean closed;
 
 			@Override
 			public void write(int b) {
@@ -210,6 +211,10 @@ public class S3Filer implements Filer {
 
 			@Override
 			public void close() throws IOException {
+				if (closed) {
+					return;
+				}
+
 				if (needle == null) {
 					InputStream in = new ByteArrayInputStream(baos.toByteArray());
 					ObjectMetadata metadata = new ObjectMetadata();
@@ -228,6 +233,8 @@ public class S3Filer implements Filer {
 						throw e.unwrap(IOException.class);
 					}
 				}
+
+				closed = true;
 			}
 
 			private void flip(long minSize) {
