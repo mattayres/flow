@@ -27,9 +27,10 @@ import com.lithium.flow.util.Lines;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.LoopThread;
 import com.lithium.flow.util.Main;
+import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Passwords;
+import com.lithium.flow.util.Sleep;
 import com.lithium.flow.util.Threader;
-import com.lithium.flow.util.Unchecked;
 import com.lithium.flow.vault.SecureVault;
 import com.lithium.flow.vault.Vault;
 
@@ -47,7 +48,6 @@ import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 
 /**
  * @author Matt Ayres
@@ -56,27 +56,35 @@ public class RelayMain {
 	private static final Logger log = Logs.getLogger();
 
 	private final AtomicReference<Process> currentProcess = new AtomicReference<>();
+	private final Threader threader = new Threader();
 	private final CheckedSupplier<String, IOException> vaultPassword;
 	private final List<String> command;
 	private final boolean oomeRestart;
+	private final long destroyMaxTime;
 
 	public RelayMain(@Nonnull Config config) throws Exception {
 		vaultPassword = buildVaultPassword(config);
 		command = buildCommand();
 		oomeRestart = config.getBoolean("runner.relay.oomeRestart", false);
+		destroyMaxTime = config.getTime("runner.relay.destroyMaxTime", "30s");
 
-		new LoopThread(config.getTime("runner.relay"), this::destroy);
+		new LoopThread(config.getTime("runner.relay", "0"), this::destroy);
 
-		while (!Thread.interrupted()) {
-			run();
+		while (currentProcess.get() == null) {
+			start();
+		}
 
-			if (!config.getBoolean("runner.relay.keepAlive", false)) {
-				break;
+		if (config.getBoolean("runner.relay.keepAlive", false)) {
+			while (!Thread.interrupted()) {
+				Sleep.until(() -> currentProcess.get() == null);
+				start();
 			}
 		}
+
+		threader.finish();
 	}
 
-	private void run() throws IOException {
+	private void start() throws IOException {
 		log.info("starting process");
 		ProcessBuilder pb = new ProcessBuilder(command);
 
@@ -89,26 +97,22 @@ public class RelayMain {
 		Process process = pb.start();
 		currentProcess.set(process);
 
-		Threader threader = new Threader();
-		threader.execute("out", () -> pipe(process.getInputStream(), System.out));
-		threader.execute("err", () -> pipe(process.getErrorStream(), System.err));
-		threader.finish();
+		try (Needle needle = threader.needle()) {
+			needle.execute("out", () -> pipe(process.getInputStream(), System.out));
+			needle.execute("err", () -> pipe(process.getErrorStream(), System.err));
+		}
 
 		log.info("exited process");
 	}
 
-	private void pipe(@Nonnull InputStream in, @Nonnull PrintStream ps) {
-		try {
-			Lines.stream(in).forEach(line -> {
-				ps.println(line);
+	private void pipe(@Nonnull InputStream in, @Nonnull PrintStream ps) throws IOException, InterruptedException {
+		for (String line : Lines.iterate(in)) {
+			ps.println(line);
 
-				if (oomeRestart && line.contains("java.lang.OutOfMemoryError")) {
-					log.info("detected OOME");
-					Unchecked.run(this::destroy);
-				}
-			});
-		} catch (Exception e) {
-			//
+			if (oomeRestart && line.contains("java.lang.OutOfMemoryError")) {
+				log.info("detected OOME");
+				destroy();
+			}
 		}
 	}
 
@@ -118,7 +122,7 @@ public class RelayMain {
 			log.info("destroying process");
 			process.destroy();
 
-			if (!process.waitFor(30, TimeUnit.SECONDS)) {
+			if (!process.waitFor(destroyMaxTime, TimeUnit.MILLISECONDS)) {
 				log.info("forcibly destroying process");
 				process.destroyForcibly();
 				process.waitFor();
@@ -128,7 +132,7 @@ public class RelayMain {
 
 	@Nonnull
 	private List<String> buildCommand() {
-		List<String> list = Lists.newArrayList(Splitter.on(' ').split(System.getenv("RELAY_COMMAND")));
+		List<String> list = Splitter.on(' ').splitToList(System.getenv("RELAY_COMMAND"));
 		return list.stream().filter(item -> !item.isEmpty()).collect(toList());
 	}
 
@@ -147,7 +151,7 @@ public class RelayMain {
 				log.warn("failed to delete vault: {}", file.getAbsolutePath());
 			}
 
-			String password = Passwords.create(32);
+			String password = Passwords.create(34);
 			Vault fileVault = new SecureVault(Configs.empty(), new FileStore(file));
 			fileVault.setup(password);
 			memoryVault.getKeys().forEach(key -> fileVault.putValue(key, memoryVault.getValue(key)));
