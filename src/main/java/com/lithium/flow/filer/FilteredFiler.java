@@ -36,7 +36,9 @@ public class FilteredFiler extends DecoratedFiler {
 	private final Predicate<Record> predicate;
 
 	public FilteredFiler(@Nonnull Filer delegate, @Nonnull Predicate<Record> predicate) {
-		super(delegate, true);
+		super(delegate);
+		bypassDelegateFind = true;
+
 		this.predicate = checkNotNull(predicate);
 	}
 

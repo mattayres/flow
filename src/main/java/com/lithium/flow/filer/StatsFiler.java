@@ -64,7 +64,7 @@ public class StatsFiler extends DecoratedFiler {
 	}
 
 	public StatsFiler(@Nonnull Filer delegate, int dumpInterval) {
-		super(delegate, false);
+		super(delegate);
 		this.delegate = checkNotNull(delegate);
 		if (dumpInterval > 0) {
 			new LoopThread(dumpInterval, this::dumpStats);

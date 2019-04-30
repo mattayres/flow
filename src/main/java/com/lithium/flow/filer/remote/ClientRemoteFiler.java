@@ -37,7 +37,8 @@ public class ClientRemoteFiler extends DecoratedFiler implements RemoteFiler {
 	}
 
 	public ClientRemoteFiler(@Nonnull String host, int port) throws IOException {
-		super(lookup(checkNotNull(host), port), true);
+		super(lookup(checkNotNull(host), port));
+		bypassDelegateFind = true;
 	}
 
 	@Nonnull

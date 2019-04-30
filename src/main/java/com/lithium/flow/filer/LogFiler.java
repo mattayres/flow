@@ -47,7 +47,7 @@ public class LogFiler extends DecoratedFiler {
 	}
 
 	public LogFiler(@Nonnull Filer delegate, boolean enter, boolean exit) {
-		super(delegate, false);
+		super(delegate);
 		this.delegate = checkNotNull(delegate);
 		this.enter = enter;
 		this.exit = exit;

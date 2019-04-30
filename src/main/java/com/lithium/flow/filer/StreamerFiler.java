@@ -37,6 +37,8 @@ public class StreamerFiler extends DecoratedFiler {
 	public StreamerFiler(@Nonnull Filer delegate, @Nonnull Streamer streamer) {
 		super(checkNotNull(delegate));
 		this.streamer = checkNotNull(streamer);
+
+		bypassDelegateHash = true;
 	}
 
 	@Override
@@ -45,7 +47,7 @@ public class StreamerFiler extends DecoratedFiler {
 		final InputStream in = super.readFile(path);
 		try {
 			return streamer.filterIn(in, path);
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			return new InputStream() {
 				@Override
 				public int read() throws IOException {

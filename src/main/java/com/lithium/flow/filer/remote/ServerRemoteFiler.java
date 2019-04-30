@@ -46,7 +46,9 @@ public class ServerRemoteFiler extends DecoratedFiler implements RemoteFiler, Se
 	private static final long serialVersionUID = 4838720717701156008L;
 
 	public ServerRemoteFiler(@Nonnull Filer delegate, int port, int localPort) throws RemoteException {
-		super(delegate, true);
+		super(delegate);
+		bypassDelegateFind = true;
+
 		log.info("port: {}, local port: {}", port, localPort);
 		UnicastRemoteObject.exportObject(this, localPort);
 		LocateRegistry.createRegistry(port).rebind(RemoteFiler.BIND, this);

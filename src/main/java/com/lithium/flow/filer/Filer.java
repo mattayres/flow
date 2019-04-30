@@ -78,9 +78,6 @@ public interface Filer extends Closeable {
 
 	void createDirs(@Nonnull String path) throws IOException;
 
-	@Override
-	void close() throws IOException;
-
 	default void createFolder(@Nonnull String path) throws IOException {
 		createDirs(RecordPath.getFolder(path));
 	}
@@ -89,9 +86,12 @@ public interface Filer extends Closeable {
 		destFiler.createFolder(destPath);
 
 		try (InputStream in = readFile(srcPath)) {
-			OutputStream out = destFiler.writeFile(destPath);
-			IOUtils.copy(in, out, 65536);
-			out.close();
+			try (OutputStream out = destFiler.writeFile(destPath)) {
+				IOUtils.copy(in, out, 65536);
+			}
 		}
 	}
+
+	@Override
+	void close() throws IOException;
 }

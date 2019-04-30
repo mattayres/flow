@@ -36,15 +36,12 @@ import javax.annotation.Nonnull;
  */
 public class DecoratedFiler implements Filer {
 	private final Filer delegate;
-	private final boolean bypassDelegateFind;
+	protected boolean bypassDelegateFind;
+	protected boolean bypassDelegateHash;
+	protected boolean bypassDelegateCopy;
 
 	public DecoratedFiler(@Nonnull Filer delegate) {
-		this(delegate, false);
-	}
-
-	public DecoratedFiler(@Nonnull Filer delegate, boolean bypassDelegateFind) {
 		this.delegate = checkNotNull(delegate);
-		this.bypassDelegateFind = bypassDelegateFind;
 	}
 
 	@Override
@@ -78,7 +75,11 @@ public class DecoratedFiler implements Filer {
 	@Override
 	@Nonnull
 	public String getHash(@Nonnull String path, @Nonnull String hash, @Nonnull String base) throws IOException {
-		return delegate.getHash(path, hash, base);
+		if (bypassDelegateHash) {
+			return Filer.super.getHash(path, hash, base);
+		} else {
+			return delegate.getHash(path, hash, base);
+		}
 	}
 
 	@Override
@@ -97,6 +98,12 @@ public class DecoratedFiler implements Filer {
 	@Nonnull
 	public OutputStream appendFile(@Nonnull String path) throws IOException {
 		return delegate.appendFile(path);
+	}
+
+	@Override
+	@Nonnull
+	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
+		return delegate.openFile(path, write);
 	}
 
 	@Override
@@ -120,13 +127,16 @@ public class DecoratedFiler implements Filer {
 	}
 
 	@Override
-	public void close() throws IOException {
-		delegate.close();
+	public void copy(@Nonnull String srcPath, @Nonnull Filer destFiler, @Nonnull String destPath) throws IOException {
+		if (bypassDelegateCopy) {
+			Filer.super.copy(srcPath, destFiler, destPath);
+		} else {
+			delegate.copy(srcPath, destFiler, destPath);
+		}
 	}
 
 	@Override
-	@Nonnull
-	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
-		return delegate.openFile(path, write);
+	public void close() throws IOException {
+		delegate.close();
 	}
 }
