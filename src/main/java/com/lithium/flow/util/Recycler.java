@@ -49,7 +49,7 @@ public class Recycler<K, V extends Closeable> implements Closeable {
 
 		time = config.getTime("recycle.time", "1m");
 
-		cache = Caches.buildWithListener(key -> new Bin(key, function.apply(key)),
+		cache = Caches.buildWithListener(key -> new Bin(function.apply(key)),
 				builder -> builder.expireAfterAccess(time, TimeUnit.MILLISECONDS),
 				notification -> Swallower.close(notification.getValue()));
 	}
@@ -67,13 +67,11 @@ public class Recycler<K, V extends Closeable> implements Closeable {
 	}
 
 	private class Bin implements Reusable<V>, Closeable {
-		private final K key;
 		private final V value;
 		private final Set<Object> set = new HashSet<>();
 		private boolean closed;
 
-		public Bin(@Nonnull K key, @Nonnull V value) {
-			this.key = checkNotNull(key);
+		public Bin(@Nonnull V value) {
 			this.value = checkNotNull(value);
 		}
 

@@ -96,8 +96,6 @@ public class CsvFormats {
 	@Nullable
 	private static QuoteMode getQuoteMode(@Nonnull Config config) {
 		switch (config.getString("csv.quoteMode", "default")) {
-			case "default":
-				return null;
 			case "all":
 				return QuoteMode.ALL;
 			case "minimal":

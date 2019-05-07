@@ -32,6 +32,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -96,19 +97,7 @@ public class SqlTable implements Table {
 
 	@Override
 	public void putRow(@Nonnull Row row) {
-		checkNotNull(row);
-
-		List<String> columns = row.columns();
-		columns.forEach(this::checkValidColumn);
-
-		List<Object> params = new ArrayList<>();
-		params.addAll(row.values());
-		params.addAll(row.getKey().list());
-
-		String query = buildInsertQuery(columns);
-		log.debug("insert: {} {}", query, params);
-
-		Unchecked.run(() -> schema.update(query, params.toArray()));
+		writeRow(row, this::buildInsertQuery);
 	}
 
 	@Override
@@ -148,7 +137,12 @@ public class SqlTable implements Table {
 
 	@Override
 	public void updateRow(@Nonnull Row row) {
+		writeRow(row, this::buildUpdateQuery);
+	}
+
+	private void writeRow(@Nonnull Row row, @Nonnull Function<List<String>, String> function) {
 		checkNotNull(row);
+		checkNotNull(function);
 
 		List<String> columns = row.columns();
 		columns.forEach(this::checkValidColumn);
@@ -157,8 +151,8 @@ public class SqlTable implements Table {
 		params.addAll(row.values());
 		params.addAll(row.getKey().list());
 
-		String query = buildUpdateQuery(columns);
-		log.debug("update: {} {}", query, params);
+		String query = function.apply(columns);
+		log.debug("write: {} {}", query, params);
 
 		Unchecked.run(() -> schema.update(query, params.toArray()));
 	}
