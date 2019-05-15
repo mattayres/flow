@@ -29,7 +29,6 @@ import com.lithium.flow.util.LoopThread;
 import com.lithium.flow.util.Main;
 import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Passwords;
-import com.lithium.flow.util.Sleep;
 import com.lithium.flow.util.Threader;
 import com.lithium.flow.vault.SecureVault;
 import com.lithium.flow.vault.Vault;
@@ -61,30 +60,30 @@ public class RelayMain {
 	private final List<String> command;
 	private final boolean oomeRestart;
 	private final long destroyMaxTime;
+	private volatile boolean restarting;
 
 	public RelayMain(@Nonnull Config config) throws Exception {
 		vaultPassword = buildVaultPassword(config);
 		command = buildCommand();
 		oomeRestart = config.getBoolean("runner.relay.oomeRestart", false);
 		destroyMaxTime = config.getTime("runner.relay.destroyMaxTime", "30s");
+		boolean keepAlive = config.getBoolean("runner.relay.keepAlive", false);
 
-		new LoopThread(config.getTime("runner.relay", "0"), this::destroy);
+		long interval = config.getTime("runner.relay", "0");
+		if (interval > 0) {
+			new LoopThread(interval, this::destroy);
+		}
 
-		while (currentProcess.get() == null) {
+		do {
 			start();
-		}
-
-		if (config.getBoolean("runner.relay.keepAlive", false)) {
-			while (!Thread.interrupted()) {
-				Sleep.until(() -> currentProcess.get() == null);
-				start();
-			}
-		}
+		} while (keepAlive || restarting);
 
 		threader.finish();
 	}
 
 	private void start() throws IOException {
+		restarting = false;
+
 		log.info("starting process");
 		ProcessBuilder pb = new ProcessBuilder(command);
 
@@ -102,7 +101,7 @@ public class RelayMain {
 			needle.execute("err", () -> pipe(process.getErrorStream(), System.err));
 		}
 
-		log.info("exited process");
+		log.info("exited process: {}", process.exitValue());
 	}
 
 	private void pipe(@Nonnull InputStream in, @Nonnull PrintStream ps) throws IOException, InterruptedException {
@@ -119,6 +118,8 @@ public class RelayMain {
 	private void destroy() throws InterruptedException {
 		Process process = currentProcess.getAndSet(null);
 		if (process != null) {
+			restarting = true;
+
 			log.info("destroying process");
 			process.destroy();
 

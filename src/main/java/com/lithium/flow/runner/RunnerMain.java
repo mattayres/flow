@@ -158,7 +158,7 @@ public class RunnerMain {
 			}
 
 			String command = runnerConfig.getString("java.command");
-			if (runnerConfig.getTime("relay", "0") > 0) {
+			if (runnerConfig.getTime("relay", "0") != 0) {
 				commands.add("export RELAY_COMMAND='" + command + "'");
 				commands.add(runnerConfig.getString("relay.command"));
 			} else {
