@@ -97,7 +97,10 @@ public class S3Filer implements Filer {
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
 		storageClass = StorageClass.fromValue(config.getString("s3.storageClass", "STANDARD"));
 		limiter = RateLimiter.create(config.getDouble("s3.rateLimit", 3400));
-		threader = new Threader(config.getInt("s3.threads", 8));
+
+		int threads = config.getInt("s3.threads", 8);
+		int maxQueued = config.getInt("s3.maxQueued", threads);
+		threader = new Threader(threads).setMaxQueued(maxQueued);
 	}
 
 	@Override
