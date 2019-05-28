@@ -60,7 +60,7 @@ public class RelayMain {
 	private final List<String> command;
 	private final boolean oomeRestart;
 	private final long destroyMaxTime;
-	private volatile boolean restarting;
+	private volatile boolean restart;
 
 	public RelayMain(@Nonnull Config config) throws Exception {
 		vaultPassword = buildVaultPassword(config);
@@ -76,13 +76,13 @@ public class RelayMain {
 
 		do {
 			start();
-		} while (keepAlive || restarting);
+		} while (keepAlive || restart);
 
 		threader.finish();
 	}
 
 	private void start() throws IOException {
-		restarting = false;
+		restart = false;
 
 		log.info("starting process");
 		ProcessBuilder pb = new ProcessBuilder(command);
@@ -118,8 +118,6 @@ public class RelayMain {
 	private void destroy() throws InterruptedException {
 		Process process = currentProcess.getAndSet(null);
 		if (process != null) {
-			restarting = true;
-
 			log.info("destroying process");
 			process.destroy();
 
@@ -128,6 +126,8 @@ public class RelayMain {
 				process.destroyForcibly();
 				process.waitFor();
 			}
+
+			restart = true;
 		}
 	}
 
