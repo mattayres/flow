@@ -71,6 +71,15 @@ public abstract class JettyServer {
 	public void onClose(@Nonnull Session session, int status, @Nullable String reason) {
 		checkNotNull(session);
 		log.debug("{} disconnected: {} {}", session.getRemoteAddress(), status, reason);
+
+		try {
+			shutdown();
+		} catch (Exception e) {
+			log.warn("failed on shutdown", e);
+		}
+	}
+
+	protected void shutdown() throws IOException {
 	}
 
 	protected abstract String encode(@Nonnull Session session, @Nonnull String param) throws IOException;
