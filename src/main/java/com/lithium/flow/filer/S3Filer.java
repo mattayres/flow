@@ -22,6 +22,7 @@ import com.lithium.flow.access.Access;
 import com.lithium.flow.access.Prompt.Response;
 import com.lithium.flow.access.Prompt.Type;
 import com.lithium.flow.config.Config;
+import com.lithium.flow.config.Configs;
 import com.lithium.flow.io.DataIo;
 import com.lithium.flow.streams.CounterInputStream;
 import com.lithium.flow.util.Needle;
@@ -86,12 +87,20 @@ public class S3Filer implements Filer {
 	private final Threader threader;
 
 	public S3Filer(@Nonnull Config config, @Nonnull Access access) {
-		checkNotNull(config);
-		checkNotNull(access);
+		this(config, buildS3(config, access));
+	}
 
-		uri = getBaseURI(config.getString("url"));
-		bucket = uri.getHost();
-		s3 = buildS3(config, access, bucket);
+	public S3Filer(@Nonnull AmazonS3 s3) {
+		this(Configs.empty(), s3);
+	}
+
+	public S3Filer(@Nonnull Config config, @Nonnull AmazonS3 s3) {
+		checkNotNull(config);
+		this.s3 = checkNotNull(s3);
+
+		String url = config.getString("url");
+		uri = getBaseURI(url);
+		bucket = getBucket(url);
 		partSize = config.getInt("s3.partSize", 5 * 1024 * 1024);
 		maxDrainBytes = config.getInt("s3.maxDrainBytes", 128 * 1024);
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
@@ -102,6 +111,7 @@ public class S3Filer implements Filer {
 		int maxQueued = config.getInt("s3.maxQueued", threads);
 		threader = new Threader(threads).setMaxQueued(maxQueued);
 	}
+
 
 	@Override
 	@Nonnull
@@ -331,7 +341,10 @@ public class S3Filer implements Filer {
 	}
 
 	@Nonnull
-	public static AmazonS3 buildS3(@Nonnull Config config, @Nonnull Access access, @Nonnull String bucket) {
+	public static AmazonS3 buildS3(@Nonnull Config config, @Nonnull Access access) {
+		checkNotNull(config);
+		checkNotNull(access);
+
 		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 
 		ClientConfiguration cc = new ClientConfiguration();
@@ -365,7 +378,7 @@ public class S3Filer implements Filer {
 					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
 
 					AmazonS3 s3 = builder.build();
-					s3.getBucketAcl(bucket);
+					s3.getBucketAcl("");
 					response.accept();
 					return s3;
 				} catch (AmazonS3Exception e) {
@@ -380,6 +393,11 @@ public class S3Filer implements Filer {
 		}
 
 		return builder.build();
+	}
+
+	@Nonnull
+	public static String getBucket(@Nonnull String url) {
+		return getBaseURI(url).getHost();
 	}
 
 	@Nonnull
