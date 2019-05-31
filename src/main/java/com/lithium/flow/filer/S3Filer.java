@@ -356,6 +356,7 @@ public class S3Filer implements Filer {
 
 		String region = config.getString("aws.region", null);
 		String endpoint = config.getString("aws.endpoint", null);
+		String bucket = getBucket(config.getString("url"));
 
 		if (endpoint != null) {
 			builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region));
@@ -378,7 +379,7 @@ public class S3Filer implements Filer {
 					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
 
 					AmazonS3 s3 = builder.build();
-					s3.getBucketAcl("");
+					s3.getBucketAcl(bucket);
 					response.accept();
 					return s3;
 				} catch (AmazonS3Exception e) {
