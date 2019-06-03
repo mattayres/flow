@@ -78,72 +78,70 @@ public class RunnerSync {
 	}
 
 	public void sync() throws IOException {
-		Needle needle = context.getSyncThreader().needle();
+		Needle syncNeedle = context.getSyncThreader().needle();
+		Needle jarNeedle = context.getJarThreader().needle();
 
 		List<Record> srcRecords = context.getRecords(paths);
 		context.getHostsMeasure().incTodo();
 		context.getFilesMeasure().addTodo(srcRecords.size());
 		context.getJarsMeasure().addTodo(context.getJars().size());
 
-		needle.execute("jars", () -> {
-			destFiler.createDirs(libDir);
+		destFiler.createDirs(libDir);
 
-			Map<String, Record> jarRecords = destFiler.findRecords(destDir, 1)
-					.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
+		Map<String, Record> jarRecords = destFiler.findRecords(destDir, 1)
+				.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
 
-			for (String jar : context.getJars()) {
-				Record srcRecord = srcFiler.getRecord(jar);
-				String name = srcRecord.getName();
-				Record destRecord = jarRecords.get(name);
+		for (String jar : context.getJars()) {
+			Record srcRecord = srcFiler.getRecord(jar);
+			String name = srcRecord.getName();
+			Record destRecord = jarRecords.get(name);
 
-				boolean sameSize = destRecord != null && srcRecord.getSize() == destRecord.getSize();
-				if (!sameSize) {
-					needle.execute("jar:" + jar, () -> copyJar(srcRecord, libDir + "/" + name));
-				} else {
-					context.getJarsMeasure().incDone();
+			boolean sameSize = destRecord != null && srcRecord.getSize() == destRecord.getSize();
+			if (!sameSize) {
+				jarNeedle.execute("jar:" + jar, () -> copyJar(srcRecord, libDir + "/" + name));
+			} else {
+				context.getJarsMeasure().incDone();
+			}
+		}
+
+		Map<String, Record> destRecords = destFiler.findRecords(destDir, 1)
+				.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
+
+		for (Record srcRecord : srcRecords) {
+			String srcPath = context.normalize(srcRecord.getPath());
+			String destPath = srcPath.replace(context.getNormalizedSrcDir(), destDir);
+			Record destRecord = destRecords.remove(destPath);
+
+			boolean sameSize = destRecord != null && srcRecord.getSize() == destRecord.getSize();
+			boolean sameTime = destRecord != null && srcRecord.getTime() / 1000 == destRecord.getTime() / 1000;
+
+			if (!sameSize || !sameTime) {
+				context.getCopiedMeasure().addTodo(srcRecord.getSize());
+				syncNeedle.execute(srcPath + " to " + destPath, () -> copyFile(srcRecord));
+			} else {
+				context.getFilesMeasure().incDone();
+			}
+		}
+
+		List<String> destDirs = new ArrayList<>();
+		paths.forEach(path -> destDirs.add(path.replace(context.getSrcDir(), destDir)));
+		context.getClasspath(destDir).stream()
+				.filter(path -> !RecordPath.getName(path).contains("."))
+				.forEach(destDirs::add);
+
+		for (Record destRecord : destRecords.values()) {
+			for (String dir : destDirs) {
+				if (destRecord.getPath().startsWith(dir)) {
+					log.debug("delete: {}", destRecord.getPath());
+					destFiler.deleteFile(destRecord.getPath());
+					context.getDeletedMeasure().incDone();
+					break;
 				}
 			}
-		});
+		}
 
-		needle.execute("paths", () -> {
-			Map<String, Record> destRecords = destFiler.findRecords(destDir, 1)
-					.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
-
-			for (Record srcRecord : srcRecords) {
-				String srcPath = context.normalize(srcRecord.getPath());
-				String destPath = srcPath.replace(context.getNormalizedSrcDir(), destDir);
-				Record destRecord = destRecords.remove(destPath);
-
-				boolean sameSize = destRecord != null && srcRecord.getSize() == destRecord.getSize();
-				boolean sameTime = destRecord != null && srcRecord.getTime() / 1000 == destRecord.getTime() / 1000;
-
-				if (!sameSize || !sameTime) {
-					context.getCopiedMeasure().addTodo(srcRecord.getSize());
-					needle.execute(srcPath + " to " + destPath, () -> copyFile(srcRecord));
-				} else {
-					context.getFilesMeasure().incDone();
-				}
-			}
-
-			List<String> destDirs = new ArrayList<>();
-			paths.forEach(path -> destDirs.add(path.replace(context.getSrcDir(), destDir)));
-			context.getClasspath(destDir).stream()
-					.filter(path -> !RecordPath.getName(path).contains("."))
-					.forEach(destDirs::add);
-
-			for (Record destRecord : destRecords.values()) {
-				for (String dir : destDirs) {
-					if (destRecord.getPath().startsWith(dir)) {
-						log.debug("delete: {}", destRecord.getPath());
-						destFiler.deleteFile(destRecord.getPath());
-						context.getDeletedMeasure().incDone();
-						break;
-					}
-				}
-			}
-		});
-
-		needle.finish();
+		jarNeedle.finish();
+		syncNeedle.finish();
 	}
 
 	private void copyJar(@Nonnull Record srcRecord, @Nonnull String destPath) throws IOException {

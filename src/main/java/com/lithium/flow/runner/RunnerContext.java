@@ -60,6 +60,7 @@ public class RunnerContext {
 	private final Access access;
 	private final Shore shore;
 	private final Threader syncThreader;
+	private final Threader jarThreader;
 	private final Threader runThreader;
 	private final String srcDir;
 	private final String normalizedSrcDir;
@@ -108,8 +109,9 @@ public class RunnerContext {
 		vault = Vaults.buildVault(config);
 		access = Vaults.buildAccess(config, vault);
 		shore = Shells.buildShore(config, access);
-		syncThreader = new Threader(config.getInt("sync.threads"));
-		runThreader = new Threader(config.getInt("run.threads"));
+		syncThreader = new Threader(config.getInt("sync.threads", 50));
+		jarThreader = new Threader(config.getInt("jar.threads", 50));
+		runThreader = new Threader(config.getInt("run.threads", -1));
 		srcDir = new File(config.getString("src.dir")).getCanonicalPath();
 		normalizedSrcDir = normalize(srcDir);
 		jarProvider = JarProvider.build(config, access, filer);
@@ -126,6 +128,7 @@ public class RunnerContext {
 
 	public void close() throws IOException {
 		syncThreader.finish();
+		jarThreader.finish();
 		runThreader.finish();
 		shore.close();
 	}
@@ -169,6 +172,11 @@ public class RunnerContext {
 	@Nonnull
 	public Threader getSyncThreader() {
 		return syncThreader;
+	}
+
+	@Nonnull
+	public Threader getJarThreader() {
+		return jarThreader;
 	}
 
 	@Nonnull
