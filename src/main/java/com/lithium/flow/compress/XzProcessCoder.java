@@ -38,4 +38,10 @@ public class XzProcessCoder extends ProcessCoder {
 	public OutputStream wrapOut(@Nonnull OutputStream out) throws IOException {
 		return wrapOut(out, LZMA2Options.PRESET_DEFAULT);
 	}
+
+	@Override
+	@Nonnull
+	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
+		return super.wrapOut(out, option == -1 ? LZMA2Options.PRESET_DEFAULT : option);
+	}
 }

@@ -17,9 +17,8 @@
 package com.lithium.flow.compress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.toList;
-
-import com.lithium.flow.util.Unchecked;
 
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
@@ -28,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nonnull;
 
@@ -51,10 +51,14 @@ public class ProcessCoder implements Coder {
 	@Override
 	@Nonnull
 	public InputStream wrapIn(@Nonnull InputStream in) throws IOException {
+		AtomicReference<IOException> exception = new AtomicReference<>();
+
 		Process process = new ProcessBuilder(inCommands).start();
-		Unchecked.runAsync(() -> {
+		runAsync(() -> {
 			try (OutputStream out = process.getOutputStream()) {
 				IOUtils.copy(in, out);
+			} catch (IOException e) {
+				exception.set(e);
 			}
 		});
 
@@ -62,7 +66,14 @@ public class ProcessCoder implements Coder {
 			@Override
 			public void close() throws IOException {
 				super.close();
-				process.destroy();
+				try {
+					process.waitFor();
+					if (exception.get() != null) {
+						throw exception.get();
+					}
+				} catch (InterruptedException e) {
+					throw new IOException(e);
+				}
 			}
 		};
 	}
@@ -71,24 +82,29 @@ public class ProcessCoder implements Coder {
 	@Nonnull
 	public OutputStream wrapOut(@Nonnull OutputStream out, int option) throws IOException {
 		CountDownLatch latch = new CountDownLatch(1);
+		AtomicReference<IOException> exception = new AtomicReference<>();
 
 		List<String> optionCommands = outCommands.stream()
 				.map(c -> c.replace("{option}", String.valueOf(option)))
 				.collect(toList());
 
 		Process process = new ProcessBuilder(optionCommands).start();
-		Unchecked.runAsync(() -> {
-			try (InputStream in = process.getInputStream()) {
-				IOUtils.copy(in, out);
+		runAsync(() -> {
+			try {
+				try (InputStream in = process.getInputStream()) {
+					IOUtils.copy(in, out);
+					out.close();
+				}
+			} catch (IOException e) {
+				exception.set(e);
 			}
 			latch.countDown();
 		});
 
-		OutputStream pout = process.getOutputStream();
-		return new FilterOutputStream(pout) {
+		return new FilterOutputStream(process.getOutputStream()) {
 			@Override
 			public void write(@Nonnull byte[] b, int off, int len) throws IOException {
-				pout.write(b, off, len);
+				out.write(b, off, len);
 			}
 
 			@Override
@@ -97,8 +113,11 @@ public class ProcessCoder implements Coder {
 				try {
 					process.waitFor();
 					latch.await();
+					if (exception.get() != null) {
+						throw exception.get();
+					}
 				} catch (InterruptedException e) {
-					//
+					throw new IOException(e);
 				}
 			}
 		};
