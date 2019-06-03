@@ -5,13 +5,11 @@
 		  http://mojo.codehaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
 
 	<ignoreVersions>
-		<ignoreVersion type="regex">.*alpha.*</ignoreVersion>
-		<ignoreVersion type="regex">.*beta.*</ignoreVersion>
-		<ignoreVersion type="regex">.*rc[\d].*</ignoreVersion>
-		<ignoreVersion type="regex">.*RC[\d].*</ignoreVersion>
-		<ignoreVersion type="regex">.*pr[\d].*</ignoreVersion>
-		<ignoreVersion type="regex">.*b[\d].*</ignoreVersion>
-		<ignoreVersion type="regex">.*M[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">(?i).*alpha.*</ignoreVersion>
+		<ignoreVersion type="regex">(?i).*beta.*</ignoreVersion>
+		<ignoreVersion type="regex">(?i).*ea</ignoreVersion>
+		<ignoreVersion type="regex">(?i).*rc[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">.*-m[0-9]*</ignoreVersion>
 	</ignoreVersions>
 
 	<rules>
@@ -23,6 +21,16 @@
 		<rule groupId="org.apache.tomcat" comparisonMethod="maven">
 			<ignoreVersions>
 				<ignoreVersion type="regex">[^8]..*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="org.apache.lucene" comparisonMethod="maven">
+			<ignoreVersions>
+				<ignoreVersion type="regex">[^7]..*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="org.elasticsearch" comparisonMethod="maven">
+			<ignoreVersions>
+				<ignoreVersion type="regex">[^6]..*</ignoreVersion>
 			</ignoreVersions>
 		</rule>
 	</rules>
