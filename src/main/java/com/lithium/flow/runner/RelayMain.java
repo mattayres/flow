@@ -81,7 +81,7 @@ public class RelayMain {
 		threader.finish();
 	}
 
-	private void start() throws IOException {
+	private void start() throws IOException, InterruptedException {
 		restart = false;
 
 		log.info("starting process");
@@ -100,6 +100,8 @@ public class RelayMain {
 			needle.execute("out", () -> pipe(process.getInputStream(), System.out));
 			needle.execute("err", () -> pipe(process.getErrorStream(), System.err));
 		}
+
+		process.waitFor();
 
 		log.info("exited process: {}", process.exitValue());
 	}
