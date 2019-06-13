@@ -60,7 +60,7 @@ public class ScheduledRepo implements Repo {
 	public ScheduledRepo(@Nonnull Repo delegate, long interval, long offset, @Nonnull Checker checker) {
 		configCache = Caches.build(delegate::getConfig);
 
-		thread = new LoopThread(interval, offset - interval, true, () -> {
+		thread = new LoopThread(interval, offset - interval * 2, true, () -> {
 			if (configMap == null || checker.check()) {
 				try {
 					configMap = delegate.streamConfigs().collect(toMap(Config::getName, config -> config));
