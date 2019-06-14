@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 
 import javax.annotation.Nonnull;
 
@@ -34,11 +35,16 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public class Needle<T> implements AutoCloseable {
 	private final Threader threader;
+	private final Semaphore semaphore;
 	private final BlockingQueue<ListenableFuture<T>> queue = new LinkedBlockingQueue<>();
 
 	public Needle(@Nonnull Threader threader) {
-		checkNotNull(threader);
+		this(threader, Integer.MAX_VALUE);
+	}
+
+	public Needle(@Nonnull Threader threader, int permits) {
 		this.threader = checkNotNull(threader);
+		semaphore = new Semaphore(permits);
 	}
 
 	@Nonnull
@@ -54,7 +60,15 @@ public class Needle<T> implements AutoCloseable {
 		checkNotNull(name);
 		checkNotNull(callable);
 
-		ListenableFuture<T> future = threader.submit(name, callable);
+		ListenableFuture<T> future = threader.submit(name, () -> {
+			semaphore.acquireUninterruptibly();
+			try {
+				return callable.call();
+			} finally {
+				semaphore.release();
+			}
+		});
+
 		queue.add(future);
 		return future;
 	}

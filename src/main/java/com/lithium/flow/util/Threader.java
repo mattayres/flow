@@ -45,6 +45,7 @@ public class Threader implements AutoCloseable {
 	private final AtomicInteger queued = new AtomicInteger();
 	private volatile int retries;
 	private volatile int maxQueued = Integer.MAX_VALUE;
+	private volatile int needlePermits = Integer.MAX_VALUE;
 
 	public Threader() {
 		this(-1);
@@ -71,8 +72,40 @@ public class Threader implements AutoCloseable {
 	}
 
 	@Nonnull
+	public Threader withRetries(int retries) {
+		this.retries = retries;
+		return this;
+	}
+
+	public int getMaxQueued() {
+		return maxQueued;
+	}
+
+	@Nonnull
 	public Threader setMaxQueued(int maxQueued) {
 		this.maxQueued = maxQueued;
+		return this;
+	}
+
+	@Nonnull
+	public Threader withMaxQueued(int maxQueued) {
+		this.maxQueued = maxQueued;
+		return this;
+	}
+
+	public int getNeedlePermits() {
+		return needlePermits;
+	}
+
+	@Nonnull
+	public Threader setNeedlePermits(int needlePermits) {
+		this.needlePermits = needlePermits;
+		return this;
+	}
+
+	@Nonnull
+	public Threader withNeedlePermits(int needlePermits) {
+		this.needlePermits = needlePermits;
 		return this;
 	}
 
@@ -148,7 +181,12 @@ public class Threader implements AutoCloseable {
 
 	@Nonnull
 	public <T> Needle<T> needle() {
-		return new Needle<>(this);
+		return new Needle<>(this, needlePermits);
+	}
+
+	@Nonnull
+	public <T> Needle<T> needle(int permits) {
+		return new Needle<>(this, permits);
 	}
 
 	@Nonnull
