@@ -51,7 +51,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>27.1-jre</version>
+			<version>28.0-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>org.picocontainer</groupId>
@@ -103,7 +103,7 @@
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
-			<version>1.11.563</version>
+			<version>1.11.572</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -145,25 +145,25 @@
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
-			<version>7.7.1</version>
+			<version>7.7.2</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
-			<version>9.4.18.v20190429</version>
+			<version>9.4.19.v20190610</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-servlet</artifactId>
-			<version>9.4.18.v20190429</version>
+			<version>9.4.19.v20190610</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>websocket-server</artifactId>
-			<version>9.4.18.v20190429</version>
+			<version>9.4.19.v20190610</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -179,15 +179,27 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-common</artifactId>
-			<version>2.9.2</version>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>3.14.2</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-hdfs</artifactId>
-			<version>2.9.2</version>
+			<artifactId>hadoop-common</artifactId>
+			<version>3.2.0</version>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-hdfs-client</artifactId>
+			<version>3.2.0</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -199,7 +211,7 @@
 		<dependency>
 			<groupId>org.apache.tomcat</groupId>
 			<artifactId>tomcat-jdbc</artifactId>
-			<version>8.5.41</version>
+			<version>9.0.21</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -247,7 +259,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
-			<version>1.6</version>
+			<version>1.7</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>

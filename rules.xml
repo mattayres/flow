@@ -13,16 +13,6 @@
 	</ignoreVersions>
 
 	<rules>
-		<rule groupId="org.apache.hadoop" comparisonMethod="maven">
-			<ignoreVersions>
-				<ignoreVersion type="regex">[^2]..*</ignoreVersion>
-			</ignoreVersions>
-		</rule>
-		<rule groupId="org.apache.tomcat" comparisonMethod="maven">
-			<ignoreVersions>
-				<ignoreVersion type="regex">[^8]..*</ignoreVersion>
-			</ignoreVersions>
-		</rule>
 		<rule groupId="org.apache.lucene" comparisonMethod="maven">
 			<ignoreVersions>
 				<ignoreVersion type="regex">[^7]..*</ignoreVersion>
