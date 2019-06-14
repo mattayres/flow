@@ -65,6 +65,10 @@ public class StringMatchers {
 	public static StringMatcher fromList(@Nonnull List<String> list) {
 		Multimap<String, String> multimap = HashMultimap.create();
 		for (String value : list) {
+			if (value.equals("*")) {
+				return new AllStringMatcher();
+			}
+
 			int index = value.indexOf(':');
 			if (index == -1 || index >= value.length() - 1) {
 				multimap.put("exact", value);
