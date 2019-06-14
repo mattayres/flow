@@ -39,6 +39,7 @@ import com.google.common.cache.LoadingCache;
 public class CachedFiler extends DecoratedFiler {
 	private final LoadingCache<String, List<Record>> dirCache;
 	private final LoadingCache<String, Record> fileCache;
+	private final boolean dirOnly;
 
 	public CachedFiler(@Nonnull Filer delegate, @Nonnull Config config) {
 		super(checkNotNull(delegate));
@@ -46,6 +47,7 @@ public class CachedFiler extends DecoratedFiler {
 
 		int concurrency = config.getInt("cache.concurrency", 4);
 		long expireTime = config.getTime("cache.expireTime", "1m");
+		dirOnly = config.getBoolean("cache.dirOnly", false);
 
 		dirCache = Caches.build(delegate::listRecords,
 				b -> b.softValues().concurrencyLevel(concurrency).expireAfterWrite(expireTime, TimeUnit.MILLISECONDS));
@@ -62,11 +64,15 @@ public class CachedFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public Record getRecord(@Nonnull String path) throws IOException {
-		String parent = RecordPath.getFolder(path);
-		for (Record record : listRecords(parent)) {
-			if (path.equals(record.getPath())) {
-				return record;
+		if (dirOnly) {
+			String parent = RecordPath.getFolder(path);
+			for (Record record : listRecords(parent)) {
+				if (path.equals(record.getPath())) {
+					return record;
+				}
 			}
+
+			return Record.noFile(getUri(), path);
 		}
 
 		return Caches.get(fileCache, path, IOException.class);
