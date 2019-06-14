@@ -99,6 +99,6 @@ public class S3JarProvider implements JarProvider {
 			shell.exec(command).exit();
 		}
 
-		return true;
+		return srcSize == destFiler.getRecord(destPath).getSize();
 	}
 }
