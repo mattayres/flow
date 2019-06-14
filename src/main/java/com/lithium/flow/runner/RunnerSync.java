@@ -57,7 +57,8 @@ public class RunnerSync {
 	private final Once<String> once;
 	private final Shell shell;
 
-	public RunnerSync(@Nonnull Config config, @Nonnull RunnerContext context, @Nonnull Filer destFiler) throws IOException {
+	public RunnerSync(@Nonnull Config config, @Nonnull RunnerContext context, @Nonnull Filer destFiler)
+			throws IOException {
 		checkNotNull(config);
 		this.context = checkNotNull(context);
 		this.destFiler = checkNotNull(destFiler);
@@ -77,14 +78,8 @@ public class RunnerSync {
 		log.debug("dest.dir: {}", destDir);
 	}
 
-	public void sync() throws IOException {
-		Needle syncNeedle = context.getSyncThreader().needle();
-		Needle jarNeedle = context.getJarThreader().needle();
-
-		List<Record> srcRecords = context.getRecords(paths);
-		context.getHostsMeasure().incTodo();
-		context.getFilesMeasure().addTodo(srcRecords.size());
-		context.getJarsMeasure().addTodo(context.getJars().size());
+	public void jars() throws IOException {
+		Needle jarNeedle = context.getJarNeedle();
 
 		destFiler.createDirs(libDir);
 
@@ -103,6 +98,17 @@ public class RunnerSync {
 				context.getJarsMeasure().incDone();
 			}
 		}
+
+		jarNeedle.close();
+	}
+
+	public void sync() throws IOException {
+		Needle syncNeedle = context.getSyncNeedle();
+
+		List<Record> srcRecords = context.getRecords(paths);
+		context.getHostsMeasure().incTodo();
+		context.getFilesMeasure().addTodo(srcRecords.size());
+		context.getJarsMeasure().addTodo(context.getJars().size());
 
 		Map<String, Record> destRecords = destFiler.findRecords(destDir, 1)
 				.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
@@ -140,8 +146,7 @@ public class RunnerSync {
 			}
 		}
 
-		jarNeedle.finish();
-		syncNeedle.finish();
+		syncNeedle.close();
 	}
 
 	private void copyJar(@Nonnull Record srcRecord, @Nonnull String destPath) throws IOException {
@@ -170,7 +175,7 @@ public class RunnerSync {
 
 		try (InputStream in = srcFiler.readFile(srcPath)) {
 			try (OutputStream out = destFiler.writeFile(destPath)) {
-				IOUtils.copy(in, out);
+				IOUtils.copy(in, out, 65536);
 			}
 		}
 

@@ -31,6 +31,7 @@ import com.lithium.flow.shell.Shore;
 import com.lithium.flow.util.Lazy;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Measure;
+import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Progress;
 import com.lithium.flow.util.Threader;
 import com.lithium.flow.vault.Vault;
@@ -109,8 +110,10 @@ public class RunnerContext {
 		vault = Vaults.buildVault(config);
 		access = Vaults.buildAccess(config, vault);
 		shore = Shells.buildShore(config, access);
-		syncThreader = new Threader(config.getInt("sync.threads", 50));
-		jarThreader = new Threader(config.getInt("jar.threads", 50));
+		syncThreader = new Threader(config.getInt("sync.threads", 100))
+				.withNeedlePermits(config.getInt("sync.needlePermits", 8));
+		jarThreader = new Threader(config.getInt("jar.threads", 100))
+				.withNeedlePermits(config.getInt("jar.needlePermits", 8));
 		runThreader = new Threader(config.getInt("run.threads", -1));
 		srcDir = new File(config.getString("src.dir")).getCanonicalPath();
 		normalizedSrcDir = normalize(srcDir);
@@ -170,13 +173,13 @@ public class RunnerContext {
 	}
 
 	@Nonnull
-	public Threader getSyncThreader() {
-		return syncThreader;
+	public Needle getSyncNeedle() {
+		return syncThreader.needle();
 	}
 
 	@Nonnull
-	public Threader getJarThreader() {
-		return jarThreader;
+	public Needle getJarNeedle() {
+		return jarThreader.needle();
 	}
 
 	@Nonnull

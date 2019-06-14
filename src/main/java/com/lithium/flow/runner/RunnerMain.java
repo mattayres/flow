@@ -96,7 +96,11 @@ public class RunnerMain {
 		}
 
 		RunnerSync sync = new RunnerSync(runnerConfig, context, destFiler);
-		sync.sync();
+		try (Threader threader = new Threader()) {
+			threader.execute("RunnerMain:jars@" + host, sync::jars);
+			threader.execute("RunnerMain:sync@" + host, sync::sync);
+			threader.execute("RunnerMain:java@" + host, this::installJava);
+		}
 
 		kill();
 
@@ -122,8 +126,6 @@ public class RunnerMain {
 		for (String dir : runnerConfig.getList("dirs", Configs.emptyList())) {
 			destFiler.createDirs(dir);
 		}
-
-		installJava();
 
 		destFiler.close();
 
