@@ -23,6 +23,7 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.config.ConfigBuilder;
 import com.lithium.flow.config.Configs;
 import com.lithium.flow.config.Repo;
+import com.lithium.flow.config.exception.IllegalConfigException;
 import com.lithium.flow.filer.CachedFiler;
 import com.lithium.flow.filer.CachedReadFiler;
 import com.lithium.flow.filer.Filer;
@@ -35,10 +36,12 @@ import com.lithium.flow.svn.PoolSvnProvider;
 import com.lithium.flow.svn.SvnFiler;
 import com.lithium.flow.svn.SvnProvider;
 import com.lithium.flow.util.Checker;
+import com.lithium.flow.util.DateUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.function.BiFunction;
@@ -49,6 +52,7 @@ import java.util.function.UnaryOperator;
 import javax.annotation.Nonnull;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -120,8 +124,25 @@ public class Repos {
 			SvnProvider svnProvider = new LoginSvnProvider(config, access, url);
 			svnProvider = new PoolSvnProvider(svnProvider, config);
 
-			long revision = config.getLong("configs.revision", -1);
+			long revision = -1;
+			boolean hasDate = config.containsKey("configs.date");
+			boolean hasRevision = config.containsKey("configs.revision");
 			boolean findLast = config.getBoolean("configs.findLast", false);
+
+			if (hasDate && hasRevision) {
+				throw new IllegalConfigException("both 'configs.date' and 'configs.revision' are set");
+			} else if (hasDate) {
+				String date = config.getString("configs.date");
+				SVNRepository repository = svnProvider.getRepository();
+				try {
+					revision = repository.getDatedRevision(new Date(DateUtils.toMillis(date)));
+				} finally {
+					svnProvider.releaseRepository(repository);
+				}
+			} else if (hasRevision) {
+				revision = config.getLong("configs.revision");
+			}
+
 			Filer filer = new SvnFiler(svnProvider, revision, findLast);
 			filer = new CachedFiler(filer, config.prefix("configs"));
 			filer = new CachedReadFiler(filer);
