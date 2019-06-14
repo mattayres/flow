@@ -48,6 +48,18 @@ public interface Schema extends Closeable {
 	long selectLong(@Nonnull String query, Object... parameters) throws SQLException;
 
 	@Nonnull
+	<T> List<T> selectList(@Nonnull String query, Object... parameters) throws SQLException;
+
+	@Nonnull
+	List<String> selectStringList(@Nonnull String query, Object... parameters) throws SQLException;
+
+	@Nonnull
+	List<Integer> selectIntList(@Nonnull String query, Object... parameters) throws SQLException;
+
+	@Nonnull
+	List<Long> selectLongList(@Nonnull String query, Object... parameters) throws SQLException;
+
+	@Nonnull
 	<T> List<T> queryList(@Nonnull String query,
 			@Nonnull CheckedBiConsumer<ResultSet, List<T>, SQLException> consumer,
 			Object... parameters) throws SQLException;

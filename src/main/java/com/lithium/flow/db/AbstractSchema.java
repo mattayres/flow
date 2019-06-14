@@ -75,6 +75,31 @@ public abstract class AbstractSchema implements Schema {
 
 	@Override
 	@Nonnull
+	@SuppressWarnings("unchecked")
+	public <T> List<T> selectList(@Nonnull String query, Object... parameters) throws SQLException {
+		return queryList(query, (rs, list) -> list.add((T) rs.getObject(1)), parameters);
+	}
+
+	@Override
+	@Nonnull
+	public List<String> selectStringList(@Nonnull String query, Object... parameters) throws SQLException {
+		return queryList(query, (rs, list) -> list.add(rs.getString(1)), parameters);
+	}
+
+	@Override
+	@Nonnull
+	public List<Integer> selectIntList(@Nonnull String query, Object... parameters) throws SQLException {
+		return queryList(query, (rs, list) -> list.add(rs.getInt(1)), parameters);
+	}
+
+	@Override
+	@Nonnull
+	public List<Long> selectLongList(@Nonnull String query, Object... parameters) throws SQLException {
+		return queryList(query, (rs, list) -> list.add(rs.getLong(1)), parameters);
+	}
+
+	@Override
+	@Nonnull
 	public <T> List<T> queryList(@Nonnull String query,
 			@Nonnull CheckedBiConsumer<ResultSet, List<T>, SQLException> consumer,
 			Object... parameters) throws SQLException {
