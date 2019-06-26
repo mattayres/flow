@@ -17,8 +17,11 @@
 package com.lithium.flow.compress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.toList;
+
+import com.lithium.flow.util.Logs;
 
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
@@ -30,6 +33,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 
@@ -66,14 +70,7 @@ public class ProcessCoder implements Coder {
 			@Override
 			public void close() throws IOException {
 				super.close();
-				try {
-					process.waitFor();
-					if (exception.get() != null) {
-						throw exception.get();
-					}
-				} catch (InterruptedException e) {
-					throw new IOException(e);
-				}
+				ProcessCoder.this.close(process, null, exception.get());
 			}
 		};
 	}
@@ -110,17 +107,32 @@ public class ProcessCoder implements Coder {
 			@Override
 			public void close() throws IOException {
 				super.close();
-				try {
-					process.waitFor();
-					latch.await();
-					if (exception.get() != null) {
-						throw exception.get();
-					}
-				} catch (InterruptedException e) {
-					throw new IOException(e);
-				}
+				ProcessCoder.this.close(process, latch, exception.get());
 			}
 		};
+	}
+
+	private void close(@Nonnull Process process, @Nullable CountDownLatch latch, @Nullable IOException exception)
+			throws IOException {
+		try {
+			process.waitFor();
+
+			if (latch != null) {
+				latch.await();
+			}
+
+			int exitValue = process.exitValue();
+			if (exitValue != 0) {
+				String errorMessage = IOUtils.toString(process.getErrorStream(), UTF_8);
+				throw new IOException(Logs.message("got exit code {}: {}", exitValue, errorMessage));
+			}
+
+			if (exception != null) {
+				throw exception;
+			}
+		} catch (InterruptedException e) {
+			throw new IOException(e);
+		}
 	}
 
 	@Override
