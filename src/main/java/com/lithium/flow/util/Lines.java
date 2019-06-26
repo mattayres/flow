@@ -18,8 +18,6 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.lithium.flow.io.Swallower;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -66,7 +64,7 @@ public class Lines {
 						action.accept(it.nextLine());
 						return true;
 					} else {
-						Swallower.close(it);
+						Unchecked.run(it::close);
 						return false;
 					}
 				} catch (IllegalStateException e) {
@@ -125,7 +123,7 @@ public class Lines {
 				public boolean hasNext() {
 					boolean next = it.hasNext();
 					if (!next) {
-						Swallower.close(it);
+						Unchecked.run(it::close);
 					}
 					return next;
 				}
