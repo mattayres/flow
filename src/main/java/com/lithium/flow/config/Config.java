@@ -102,6 +102,16 @@ public interface Config {
 	}
 
 	@Nonnull
+	default Config subset(@Nonnull String prefix) {
+		Config allowConfig = toBuilder().allowUndefined(true).build();
+		ConfigBuilder builder = Configs.newBuilder();
+		for (String key : getPrefixKeys(prefix)) {
+			builder.setString(key.substring(prefix.length() + 1), allowConfig.getString(key));
+		}
+		return builder.build();
+	}
+
+	@Nonnull
 	default Map<String, String> asMap() {
 		Map<String, String> map = new LinkedHashMap<>();
 		Config config = toBuilder().allowUndefined(true).build();
