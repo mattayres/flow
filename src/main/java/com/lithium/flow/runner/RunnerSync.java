@@ -83,8 +83,8 @@ public class RunnerSync {
 
 		destFiler.createDirs(libDir);
 
-		Map<String, Record> jarRecords = destFiler.findRecords(destDir, 1)
-				.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
+		Map<String, Record> jarRecords = destFiler.listRecords(libDir).stream()
+				.filter(Record::isFile).collect(toMap(Record::getName, r -> r));
 
 		for (String jar : context.getJars()) {
 			Record srcRecord = srcFiler.getRecord(jar);
