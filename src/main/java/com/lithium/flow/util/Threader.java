@@ -143,12 +143,12 @@ public class Threader implements AutoCloseable {
 
 			@Override
 			public void onFailure(@Nonnull Throwable throwable) {
-				remaining.decrementAndGet();
-				log.warn("execution failed: {} ({} retries left)", name, retriesLeft, throwable);
-
 				if (retriesLeft > 0) {
 					submit(name, callable, retriesLeft - 1);
 				}
+
+				remaining.decrementAndGet();
+				log.warn("execution failed: {} ({} retries left)", name, retriesLeft, throwable);
 			}
 		}, MoreExecutors.directExecutor());
 
