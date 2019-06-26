@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -170,10 +171,15 @@ public class RunnerMain {
 			String readyString = runnerConfig.getString("run.readyString", null);
 			AtomicBoolean ready = new AtomicBoolean();
 
+			int logSkip = runnerConfig.getInt("log.skip", 0);
+			AtomicInteger logCount = new AtomicInteger();
+
 			commands.forEach(run -> log.debug("running: {}", run));
 			runExec = getShell().exec(commands);
 			runNeedle.execute("out@" + host, () -> runExec.out().forEach(line -> {
-				System.out.println(prefix + line);
+				if (logCount.incrementAndGet() > logSkip) {
+					System.out.println(prefix + line);
+				}
 				if (readyString != null && line.contains(readyString)) {
 					ready.set(true);
 				}
