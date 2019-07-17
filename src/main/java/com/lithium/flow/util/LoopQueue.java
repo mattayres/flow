@@ -58,7 +58,11 @@ public class LoopQueue<T> implements AutoCloseable {
 	}
 
 	public void forList(int batch, @Nonnull CheckedConsumer<List<T>, Exception> consumer) {
-		forList(consumer, () -> !queue.isEmpty() && (queue.size() >= batch || finish), batch);
+		forList(consumer, () -> finish || queue.size() >= batch, batch);
+	}
+
+	public void forList(int minBatch, int maxBatch, @Nonnull CheckedConsumer<List<T>, Exception> consumer) {
+		forList(consumer, () -> finish || queue.size() >= minBatch, maxBatch);
 	}
 
 	private void forList(@Nonnull CheckedConsumer<List<T>, Exception> consumer, @Nonnull Checker checker, int max) {
@@ -88,6 +92,10 @@ public class LoopQueue<T> implements AutoCloseable {
 
 	public int size() {
 		return queue.size();
+	}
+
+	public boolean isEmpty() {
+		return queue.isEmpty();
 	}
 
 	@Override
