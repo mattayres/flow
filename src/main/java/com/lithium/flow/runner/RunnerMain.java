@@ -58,13 +58,13 @@ public class RunnerMain {
 				List<String> hosts = deployConfig.getList("runner.hosts", Splitter.on(' '));
 				HostUtils.expand(hosts).forEach(runHost -> {
 					Config runConfig = deployConfig.toBuilder().setString("runner.host", runHost).build();
-					parallel.execute(runHost, () -> runners.add(new RunnerHost(config, runConfig, context)));
+					parallel.execute(runHost, () -> runners.add(new RunnerHost(config, runConfig, context).start()));
 				});
 			} else {
 				List<String> nums = deployConfig.getList("runner.nums", singletonList("0"), Splitter.on(' '));
 				HostUtils.expand(nums).forEach(num -> {
 					Config runConfig = deployConfig.toBuilder().setString("num", num).build();
-					parallel.execute(num, () -> runners.add(new RunnerHost(config, runConfig, context)));
+					parallel.execute(num, () -> runners.add(new RunnerHost(config, runConfig, context).start()));
 				});
 			}
 

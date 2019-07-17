@@ -167,4 +167,14 @@ public class Record implements Serializable {
 	public static Comparator<Record> nameDesc() {
 		return Comparator.comparing(Record::getName).reversed();
 	}
+
+	@Nonnull
+	public static Comparator<Record> pathAsc() {
+		return Comparator.comparing(Record::getPath);
+	}
+
+	@Nonnull
+	public static Comparator<Record> pathDesc() {
+		return Comparator.comparing(Record::getPath).reversed();
+	}
 }

@@ -24,14 +24,18 @@ import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.Record;
 import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.shell.Shell;
+import com.lithium.flow.util.Lazy;
 import com.lithium.flow.util.Logs;
+import com.lithium.flow.util.Measure;
 import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Once;
 
+import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -44,141 +48,129 @@ import org.slf4j.Logger;
 /**
  * @author Matt Ayres
  */
-public class RunnerSync {
+public class RunnerSync implements Closeable {
 	private static final Logger log = Logs.getLogger();
 
+	private final Config config;
 	private final RunnerContext context;
 	private final Filer destFiler;
-	private final String destDir;
-	private final String libDir;
-	private final List<String> paths;
-
-	private final Filer srcFiler;
-	private final Once<String> once;
 	private final Shell shell;
+	private final Needle needle;
 
 	public RunnerSync(@Nonnull Config config, @Nonnull RunnerContext context, @Nonnull Filer destFiler)
 			throws IOException {
-		checkNotNull(config);
+		this.config = checkNotNull(config);
 		this.context = checkNotNull(context);
 		this.destFiler = checkNotNull(destFiler);
 
-		once = new Once<>(destFiler::createDirs);
-
-		String host = config.getString("host");
-		destDir = config.getString("dest.dir");
-		libDir = config.getString("lib.dir");
-		paths = config.getList("paths", Collections.emptyList());
-
-		srcFiler = context.getFiler();
-
-		shell = context.getShore().getShell(host);
-
-		log.debug("src.dir: {}", context.getSrcDir());
-		log.debug("dest.dir: {}", destDir);
+		shell = context.getShore().getShell(config.getString("host"));
+		needle = context.getSyncNeedle();
 	}
 
-	public void jars() throws IOException {
-		Needle jarNeedle = context.getJarNeedle();
+	public void installJava() {
+		String check = config.getString("java.check");
+		String md5 = config.getString("java.md5");
+		String install = config.getString("java.install");
 
-		destFiler.createDirs(libDir);
-
-		Map<String, Record> jarRecords = destFiler.listRecords(libDir).stream()
-				.filter(Record::isFile).collect(toMap(Record::getName, r -> r));
-
-		for (String jar : context.getJars()) {
-			Record srcRecord = srcFiler.getRecord(jar);
-			String name = srcRecord.getName();
-			Record destRecord = jarRecords.get(name);
-
-			boolean sameSize = destRecord != null && srcRecord.getSize() == destRecord.getSize();
-			if (!sameSize) {
-				jarNeedle.execute("jar:" + jar, () -> copyJar(srcRecord, libDir + "/" + name));
-			} else {
-				context.getJarsMeasure().incDone();
+		needle.execute("java", () -> {
+			String checkMd5 = shell.exec(check).line();
+			log.debug("java check md5: {}", checkMd5);
+			if (!md5.equals(checkMd5)) {
+				log.debug("java install: " + install);
+				shell.exec(install).exit();
 			}
-		}
-
-		jarNeedle.close();
+		});
 	}
 
-	public void sync() throws IOException {
-		Needle syncNeedle = context.getSyncNeedle();
+	public void syncLibs() throws IOException {
+		Measure measure = context.getLibsMeasure();
+		measure.addTodo(context.getLibs().size());
 
-		List<Record> srcRecords = context.getRecords(paths);
-		context.getHostsMeasure().incTodo();
-		context.getFilesMeasure().addTodo(srcRecords.size());
-		context.getJarsMeasure().addTodo(context.getJars().size());
-
-		Map<String, Record> destRecords = destFiler.findRecords(destDir, 1)
-				.filter(Record::isFile).collect(toMap(Record::getPath, r -> r));
-
-		for (Record srcRecord : srcRecords) {
-			String srcPath = context.normalize(srcRecord.getPath());
-			String destPath = srcPath.replace(context.getNormalizedSrcDir(), destDir);
-			Record destRecord = destRecords.remove(destPath);
-
-			boolean sameSize = destRecord != null && srcRecord.getSize() == destRecord.getSize();
-			boolean sameTime = destRecord != null && srcRecord.getTime() / 1000 == destRecord.getTime() / 1000;
-
-			if (!sameSize || !sameTime) {
-				context.getCopiedMeasure().addTodo(srcRecord.getSize());
-				syncNeedle.execute(srcPath + " to " + destPath, () -> copyFile(srcRecord));
-			} else {
-				context.getFilesMeasure().incDone();
-			}
+		String dir = context.getLibDir();
+		Map<String, Long> sizes = getSizes(dir);
+		if (sizes.isEmpty()) {
+			destFiler.createDirs(dir);
 		}
 
-		List<String> destDirs = new ArrayList<>();
-		paths.forEach(path -> destDirs.add(path.replace(context.getSrcDir(), destDir)));
-		context.getClasspath(destDir).stream()
-				.filter(path -> !RecordPath.getName(path).contains("."))
-				.forEach(destDirs::add);
-
-		for (Record destRecord : destRecords.values()) {
-			for (String dir : destDirs) {
-				if (destRecord.getPath().startsWith(dir)) {
-					log.debug("delete: {}", destRecord.getPath());
-					destFiler.deleteFile(destRecord.getPath());
-					context.getDeletedMeasure().incDone();
-					break;
+		for (String lib : context.getLibs()) {
+			needle.execute("lib:" + lib, () -> {
+				Record record = context.getFiler().getRecord(lib);
+				Long size = sizes.get(record.getName());
+				if (size == null || size != record.getSize()) {
+					if (!context.getJarProvider().copy(record.getPath(), shell, destFiler, dir)) {
+						sync(record.getPath(), dir + "/" + record.getName());
+					}
 				}
+				measure.incDone();
+			});
+		}
+	}
+
+	public void syncModules() throws IOException {
+		Measure measure = context.getModulesMeasure();
+		measure.addTodo(context.getModules().size());
+
+		String dir = context.getModuleDir();
+		Map<String, Long> sizes = getSizes(dir);
+		if (sizes.isEmpty()) {
+			destFiler.createDirs(dir);
+		}
+
+		for (String module : context.getModules()) {
+			needle.execute("module:" + module, () -> {
+				Long size = sizes.get(module);
+				Lazy<byte[]> lazy = context.getBytes(module);
+				if (size == null || size != lazy.get().length) {
+					try (OutputStream out = destFiler.writeFile(dir + "/" + module)) {
+						IOUtils.copy(new ByteArrayInputStream(lazy.get()), out);
+					}
+				}
+				measure.incDone();
+			});
+		}
+	}
+
+	public void syncPaths() {
+		List<String> paths = config.getList("paths", Collections.emptyList());
+		String destDir = config.getString("dest.dir");
+		Measure measure = context.getFilesMeasure();
+
+		needle.execute("paths", () -> {
+			Once<String> once = new Once<>(destFiler::createDirs);
+
+			for (String path : paths) {
+				RecordPath recordPath = RecordPath.from(new File(path).getCanonicalPath());
+				String prefix = recordPath.getFolder() + "/";
+
+				context.getFiler().findRecords(path, 1).filter(Record::isFile).forEach(record -> {
+					measure.incTodo();
+					needle.execute("path:" + record.getPath(), () -> {
+						String srcPath = new File(record.getPath()).getCanonicalPath();
+						String destPath = destDir + "/" + record.getPath().replace(prefix, "");
+						once.accept(RecordPath.getFolder(destPath));
+						sync(srcPath, destPath);
+						measure.incDone();
+					});
+				});
 			}
-		}
-
-		syncNeedle.close();
+		});
 	}
 
-	private void copyJar(@Nonnull Record srcRecord, @Nonnull String destPath) throws IOException {
-		String srcPath = srcRecord.getPath();
-		if (!context.getJarProvider().copy(srcPath, shell, destFiler, libDir)) {
-			sync(srcPath, destPath, srcRecord.getTime());
-		}
-
-		context.getJarsMeasure().incDone();
+	@Nonnull
+	private Map<String, Long> getSizes(@Nonnull String dir) throws IOException {
+		return destFiler.listRecords(dir).stream().collect(toMap(Record::getName, Record::getSize));
 	}
 
-	private void copyFile(@Nonnull Record srcRecord) throws IOException {
-		String srcPath = context.normalize(srcRecord.getPath());
-		String destPath = srcPath.replace(context.getNormalizedSrcDir(), destDir);
-
-		once.accept(RecordPath.getFolder(destPath));
-
-		sync(srcPath, destPath, srcRecord.getTime());
-
-		context.getCopiedMeasure().addDone(srcRecord.getSize());
-		context.getFilesMeasure().incDone();
-	}
-
-	private void sync(@Nonnull String srcPath, @Nonnull String destPath, long time) throws IOException {
-		log.debug("sync: {}", destPath);
-
-		try (InputStream in = srcFiler.readFile(srcPath)) {
+	private void sync(@Nonnull String srcPath, @Nonnull String destPath) throws IOException {
+		try (InputStream in = context.getFiler().readFile(srcPath)) {
 			try (OutputStream out = destFiler.writeFile(destPath)) {
-				IOUtils.copy(in, out, 65536);
+				IOUtils.copy(in, out);
 			}
 		}
+	}
 
-		destFiler.setFileTime(destPath, time);
+	@Override
+	public void close() {
+		needle.close();
 	}
 }

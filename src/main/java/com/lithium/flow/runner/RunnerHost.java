@@ -29,7 +29,6 @@ import com.lithium.flow.shell.Shell;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Sleep;
-import com.lithium.flow.util.Threader;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -37,7 +36,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,7 +48,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 
 /**
  * @author Matt Ayres
@@ -58,54 +55,47 @@ import com.google.common.base.Splitter;
 public class RunnerHost implements Closeable {
 	private static final Logger log = Logs.getLogger();
 
-	private final Config runnerConfig;
-	private final Filer destFiler;
-	private final VaultRun vaultRun;
 	private final RunnerContext context;
+	private final Config deployConfig;
+	private final Config runnerConfig;
+	private final VaultRun vaultRun;
+	private final Needle runNeedle;
 	private final String host;
-	private Needle runNeedle;
 	private Exec runExec;
 
-	public RunnerHost(@Nonnull Config config, @Nonnull Config deployConfig, @Nonnull RunnerContext context)
-			throws IOException {
+	public RunnerHost(@Nonnull Config config, @Nonnull Config deployConfig, @Nonnull RunnerContext context) {
 		checkNotNull(config);
-		checkNotNull(deployConfig);
+		this.deployConfig = checkNotNull(deployConfig);
 		this.context = checkNotNull(context);
 
 		runnerConfig = config.toBuilder().addAll(deployConfig.subset("runner")).build();
-
-		String name = runnerConfig.getString("name");
+		vaultRun = new VaultRun(context.getVault(), context.getAccess().getPrompt(), runnerConfig);
+		runNeedle = context.getRunThreader().needle();
 		host = runnerConfig.getString("host");
+	}
+
+	@Nonnull
+	public RunnerHost start() throws IOException {
+		String name = runnerConfig.getString("name");
 		String user = context.getAccess().getLogin(host).getUser();
 		log.info("deploying {} to {}@{}", name, user, host);
 
-		vaultRun = new VaultRun(context.getVault(), context.getAccess().getPrompt(), runnerConfig);
-
-		destFiler = new FasterShellFiler(getShell().getFiler(), this::getShell);
+		Filer destFiler = new FasterShellFiler(getShell().getFiler(), this::getShell);
 
 		if (runnerConfig.getBoolean("kill.only", false)) {
 			kill();
-			return;
+			return this;
 		}
 
-		RunnerSync sync = new RunnerSync(runnerConfig, context, destFiler);
-		try (Threader threader = new Threader()) {
-			threader.execute("RunnerHost:jars@" + host, sync::jars);
-			threader.execute("RunnerHost:sync@" + host, sync::sync);
-			threader.execute("RunnerHost:java@" + host, this::installJava);
+		try (RunnerSync sync = new RunnerSync(runnerConfig, context, destFiler)) {
+			sync.installJava();
+			sync.syncLibs();
+			sync.syncModules();
+			sync.syncPaths();
 		}
 
 		kill();
 
-		deploy(deployConfig);
-	}
-
-	@Nonnull
-	private Shell getShell() throws IOException {
-		return context.getShore().getShell(host);
-	}
-
-	public void deploy(@Nonnull Config deployConfig) throws IOException {
 		vaultRun.deploy(destFiler);
 
 		String configOut = runnerConfig.getString("config.out");
@@ -113,7 +103,7 @@ public class RunnerHost implements Closeable {
 		writeConfig(deployConfig, destFiler.writeFile(configOut));
 		log.debug("wrote: {}", configOut);
 
-		String classpath = Joiner.on(":").join(context.getClasspath(runnerConfig.getString("dest.dir")));
+		String classpath = Joiner.on(":").join(context.getClasspath());
 		log.debug("classpath: {}", classpath);
 
 		for (String dir : runnerConfig.getList("dirs", Configs.emptyList())) {
@@ -125,32 +115,25 @@ public class RunnerHost implements Closeable {
 		context.getHostsMeasure().incDone();
 
 		if (!runnerConfig.getBoolean("run", true)) {
-			return;
+			return this;
 		}
 
 		String prefix = runnerConfig.getString("prefix", runnerConfig.getString("name"));
 		int pad = runnerConfig.getInt("prefixPad", 15);
 		String paddedPrefix = StringUtils.rightPad(prefix, pad, '.') + " ";
 		run(paddedPrefix, classpath, vaultRun.getEnv());
+
+		return this;
 	}
 
 	private void run(@Nonnull String prefix, @Nonnull String classpath, @Nullable String env) {
 		try {
-			runNeedle = context.getRunThreader().needle();
-
 			List<String> commands = new ArrayList<>();
 			commands.add("export CLASSPATH=" + classpath);
 			if (env != null) {
 				commands.add(env);
 			}
 			commands.add("cd " + runnerConfig.getString("dest.dir"));
-			for (String link : runnerConfig.getList("links", Configs.emptyList())) {
-				Iterator<String> it = Splitter.on(':').split(link).iterator();
-				String target = it.next();
-				String linkName = it.next();
-				commands.add("rm -f " + linkName);
-				commands.add("ln -sf " + target + " " + linkName);
-			}
 
 			String command = runnerConfig.getString("java.command");
 			if (runnerConfig.getTime("relay", "0") != 0) {
@@ -189,10 +172,8 @@ public class RunnerHost implements Closeable {
 
 	@Override
 	public void close() {
-		if (runNeedle != null) {
-			runNeedle.close();
-			Swallower.close(runExec);
-		}
+		runNeedle.close();
+		Swallower.close(runExec);
 		log.debug("finished");
 	}
 
@@ -203,19 +184,6 @@ public class RunnerHost implements Closeable {
 			for (Map.Entry<String, String> entry : map.entrySet()) {
 				writer.write(entry.getKey() + " = " + entry.getValue() + "\r\n");
 			}
-		}
-	}
-
-	private void installJava() throws IOException {
-		String check = runnerConfig.getString("java.check");
-		String md5 = runnerConfig.getString("java.md5");
-		String install = runnerConfig.getString("java.install");
-
-		String checkMd5 = getShell().exec(check).line();
-		log.debug("java check md5: {}", checkMd5);
-		if (!md5.equals(checkMd5)) {
-			log.debug("java install: " + install);
-			getShell().exec(install).exit();
 		}
 	}
 
@@ -279,5 +247,10 @@ public class RunnerHost implements Closeable {
 		}
 
 		throw new IOException(Logs.message("failed to force kill existing pid {} for {}={}", pid, key, name));
+	}
+
+	@Nonnull
+	private Shell getShell() throws IOException {
+		return context.getShore().getShell(host);
 	}
 }

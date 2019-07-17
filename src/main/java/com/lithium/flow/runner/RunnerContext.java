@@ -37,17 +37,25 @@ import com.lithium.flow.util.Threader;
 import com.lithium.flow.vault.Vault;
 import com.lithium.flow.vault.Vaults;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import com.google.common.base.Splitter;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 
 /**
  * @author Matt Ayres
@@ -60,48 +68,23 @@ public class RunnerContext {
 	private final Vault vault;
 	private final Access access;
 	private final Shore shore;
-	private final Threader syncThreader;
-	private final Threader jarThreader;
-	private final Threader runThreader;
-	private final String srcDir;
-	private final String normalizedSrcDir;
 	private final JarProvider jarProvider;
+	private final Threader syncThreader;
+	private final Threader runThreader;
 
-	private final Lazy<Local> local;
+	private final String libDir;
+	private final String moduleDir;
 
 	private final Progress progress;
 	private final Measure hostsMeasure;
-	private final Measure jarsMeasure;
+	private final Measure libsMeasure;
+	private final Measure modulesMeasure;
 	private final Measure filesMeasure;
-	private final Measure copiedMeasure;
-	private final Measure deletedMeasure;
 
-	private class Local {
-		private final List<String> jars = new ArrayList<>();
-		private final List<Record> records = new ArrayList<>();
-		private final List<String> classpath = new ArrayList<>();
-
-		public Local() throws IOException {
-			String libDir = config.getString("lib.dir");
-			String javaHome = System.getProperty("java.home").replaceAll("/jre$", "");
-
-			for (String path : Splitter.on(File.pathSeparator).split(System.getProperty("java.class.path", ""))) {
-				if (!path.startsWith(javaHome)) {
-					log.debug("classpath: {}", path);
-
-					if (path.endsWith(".jar") || path.endsWith(".xml")) {
-						String name = RecordPath.getName(path);
-						String destPath = libDir + "/" + name;
-						classpath.add(destPath);
-						jars.add(path);
-					} else {
-						classpath.add(path);
-						filer.findRecords(path, 1).filter(Record::isFile).forEach(records::add);
-					}
-				}
-			}
-		}
-	}
+	private final List<String> classpath = new ArrayList<>();
+	private final List<String> libs = new ArrayList<>();
+	private final List<String> modules = new ArrayList<>();
+	private final Map<String, Lazy<byte[]>> bytes = new HashMap<>();
 
 	public RunnerContext(@Nonnull Config config) throws IOException {
 		this.config = checkNotNull(config);
@@ -110,41 +93,84 @@ public class RunnerContext {
 		vault = Vaults.buildVault(config);
 		access = Vaults.buildAccess(config, vault);
 		shore = Shells.buildShore(config, access);
-		syncThreader = new Threader(config.getInt("sync.threads", 100))
+		syncThreader = new Threader(config.getInt("sync.threads", 50))
 				.withNeedlePermits(config.getInt("sync.needlePermits", 8));
-		jarThreader = new Threader(config.getInt("jar.threads", 100))
-				.withNeedlePermits(config.getInt("jar.needlePermits", 8));
-		runThreader = new Threader(config.getInt("run.threads", -1));
-		srcDir = new File(config.getString("src.dir")).getCanonicalPath();
-		normalizedSrcDir = normalize(srcDir);
+		runThreader = Threader.forDaemon(config.getInt("run.threads", -1));
 		jarProvider = JarProvider.build(config, access, filer);
 
-		local = new Lazy<>(Local::new).eager();
+		libDir = config.getString("lib.dir");
+		moduleDir = config.getString("module.dir");
 
 		progress = Progress.start(config);
 		hostsMeasure = progress.counter("hosts");
-		jarsMeasure = progress.counter("jars");
+		libsMeasure = progress.counter("libs").useForEta();
+		modulesMeasure = progress.counter("modules").useForEta();
 		filesMeasure = progress.counter("files").useForEta();
-		copiedMeasure = progress.bandwidth("copied").useForEta();
-		deletedMeasure = progress.counter("deleted");
+
+		scanClassPath();
+	}
+
+	private void scanClassPath() throws IOException {
+		String javaHome = System.getProperty("java.home").replaceAll("/jre$", "");
+		String javaClassPath = System.getProperty("java.class.path", "");
+		List<String> classPaths = Splitter.on(File.pathSeparator)
+				.splitToList(javaClassPath).stream()
+				.filter(p -> !p.startsWith(javaHome))
+				.collect(toList());
+
+		for (String classPath : classPaths) {
+			log.debug("classpath: {}", classPath);
+
+			if (classPath.endsWith(".jar")) {
+				classpath.add(libDir + "/" + RecordPath.getName(classPath));
+				libs.add(classPath);
+			} else {
+				Hasher hasher = Hashing.murmur3_128().newHasher();
+				List<Record> records = filer.findRecords(classPath, 1)
+						.filter(Record::isFile)
+						.sorted(Record.pathAsc())
+						.collect(toList());
+
+				records.forEach(r -> {
+					hasher.putUnencodedChars(r.getPath());
+					hasher.putLong(r.getSize());
+					hasher.putLong(r.getTime());
+				});
+
+				String name = "runner_" + hasher.hash().toString() + ".jar";
+				classpath.add(moduleDir + "/" + name);
+				modules.add(name);
+				bytes.put(name, new Lazy<>(() -> buildJar(classPath, records)));
+			}
+		}
+	}
+
+	@Nonnull
+	private byte[] buildJar(@Nonnull String dir, @Nonnull List<Record> records) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+		try (ZipOutputStream out = new ZipOutputStream(baos)) {
+			for (Record record : records) {
+				out.putNextEntry(new ZipEntry(record.getPath().replace(dir + "/", "")));
+				try (InputStream in = filer.readFile(record.getPath())) {
+					IOUtils.copy(in, out);
+				}
+				out.closeEntry();
+			}
+		}
+
+		return baos.toByteArray();
 	}
 
 	public void close() throws IOException {
-		syncThreader.finish();
-		jarThreader.finish();
-		runThreader.finish();
+		syncThreader.close();
+		runThreader.close();
 		shore.close();
 	}
 
 	@Nonnull
-	public List<String> getClasspath(@Nonnull String destDir) {
-		Stream<String> classpath = local.get().classpath.stream();
-		return classpath.map(path -> normalize(path).replace(normalizedSrcDir, destDir)).collect(toList());
-	}
-
-	@Nonnull
-	public String normalize(@Nonnull String path) {
-		return RecordPath.from(path).getPath().replaceFirst("^[A-Z]:", "");
+	public List<String> getClasspath() {
+		return classpath;
 	}
 
 	@Nonnull
@@ -178,23 +204,8 @@ public class RunnerContext {
 	}
 
 	@Nonnull
-	public Needle getJarNeedle() {
-		return jarThreader.needle();
-	}
-
-	@Nonnull
 	public Threader getRunThreader() {
 		return runThreader;
-	}
-
-	@Nonnull
-	public String getSrcDir() {
-		return srcDir;
-	}
-
-	@Nonnull
-	public String getNormalizedSrcDir() {
-		return normalizedSrcDir;
 	}
 
 	@Nonnull
@@ -203,24 +214,28 @@ public class RunnerContext {
 	}
 
 	@Nonnull
-	public List<String> getJars() {
-		return local.get().jars;
+	public String getLibDir() {
+		return libDir;
 	}
 
 	@Nonnull
-	public List<Record> getRecords(@Nonnull List<String> paths) throws IOException {
-		List<Record> records = new ArrayList<>(local.get().records);
-		for (String path : paths) {
-			log.debug("path: {}", path);
+	public String getModuleDir() {
+		return moduleDir;
+	}
 
-			Record record = filer.getRecord(new File(path).getCanonicalPath());
-			if (record.isDir()) {
-				filer.findRecords(path, 1).filter(Record::isFile).forEach(records::add);
-			} else {
-				records.add(record);
-			}
-		}
-		return records;
+	@Nonnull
+	public List<String> getLibs() {
+		return libs;
+	}
+
+	@Nonnull
+	public List<String> getModules() {
+		return modules;
+	}
+
+	@Nonnull
+	public Lazy<byte[]> getBytes(@Nonnull String sync) {
+		return bytes.get(sync);
 	}
 
 	@Nonnull
@@ -234,22 +249,17 @@ public class RunnerContext {
 	}
 
 	@Nonnull
-	public Measure getJarsMeasure() {
-		return jarsMeasure;
+	public Measure getLibsMeasure() {
+		return libsMeasure;
+	}
+
+	@Nonnull
+	public Measure getModulesMeasure() {
+		return modulesMeasure;
 	}
 
 	@Nonnull
 	public Measure getFilesMeasure() {
 		return filesMeasure;
-	}
-
-	@Nonnull
-	public Measure getCopiedMeasure() {
-		return copiedMeasure;
-	}
-
-	@Nonnull
-	public Measure getDeletedMeasure() {
-		return deletedMeasure;
 	}
 }
