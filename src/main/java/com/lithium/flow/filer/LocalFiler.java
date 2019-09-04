@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -167,9 +168,7 @@ public class LocalFiler implements Filer {
 		File newFile = new File(checkNotNull(newPath));
 		createDirs(newFile.getParentFile().getAbsolutePath());
 
-		if (!oldFile.renameTo(newFile)) {
-			throw new IOException("failed to rename: " + oldPath + " to " + newPath);
-		}
+		Files.move(oldFile.toPath(), newFile.toPath());
 	}
 
 	@Override
