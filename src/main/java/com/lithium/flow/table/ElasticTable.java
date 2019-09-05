@@ -39,23 +39,28 @@ import org.elasticsearch.search.SearchHits;
 public class ElasticTable implements Table {
 	private final Client client;
 	private final String index;
-	private final String type;
 
+	@Deprecated
+	@SuppressWarnings("unused")
 	public ElasticTable(@Nonnull Client client, @Nonnull String index, @Nonnull String type) {
 		this.client = checkNotNull(client);
 		this.index = checkNotNull(index);
-		this.type = checkNotNull(type);
+	}
+
+	public ElasticTable(@Nonnull Client client, @Nonnull String index) {
+		this.client = checkNotNull(client);
+		this.index = checkNotNull(index);
 	}
 
 	@Override
 	@Nonnull
 	public Row getRow(@Nonnull Key key) {
-		SearchHits hits = client.prepareSearch(index).setTypes(type)
+		SearchHits hits = client.prepareSearch(index)
 				.setQuery(QueryBuilders.termQuery("_id", key.id()))
 				.execute().actionGet().getHits();
 
 		Row row = new Row(key);
-		if (hits.getTotalHits() > 0) {
+		if (hits.getHits().length > 0) {
 			row.putAll(hits.getAt(0).getSourceAsMap());
 		}
 		return row;
@@ -68,7 +73,7 @@ public class ElasticTable implements Table {
 
 	@Override
 	public void deleteRow(@Nonnull Key key) {
-		client.prepareDelete(index, type, key.id()).execute().actionGet();
+		client.prepareDelete(index, "_doc", key.id()).execute().actionGet();
 	}
 
 	@Override
@@ -92,7 +97,7 @@ public class ElasticTable implements Table {
 				content.field(column, row.getCell(column, Object.class));
 			}
 			String id = row.getKey().isAuto() ? null : row.getKey().id();
-			return client.prepareIndex(index, type, id).setSource(content.endObject());
+			return client.prepareIndex(index, "_doc", id).setSource(content.endObject());
 		});
 	}
 

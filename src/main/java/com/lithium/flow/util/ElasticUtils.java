@@ -28,10 +28,8 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 
 import com.google.common.base.Splitter;
@@ -54,7 +52,9 @@ public class ElasticUtils {
 				.filter(key -> key.startsWith("elastic:"))
 				.forEach(key -> settings.put(key.replaceFirst("^elastic:", ""), config.getString(key)));
 
-		TransportClient client = new PreBuiltTransportClient(settings.build());
+		@SuppressWarnings("deprecation")
+		org.elasticsearch.client.transport.TransportClient client =
+				new org.elasticsearch.transport.client.PreBuiltTransportClient(settings.build());
 
 		List<String> hosts = config.getList("elastic.hosts", Splitter.on(' '));
 		int port = config.getInt("elastic.port", 9300);
@@ -81,7 +81,6 @@ public class ElasticUtils {
 		checkNotNull(client);
 
 		String index = config.getString("elastic.index");
-		String type = config.getString("elastic.type");
-		return new ElasticTable(client, index, type);
+		return new ElasticTable(client, index);
 	}
 }

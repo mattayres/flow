@@ -11,17 +11,4 @@
 		<ignoreVersion type="regex">(?i).*rc[\d].*</ignoreVersion>
 		<ignoreVersion type="regex">.*-m[0-9]*</ignoreVersion>
 	</ignoreVersions>
-
-	<rules>
-		<rule groupId="org.apache.lucene" comparisonMethod="maven">
-			<ignoreVersions>
-				<ignoreVersion type="regex">[^7]..*</ignoreVersion>
-			</ignoreVersions>
-		</rule>
-		<rule groupId="org.elasticsearch" comparisonMethod="maven">
-			<ignoreVersions>
-				<ignoreVersion type="regex">[^6]..*</ignoreVersion>
-			</ignoreVersions>
-		</rule>
-	</rules>
 </ruleset>

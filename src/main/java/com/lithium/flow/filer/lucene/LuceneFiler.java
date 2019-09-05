@@ -144,7 +144,7 @@ public class LuceneFiler extends DecoratedFiler {
 		IndexSearcher searcher = manager.acquire();
 		try {
 			TopDocs topDocs = searcher.search(new TermQuery(term), Integer.MAX_VALUE);
-			if (topDocs.totalHits > 0) {
+			if (topDocs.totalHits.value > 0) {
 				List<Record> records = new ArrayList<>();
 				for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
 					Document doc = searcher.doc(scoreDoc.doc);
