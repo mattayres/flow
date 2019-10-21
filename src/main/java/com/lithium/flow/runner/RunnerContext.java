@@ -131,6 +131,10 @@ public class RunnerContext {
 						.sorted(Record.pathAsc())
 						.collect(toList());
 
+				if (records.isEmpty()) {
+					continue;
+				}
+
 				records.forEach(r -> {
 					hasher.putUnencodedChars(r.getPath());
 					hasher.putLong(r.getSize());
