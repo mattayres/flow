@@ -61,7 +61,7 @@ public class LuceneFiler extends DecoratedFiler {
 
 	private final IndexWriter writer;
 	private final ReferenceManager<IndexSearcher> manager;
-	private final ControlledRealTimeReopenThread thread;
+	private final ControlledRealTimeReopenThread<IndexSearcher> thread;
 	private final long maxAge;
 
 	public LuceneFiler(@Nonnull Filer delegate, @Nonnull Config config) throws IOException {

@@ -188,7 +188,7 @@ public class RunnerContext {
 	}
 
 	@Nonnull
-	public Needle getSyncNeedle() {
+	public Needle<?> getSyncNeedle() {
 		return syncThreader.needle();
 	}
 

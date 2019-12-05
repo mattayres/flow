@@ -25,8 +25,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.lithium.flow.config.ConfigBuilder;
 
-import java.io.IOException;
-
 import org.junit.Test;
 
 /**
@@ -34,7 +32,7 @@ import org.junit.Test;
  */
 public class RequiredConfigParserTest {
 	@Test
-	public void testRequired() throws IOException {
+	public void testRequired() {
 		testRequired("foo !=", "foo");
 		testRequired("bar != baz", "bar");
 	}
@@ -48,7 +46,7 @@ public class RequiredConfigParserTest {
 	}
 
 	@Test
-	public void testNoRequired() throws IOException {
+	public void testNoRequired() {
 		testNoRequired("foo = bar");
 		testNoRequired("foo %=");
 	}

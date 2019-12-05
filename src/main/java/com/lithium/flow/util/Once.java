@@ -26,7 +26,7 @@ import com.google.common.cache.LoadingCache;
  * @author Matt Ayres
  */
 public class Once<T> {
-	private final LoadingCache<T, Once> cache;
+	private final LoadingCache<T, Once<T>> cache;
 
 	public Once(@Nonnull CheckedConsumer<T, Exception> consumer) {
 		checkNotNull(consumer);

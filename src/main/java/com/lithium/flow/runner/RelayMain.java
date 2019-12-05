@@ -96,7 +96,7 @@ public class RelayMain {
 		Process process = pb.start();
 		currentProcess.set(process);
 
-		try (Needle needle = threader.needle()) {
+		try (Needle<?> needle = threader.needle()) {
 			needle.execute("out", () -> pipe(process.getInputStream(), System.out));
 			needle.execute("err", () -> pipe(process.getErrorStream(), System.err));
 		}

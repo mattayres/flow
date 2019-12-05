@@ -139,7 +139,7 @@ public class PicoLocator implements Locator {
 		}
 	}
 
-	public class Adapter extends AbstractAdapter {
+	public class Adapter extends AbstractAdapter<Object> {
 		private final Provider<?> provider;
 
 		public Adapter(@Nonnull Class<?> type, @Nonnull Provider<?> provider) {

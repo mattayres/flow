@@ -40,7 +40,7 @@ public class TimeUtils {
 
 		char c = value.charAt(value.length() - 1);
 		if (Character.isLetter(c) && value.length() > 1) {
-			long millis = Long.valueOf(value.substring(0, value.length() - 1));
+			long millis = Long.parseLong(value.substring(0, value.length() - 1));
 			switch (c) {
 				case 'y':
 					return millis * 1000 * 60 * 60 * 24 * 365;
@@ -60,7 +60,7 @@ public class TimeUtils {
 					return millis;
 			}
 		} else {
-			return Long.valueOf(value);
+			return Long.parseLong(value);
 		}
 	}
 

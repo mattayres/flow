@@ -77,7 +77,7 @@ public class JedisUtils {
 		List<String> hosts = config.getList("redis.hosts", Collections.singletonList("localhost"));
 		Set<HostAndPort> nodes = hosts.stream().map(JedisUtils::buildHostAndPort).collect(toSet());
 		int timeout = (int) config.getTime("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT));
-		GenericObjectPoolConfig poolConfig = ConfigObjectPool.buildConfig(config.prefix("redis"));
+		GenericObjectPoolConfig<Jedis> poolConfig = ConfigObjectPool.buildConfig(config.prefix("redis"));
 
 		return new JedisCluster(nodes, timeout, poolConfig);
 	}

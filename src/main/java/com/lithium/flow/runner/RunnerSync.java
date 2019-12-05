@@ -55,7 +55,7 @@ public class RunnerSync implements Closeable {
 	private final RunnerContext context;
 	private final Filer destFiler;
 	private final Shell shell;
-	private final Needle needle;
+	private final Needle<?> needle;
 
 	public RunnerSync(@Nonnull Config config, @Nonnull RunnerContext context, @Nonnull Filer destFiler)
 			throws IOException {

@@ -59,7 +59,7 @@ public class RunnerHost implements Closeable {
 	private final Config deployConfig;
 	private final Config runnerConfig;
 	private final VaultRun vaultRun;
-	private final Needle runNeedle;
+	private final Needle<?> runNeedle;
 	private final String host;
 	private Exec runExec;
 

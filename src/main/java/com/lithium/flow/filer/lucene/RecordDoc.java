@@ -100,7 +100,7 @@ public class RecordDoc {
 		String name = doc.get(RECORD_NAME);
 		long time = Long.parseLong(doc.get(RECORD_TIME));
 		long size = Long.parseLong(doc.get(RECORD_SIZE));
-		boolean dir = Boolean.valueOf(doc.get(RECORD_DIR));
+		boolean dir = Boolean.parseBoolean(doc.get(RECORD_DIR));
 		long indexTime = Long.parseLong(doc.get(INDEX_TIME));
 
 		Record record = new Record(uri, RecordPath.from(parent, name), time, size, dir);
