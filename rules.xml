@@ -8,7 +8,7 @@
 		<ignoreVersion type="regex">(?i).*alpha.*</ignoreVersion>
 		<ignoreVersion type="regex">(?i).*beta.*</ignoreVersion>
 		<ignoreVersion type="regex">(?i).*ea</ignoreVersion>
-		<ignoreVersion type="regex">(?i).*rc[\d].*</ignoreVersion>
+		<ignoreVersion type="regex">(?i).*rc[-\d].*</ignoreVersion>
 		<ignoreVersion type="regex">.*-m[0-9]*</ignoreVersion>
 		<ignoreVersion type="regex">.*.pr[0-9]*</ignoreVersion>
 	</ignoreVersions>
