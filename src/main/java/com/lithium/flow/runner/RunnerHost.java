@@ -87,10 +87,13 @@ public class RunnerHost implements Closeable {
 			return this;
 		}
 
+		String libDir = runnerConfig.getString("lib.dir");
+		String moduleDir = runnerConfig.getString("module.dir");
+
 		try (RunnerSync sync = new RunnerSync(runnerConfig, context, destFiler)) {
 			sync.installJava();
-			sync.syncLibs();
-			sync.syncModules();
+			sync.syncLibs(libDir);
+			sync.syncModules(moduleDir);
 			sync.syncPaths();
 		}
 
@@ -103,7 +106,11 @@ public class RunnerHost implements Closeable {
 		writeConfig(deployConfig, destFiler.writeFile(configOut));
 		log.debug("wrote: {}", configOut);
 
-		String classpath = Joiner.on(":").join(context.getClasspath());
+		List<String> classpathList = new ArrayList<>();
+		context.getLibs().forEach(lib -> classpathList.add(libDir + "/" + RecordPath.getName(lib)));
+		context.getModules().forEach(module -> classpathList.add(moduleDir + "/" + module));
+
+		String classpath = Joiner.on(":").join(classpathList);
 		log.debug("classpath: {}", classpath);
 
 		for (String dir : runnerConfig.getList("dirs", Configs.emptyList())) {

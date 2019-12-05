@@ -25,7 +25,6 @@ import com.lithium.flow.filer.CachedFiler;
 import com.lithium.flow.filer.Filer;
 import com.lithium.flow.filer.LocalFiler;
 import com.lithium.flow.filer.Record;
-import com.lithium.flow.filer.RecordPath;
 import com.lithium.flow.shell.Shells;
 import com.lithium.flow.shell.Shore;
 import com.lithium.flow.util.Lazy;
@@ -72,16 +71,12 @@ public class RunnerContext {
 	private final Threader syncThreader;
 	private final Threader runThreader;
 
-	private final String libDir;
-	private final String moduleDir;
-
 	private final Progress progress;
 	private final Measure hostsMeasure;
 	private final Measure libsMeasure;
 	private final Measure modulesMeasure;
 	private final Measure filesMeasure;
 
-	private final List<String> classpath = new ArrayList<>();
 	private final List<String> libs = new ArrayList<>();
 	private final List<String> modules = new ArrayList<>();
 	private final Map<String, Lazy<byte[]>> bytes = new HashMap<>();
@@ -97,9 +92,6 @@ public class RunnerContext {
 				.withNeedlePermits(config.getInt("sync.needlePermits", 8));
 		runThreader = Threader.forDaemon(config.getInt("run.threads", -1));
 		jarProvider = JarProvider.build(config, access, filer);
-
-		libDir = config.getString("lib.dir");
-		moduleDir = config.getString("module.dir");
 
 		progress = Progress.start(config);
 		hostsMeasure = progress.counter("hosts");
@@ -122,7 +114,6 @@ public class RunnerContext {
 			log.debug("classpath: {}", classPath);
 
 			if (classPath.endsWith(".jar")) {
-				classpath.add(libDir + "/" + RecordPath.getName(classPath));
 				libs.add(classPath);
 			} else {
 				Hasher hasher = Hashing.murmur3_128().newHasher();
@@ -142,7 +133,6 @@ public class RunnerContext {
 				});
 
 				String name = "runner_" + hasher.hash().toString() + ".jar";
-				classpath.add(moduleDir + "/" + name);
 				modules.add(name);
 				bytes.put(name, new Lazy<>(() -> buildJar(classPath, records)));
 			}
@@ -170,11 +160,6 @@ public class RunnerContext {
 		syncThreader.close();
 		runThreader.close();
 		shore.close();
-	}
-
-	@Nonnull
-	public List<String> getClasspath() {
-		return classpath;
 	}
 
 	@Nonnull
@@ -215,16 +200,6 @@ public class RunnerContext {
 	@Nonnull
 	public JarProvider getJarProvider() {
 		return jarProvider;
-	}
-
-	@Nonnull
-	public String getLibDir() {
-		return libDir;
-	}
-
-	@Nonnull
-	public String getModuleDir() {
-		return moduleDir;
 	}
 
 	@Nonnull

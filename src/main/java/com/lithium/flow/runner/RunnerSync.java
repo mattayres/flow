@@ -82,11 +82,10 @@ public class RunnerSync implements Closeable {
 		});
 	}
 
-	public void syncLibs() throws IOException {
+	public void syncLibs(@Nonnull String dir) throws IOException {
 		Measure measure = context.getLibsMeasure();
 		measure.addTodo(context.getLibs().size());
 
-		String dir = context.getLibDir();
 		Map<String, Long> sizes = getSizes(dir);
 		if (sizes.isEmpty()) {
 			destFiler.createDirs(dir);
@@ -106,11 +105,10 @@ public class RunnerSync implements Closeable {
 		}
 	}
 
-	public void syncModules() throws IOException {
+	public void syncModules(@Nonnull String dir) throws IOException {
 		Measure measure = context.getModulesMeasure();
 		measure.addTodo(context.getModules().size());
 
-		String dir = context.getModuleDir();
 		Map<String, Long> sizes = getSizes(dir);
 		if (sizes.isEmpty()) {
 			destFiler.createDirs(dir);
