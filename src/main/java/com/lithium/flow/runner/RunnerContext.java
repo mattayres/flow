@@ -108,6 +108,7 @@ public class RunnerContext {
 		List<String> classPaths = Splitter.on(File.pathSeparator)
 				.splitToList(javaClassPath).stream()
 				.filter(p -> !p.startsWith(javaHome))
+				.map(p -> p.replace(File.separatorChar, '/'))
 				.collect(toList());
 
 		for (String classPath : classPaths) {
