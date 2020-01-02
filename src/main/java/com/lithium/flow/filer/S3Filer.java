@@ -380,7 +380,9 @@ public class S3Filer implements Filer {
 					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
 
 					AmazonS3 s3 = builder.build();
-					s3.getBucketAcl(bucket);
+					if (!s3.doesBucketExistV2(bucket)) {
+						throw new RuntimeException("bucket does not exist: " + bucket);
+					}
 					response.accept();
 					return s3;
 				} catch (AmazonS3Exception e) {
