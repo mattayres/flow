@@ -355,6 +355,7 @@ public class S3Filer implements Filer {
 		cc.setRequestTimeout((int) config.getTime("s3.requestTimeout", "0"));
 		cc.setSocketTimeout((int) config.getTime("s3.socketTimeout", "50s"));
 		cc.setClientExecutionTimeout((int) config.getTime("s3.clientExecutionTimeout", "0"));
+		cc.setMaxConnections(config.getInt("s3.maxConnections", 50));
 		builder.withClientConfiguration(cc);
 
 		String region = config.getString("aws.region", null);
