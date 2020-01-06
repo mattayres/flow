@@ -38,6 +38,7 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -65,7 +66,7 @@ public class JettyClient extends BasePooledObjectFactory<Session> implements Clo
 	public JettyClient(@Nonnull Config config) {
 		checkNotNull(config);
 
-		client = new WebSocketClient(new SslContextFactory.Client(), null, null);
+		client = new WebSocketClient(new HttpClient(new SslContextFactory.Client()));
 		client.getPolicy().setMaxTextMessageSize(config.getInt("maxTextMessageSize", 1024 * 1024));
 		client.getPolicy().setIdleTimeout(config.getTime("idleTimeout", "1h"));
 		client.getPolicy().setAsyncWriteTimeout(config.getTime("asyncWriteTimeout", "1m"));
