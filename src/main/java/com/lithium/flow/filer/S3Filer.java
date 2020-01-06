@@ -134,9 +134,11 @@ public class S3Filer implements Filer {
 			listing = s3().listObjectsV2(request);
 
 			for (String dir : listing.getCommonPrefixes()) {
-				String name = dir.replaceFirst(prefix, "").replace("/", "");
-				if (names.add(name)) {
-					records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
+				if (dir.startsWith(prefix)) {
+					String name = dir.substring(prefix.length()).replace("/", "");
+					if (names.add(name)) {
+						records.add(new Record(uri, RecordPath.from(path, name), 0, 0, true));
+					}
 				}
 			}
 
