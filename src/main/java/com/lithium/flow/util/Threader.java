@@ -124,7 +124,9 @@ public class Threader implements AutoCloseable {
 		checkNotNull(name);
 		checkNotNull(callable);
 
-		Sleep.until(() -> queued.get() < maxQueued);
+		if (retriesLeft == retries) {
+			Sleep.until(() -> queued.get() < maxQueued);
+		}
 
 		remaining.incrementAndGet();
 		queued.incrementAndGet();
