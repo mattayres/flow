@@ -49,8 +49,11 @@ import org.apache.http.HttpStatus;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -69,6 +72,8 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.model.UploadPartRequest;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.util.IOUtils;
 import com.google.common.util.concurrent.RateLimiter;
 
@@ -380,7 +385,7 @@ public class S3Filer implements Filer {
 				Response response = access.prompt(key + ".secret", key + ".secret: ", Type.MASKED);
 				try {
 					String secret = response.value();
-					builder.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret)));
+					builder.withCredentials(buildCredentials(config, new BasicAWSCredentials(key, secret)));
 
 					AmazonS3 s3 = builder.build();
 					if (!s3.doesBucketExistV2(bucket)) {
@@ -400,6 +405,28 @@ public class S3Filer implements Filer {
 		}
 
 		return builder.build();
+	}
+
+	@Nonnull
+	private static AWSCredentialsProvider buildCredentials(@Nonnull Config config, @Nonnull AWSCredentials basic) {
+		AWSCredentialsProvider credentials = new AWSStaticCredentialsProvider(basic);
+
+		String roleArn = config.getString("aws.roleArn", null);
+		String roleSessionName = config.getString("aws.roleSessionName", null);
+		String region = config.getString("aws.region", null);
+
+		if (roleArn == null || roleSessionName == null) {
+			return credentials;
+		}
+
+		AWSSecurityTokenService sts = AWSSecurityTokenServiceClientBuilder.standard()
+				.withCredentials(credentials)
+				.withRegion(region)
+				.build();
+
+		return new STSAssumeRoleSessionCredentialsProvider.Builder(roleArn, roleSessionName)
+				.withStsClient(sts)
+				.build();
 	}
 
 	@Nonnull
