@@ -100,12 +100,16 @@ public class LoopThread extends Thread implements AutoCloseable {
 		finished = true;
 	}
 
-	@Override
-	public void close() {
-		finish();
+	/**
+	 * @deprecated Use {@link #close()} instead.
+	 */
+	@Deprecated
+	public void finish() {
+		close();
 	}
 
-	public void finish() {
+	@Override
+	public void close() {
 		doFinish = true;
 		Sleep.until(() -> finished);
 	}

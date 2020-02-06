@@ -90,7 +90,7 @@ public class RecordFinder extends IndefiniteSpliterator<Record> {
 				break;
 			}
 		}
-		threader.finish();
+		threader.close();
 		return false;
 	}
 

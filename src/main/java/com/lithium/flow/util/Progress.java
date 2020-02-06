@@ -94,12 +94,16 @@ public class Progress implements AutoCloseable {
 		stopped = true;
 	}
 
-	@Override
-	public void close() {
-		finish();
+	/**
+	 * @deprecated Use {@link #close()} instead.
+	 */
+	@Deprecated
+	public void finish() {
+		close();
 	}
 
-	public void finish() {
+	@Override
+	public void close() {
 		stop();
 		log(System.currentTimeMillis() - startTime);
 	}

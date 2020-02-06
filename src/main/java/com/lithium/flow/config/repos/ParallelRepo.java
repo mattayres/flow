@@ -66,10 +66,10 @@ public class ParallelRepo extends DecoratedRepo {
 				});
 			});
 
-			threader.finish();
+			threader.close();
 		} finally {
 			if (config.getBoolean("progress", false)) {
-				progress.finish();
+				progress.close();
 			}
 		}
 

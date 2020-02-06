@@ -78,7 +78,7 @@ public class RelayMain {
 			start();
 		} while (keepAlive || restart);
 
-		threader.finish();
+		threader.close();
 	}
 
 	private void start() throws IOException, InterruptedException {

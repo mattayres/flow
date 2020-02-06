@@ -69,10 +69,10 @@ public class RunnerMain {
 			}
 
 			Sleep.softly(config.getTime("sleep", "0"));
-			parallel.finish();
+			parallel.close();
 		}
 
-		context.getProgress().finish();
+		context.getProgress().close();
 
 		runners.forEach(RunnerHost::close);
 		context.close();

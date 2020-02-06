@@ -22,6 +22,7 @@ import com.lithium.flow.io.DataIo;
 import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.LoopThread;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,149 +75,107 @@ public class StatsFiler extends DecoratedFiler {
 	@Override
 	@Nonnull
 	public java.net.URI getUri() throws IOException {
-		Token token = getUriStat.start();
-		try {
+		try (Closeable ignored = getUriStat.start()) {
 			return delegate.getUri();
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public List<Record> listRecords(@Nonnull String path) throws IOException {
-		Token token = listRecordsStat.start();
-		try {
+		try (Closeable ignored = listRecordsStat.start()) {
 			return delegate.listRecords(path);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public Record getRecord(@Nonnull String path) throws IOException {
-		Token token = getRecordStat.start();
-		try {
+		try (Closeable ignored = getRecordStat.start()) {
 			return delegate.getRecord(path);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public Stream<Record> findRecords(@Nonnull String path, int threads) throws IOException {
-		Token token = findRecordsStat.start();
-		try {
+		try (Closeable ignored = findRecordsStat.start()) {
 			return delegate.findRecords(path, threads);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public String getHash(@Nonnull String path, @Nonnull String hash, @Nonnull String base) throws IOException {
-		Token token = getHashFileStat.start();
-		try {
+		try (Closeable ignored = getHashFileStat.start()) {
 			return super.getHash(path, hash, base);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public InputStream readFile(@Nonnull String path) throws IOException {
-		Token token = readFileStat.start();
-		try {
+		try (Closeable ignored = readFileStat.start()) {
 			return delegate.readFile(path);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
-		Token token = writeFileStat.start();
-		try {
+		try (Closeable ignored = writeFileStat.start()) {
 			return delegate.writeFile(path);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public OutputStream appendFile(@Nonnull String path) throws IOException {
-		Token token = appendFileStat.start();
-		try {
+		try (Closeable ignored = appendFileStat.start()) {
 			return delegate.appendFile(path);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	@Nonnull
 	public DataIo openFile(@Nonnull String path, boolean write) throws IOException {
-		Token token = openFileStat.start();
-		try {
+		try (Closeable ignored = openFileStat.start()) {
 			return delegate.openFile(path, write);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	public void setFileTime(@Nonnull String path, long time) throws IOException {
-		Token token = setFileTimeStat.start();
-		try {
+		try (Closeable ignored = setFileTimeStat.start()) {
 			delegate.setFileTime(path, time);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	public void deleteFile(@Nonnull String path) throws IOException {
-		Token token = removeFileStat.start();
-		try {
+		try (Closeable ignored = removeFileStat.start()) {
 			delegate.deleteFile(path);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	public void createDirs(@Nonnull String path) throws IOException {
-		Token token = createDirsStat.start();
-		try {
+		try (Closeable ignored = createDirsStat.start()) {
 			delegate.createDirs(path);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	public void renameFile(@Nonnull String oldPath, @Nonnull String newPath) throws IOException {
-		Token token = renameFileStat.start();
-		try {
+		try (Closeable ignored = renameFileStat.start()) {
 			delegate.renameFile(oldPath, newPath);
-		} finally {
-			token.finish();
 		}
 	}
 
 	@Override
 	public void close() throws IOException {
-		Token token = closeStat.start();
-		try {
+		try (Closeable ignored = closeStat.start()) {
 			delegate.close();
-		} finally {
-			token.finish();
 		}
 
 		dumpStats();
@@ -245,7 +204,7 @@ public class StatsFiler extends DecoratedFiler {
 		}
 
 		@Nonnull
-		public Token start() {
+		public Closeable start() {
 			long nanoTime = System.nanoTime();
 			return () -> {
 				count.incrementAndGet();
@@ -265,9 +224,5 @@ public class StatsFiler extends DecoratedFiler {
 		public long getTime() {
 			return nanos.get() / 1000000L;
 		}
-	}
-
-	private interface Token {
-		void finish();
 	}
 }

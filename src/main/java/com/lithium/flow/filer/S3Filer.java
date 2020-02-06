@@ -246,7 +246,7 @@ public class S3Filer implements Filer {
 					flip(1);
 
 					try {
-						List<PartETag> tags = needle.finish();
+						List<PartETag> tags = needle.toList();
 						s3().completeMultipartUpload(new CompleteMultipartUploadRequest(bucket, key, uploadId, tags));
 					} catch (UncheckedException e) {
 						s3().abortMultipartUpload(new AbortMultipartUploadRequest(bucket, key, uploadId));
@@ -332,7 +332,7 @@ public class S3Filer implements Filer {
 
 	@Override
 	public void close() {
-		threader.finish();
+		threader.close();
 		s3.shutdown();
 	}
 

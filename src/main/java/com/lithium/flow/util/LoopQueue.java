@@ -98,12 +98,16 @@ public class LoopQueue<T> implements AutoCloseable {
 		return queue.isEmpty();
 	}
 
-	@Override
-	public void close() {
-		finish();
+	/**
+	 * @deprecated Use {@link #close()} instead.
+	 */
+	@Deprecated
+	public void finish() {
+		close();
 	}
 
-	public void finish() {
+	@Override
+	public void close() {
 		finish = true;
 		Sleep.until(queue::isEmpty);
 		threads.forEach(LoopThread::finish);

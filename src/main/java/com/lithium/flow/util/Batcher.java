@@ -56,7 +56,7 @@ public class Batcher<T> {
 		checkNotNull(item);
 
 		if (finished) {
-			throw new IllegalStateException("Cannot offer more elements after finish() has been called");
+			throw new IllegalStateException("Cannot offer more elements after close() has been called");
 		}
 
 		currentBatch.add(item);
@@ -98,7 +98,15 @@ public class Batcher<T> {
 		return toReturn;
 	}
 
+	/**
+	 * @deprecated Use {@link #close()} instead.
+	 */
+	@Deprecated
 	public synchronized void finish() {
+		close();
+	}
+
+	public synchronized void close() {
 		if (finished) {
 			throw new IllegalStateException("Batcher already finished");
 		}

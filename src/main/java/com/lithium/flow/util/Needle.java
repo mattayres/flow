@@ -75,11 +75,20 @@ public class Needle<T> implements AutoCloseable {
 
 	@Override
 	public void close() {
-		finish();
+		toList();
+	}
+
+	/**
+	 * @deprecated Use {@link #toList()} instead.
+	 */
+	@Deprecated
+	@Nonnull
+	public List<T> finish() {
+		return toList();
 	}
 
 	@Nonnull
-	public List<T> finish() {
+	public List<T> toList() {
 		List<T> values = new ArrayList<>();
 
 		while (!queue.isEmpty()) {

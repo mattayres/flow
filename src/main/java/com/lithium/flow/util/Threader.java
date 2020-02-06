@@ -157,16 +157,28 @@ public class Threader implements AutoCloseable {
 		return future;
 	}
 
+	/**
+	 * @deprecated Use {@link #close()} instead.
+	 */
+	@Deprecated
+	public void finish() {
+		close();
+	}
+
+	/**
+	 * @deprecated Use {@link #close(long)} instead.
+	 */
+	@Deprecated
+	public void finish(long timeout) {
+		close(timeout);
+	}
+
 	@Override
 	public void close() {
-		finish();
+		close(-1);
 	}
 
-	public void finish() {
-		finish(-1);
-	}
-
-	public boolean finish(long timeout) {
+	public boolean close(long timeout) {
 		long endTime = timeout == -1 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
 		Sleep.until(() -> remaining.get() == 0 || System.currentTimeMillis() > endTime);
 		service.shutdown();
