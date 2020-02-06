@@ -18,6 +18,9 @@ package com.lithium.flow.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.lithium.flow.config.Config;
+import com.lithium.flow.config.exception.IllegalConfigException;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,21 +43,25 @@ import com.google.common.util.concurrent.MoreExecutors;
 public class Threader implements AutoCloseable {
 	private static final Logger log = Logs.getLogger();
 
+	public static final int DEFAULT_THREADS = -1;
+	public static final int DEFAULT_RETRIES = 0;
+	public static final int DEFAULT_MAX_QUEUED = Integer.MAX_VALUE;
+	public static final int DEFAULT_NEEDLE_PERMITS = Integer.MAX_VALUE;
+	public static final boolean DEFAULT_DAEMON = false;
+
 	private final ListeningExecutorService service;
 	private final AtomicInteger remaining = new AtomicInteger();
 	private final AtomicInteger queued = new AtomicInteger();
-	private volatile int retries;
-	private volatile int maxQueued = Integer.MAX_VALUE;
-	private volatile int needlePermits = Integer.MAX_VALUE;
+	private volatile int retries = DEFAULT_RETRIES;
+	private volatile int maxQueued = DEFAULT_MAX_QUEUED;
+	private volatile int needlePermits = DEFAULT_NEEDLE_PERMITS;
 
 	public Threader() {
-		this(-1);
+		this(DEFAULT_THREADS);
 	}
 
 	public Threader(int threads) {
-		this(threads == -1 ? Executors.newCachedThreadPool()
-				: threads == 0 ? MoreExecutors.newDirectExecutorService()
-				: Executors.newFixedThreadPool(threads));
+		this(buildService(threads, false));
 	}
 
 	public Threader(@Nonnull ExecutorService service) {
@@ -210,23 +217,54 @@ public class Threader implements AutoCloseable {
 
 	@Nonnull
 	public static Threader forDaemon() {
-		return forDaemon(-1);
+		return forDaemon(DEFAULT_THREADS);
 	}
 
 	@Nonnull
 	public static Threader forDaemon(int threads) {
+		return new Threader(buildService(threads, true));
+	}
+
+	@Nonnull
+	public static Threader build(@Nonnull Config config) {
+		int threads = getThreads(config);
+		int retries = config.getInt("retries", DEFAULT_RETRIES);
+		int maxQueued = config.getInt("maxQueued", DEFAULT_MAX_QUEUED);
+		int needlePermits = config.getInt("needlePermits", DEFAULT_NEEDLE_PERMITS);
+		boolean daemon = config.getBoolean("daemon", DEFAULT_DAEMON);
+
+		return new Threader(buildService(threads, daemon))
+				.withRetries(retries)
+				.withMaxQueued(maxQueued)
+				.withNeedlePermits(needlePermits);
+	}
+
+	public static int getThreads(@Nonnull Config config) {
+		String value = config.getString("threads", String.valueOf(DEFAULT_THREADS));
+		try {
+			if (value.endsWith("%")) {
+				int percent = Integer.parseInt(value.substring(0, value.length() - 1));
+				return Runtime.getRuntime().availableProcessors() * percent / 100;
+			} else {
+				return Integer.parseInt(value);
+			}
+		} catch (NumberFormatException e) {
+			throw new IllegalConfigException("threads", value, "int", e);
+		}
+	}
+
+	@Nonnull
+	private static ExecutorService buildService(int threads, boolean daemon) {
 		ThreadFactory defaultFactory = Executors.defaultThreadFactory();
 
 		ThreadFactory daemonFactory = runnable -> {
 			Thread thread = defaultFactory.newThread(runnable);
-			thread.setDaemon(true);
+			thread.setDaemon(daemon);
 			return thread;
 		};
 
-		ExecutorService service = threads == -1
+		return threads == -1
 				? Executors.newCachedThreadPool(daemonFactory)
 				: Executors.newFixedThreadPool(threads, daemonFactory);
-
-		return new Threader(service);
 	}
 }
