@@ -180,7 +180,7 @@ public class Threader implements AutoCloseable {
 
 	public boolean close(long timeout) {
 		long endTime = timeout == -1 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
-		Sleep.until(() -> remaining.get() == 0 || System.currentTimeMillis() > endTime);
+		Sleep.until(() -> remaining.get() == 0 || System.currentTimeMillis() >= endTime);
 		service.shutdown();
 		return remaining.get() == 0;
 	}

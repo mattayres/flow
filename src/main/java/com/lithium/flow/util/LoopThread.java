@@ -110,8 +110,16 @@ public class LoopThread extends Thread implements AutoCloseable {
 
 	@Override
 	public void close() {
+		close(-1);
+	}
+
+	public boolean close(long timeout) {
+		long endTime = timeout == -1 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
+
 		doFinish = true;
-		Sleep.until(() -> finished);
+		Sleep.until(() -> finished || System.currentTimeMillis() >= endTime);
+
+		return finished;
 	}
 
 	@Nonnull

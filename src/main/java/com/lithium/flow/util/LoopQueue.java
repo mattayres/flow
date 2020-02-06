@@ -108,8 +108,17 @@ public class LoopQueue<T> implements AutoCloseable {
 
 	@Override
 	public void close() {
+		close(-1);
+	}
+
+	public boolean close(long timeout) {
+		long endTime = timeout == -1 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
+		long threadTimeout = timeout == -1 ? -1 : 0;
+
 		finish = true;
-		Sleep.until(queue::isEmpty);
-		threads.forEach(LoopThread::finish);
+		Sleep.until(() -> queue.isEmpty() || System.currentTimeMillis() >= endTime);
+		threads.forEach(loopThread -> loopThread.close(threadTimeout));
+
+		return queue.isEmpty();
 	}
 }
