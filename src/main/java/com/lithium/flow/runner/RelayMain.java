@@ -69,9 +69,10 @@ public class RelayMain {
 		destroyMaxTime = config.getTime("runner.relay.destroyMaxTime", "30s");
 		boolean keepAlive = config.getBoolean("runner.relay.keepAlive", false);
 
-		long interval = config.getTime("runner.relay", "0");
-		if (interval > 0) {
-			new LoopThread(interval, this::destroy);
+		String interval = config.getString("runner.relay", "0");
+		if (!interval.equals("0")) {
+			Config loopConfig = config.toBuilder().setString("runner.relay.loopInterval", interval).build();
+			LoopThread.from(loopConfig.prefix("runner.relay"), this::destroy);
 		}
 
 		do {
