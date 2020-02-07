@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.lithium</groupId>
 		<artifactId>lithium-oss-superpom</artifactId>
-		<version>0.12</version>
+		<version>0.15</version>
 	</parent>
 
 	<groupId>com.lithium.flow</groupId>
@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.easymock</groupId>
 			<artifactId>easymock</artifactId>
-			<version>4.1</version>
+			<version>4.2</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -103,13 +103,13 @@
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
-			<version>1.11.700</version>
+			<version>1.11.717</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-sts</artifactId>
-			<version>1.11.700</version>
+			<version>1.11.717</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -143,27 +143,21 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-core</artifactId>
-			<version>8.4.0</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
-			<version>9.4.25.v20191220</version>
+			<version>9.4.26.v20200117</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-servlet</artifactId>
-			<version>9.4.25.v20191220</version>
+			<version>9.4.26.v20200117</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>websocket-server</artifactId>
-			<version>9.4.25.v20191220</version>
+			<version>9.4.26.v20200117</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -181,7 +175,7 @@
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp</artifactId>
-			<version>4.3.0</version>
+			<version>4.3.1</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -259,7 +253,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
-			<version>1.7</version>
+			<version>1.8</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -271,7 +265,7 @@
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
 			<artifactId>transport</artifactId>
-			<version>7.5.1</version>
+			<version>7.5.2</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
