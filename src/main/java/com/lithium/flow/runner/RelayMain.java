@@ -30,6 +30,7 @@ import com.lithium.flow.util.Main;
 import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Passwords;
 import com.lithium.flow.util.Threader;
+import com.lithium.flow.util.TimeUtils;
 import com.lithium.flow.vault.SecureVault;
 import com.lithium.flow.vault.Vault;
 
@@ -70,7 +71,7 @@ public class RelayMain {
 		boolean keepAlive = config.getBoolean("runner.relay.keepAlive", false);
 
 		String interval = config.getString("runner.relay", "0");
-		if (!interval.equals("0")) {
+		if (TimeUtils.getMillisValue(interval) > 0) {
 			Config loopConfig = config.toBuilder().setString("runner.relay.loopInterval", interval).build();
 			LoopThread.from(loopConfig.prefix("runner.relay"), this::destroy);
 		}
