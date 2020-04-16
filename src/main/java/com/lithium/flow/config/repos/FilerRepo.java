@@ -116,7 +116,10 @@ public class FilerRepo implements Repo {
 
 		ConfigBuilder builder = supplier.get();
 		for (Filer filer : filers) {
-			builder.addLoader(path -> filer.getRecord(path).exists() ? filer.readFile(path) : null);
+			builder.addLoader(path -> {
+				Record pathRecord = filer.getRecord(path);
+				return pathRecord.exists() && pathRecord.isFile() ? filer.readFile(path) : null;
+			});
 		}
 		builder.allowFileNotFound(true);
 		builder.include(fullPath);
