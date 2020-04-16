@@ -25,6 +25,7 @@ import com.lithium.flow.config.Config;
 import com.lithium.flow.config.Configs;
 import com.lithium.flow.io.DataIo;
 import com.lithium.flow.streams.CounterInputStream;
+import com.lithium.flow.util.LimiterInputStream;
 import com.lithium.flow.util.Needle;
 import com.lithium.flow.util.Threader;
 import com.lithium.flow.util.UncheckedException;
@@ -89,6 +90,7 @@ public class S3Filer implements Filer {
 	private final boolean bypassCreateDirs;
 	private final StorageClass storageClass;
 	private final RateLimiter limiter;
+	private final RateLimiter bitLimiter;
 	private final Threader threader;
 
 	public S3Filer(@Nonnull Config config, @Nonnull Access access) {
@@ -111,6 +113,7 @@ public class S3Filer implements Filer {
 		bypassCreateDirs = config.getBoolean("s3.bypassCreateDirs", false);
 		storageClass = StorageClass.fromValue(config.getString("s3.storageClass", "STANDARD"));
 		limiter = RateLimiter.create(config.getDouble("s3.rateLimit", 3400));
+		bitLimiter = RateLimiter.create(config.getDouble("s3.bitLimit", Double.MAX_VALUE));
 
 		int threads = config.getInt("s3.threads", 8);
 		int maxQueued = config.getInt("s3.maxQueued", threads);
@@ -236,7 +239,7 @@ public class S3Filer implements Filer {
 				}
 
 				if (needle == null) {
-					InputStream in = new ByteArrayInputStream(baos.toByteArray());
+					InputStream in = nextInputStream();
 					ObjectMetadata metadata = new ObjectMetadata();
 					metadata.setContentLength(baos.size());
 					PutObjectRequest request = new PutObjectRequest(bucket, key, in, metadata)
@@ -269,7 +272,7 @@ public class S3Filer implements Filer {
 					uploadId = s3().initiateMultipartUpload(request).getUploadId();
 				}
 
-				InputStream in = new ByteArrayInputStream(baos.toByteArray());
+				InputStream in = nextInputStream();
 				int partNum = needle.size() + 1;
 
 				UploadPartRequest uploadRequest = new UploadPartRequest()
@@ -283,6 +286,11 @@ public class S3Filer implements Filer {
 				needle.submit(uploadId + "@" + partNum, () -> s3().uploadPart(uploadRequest).getPartETag());
 
 				baos.reset();
+			}
+
+			@Nonnull
+			private InputStream nextInputStream() {
+				return new LimiterInputStream(new ByteArrayInputStream(baos.toByteArray()), bitLimiter);
 			}
 		};
 	}
