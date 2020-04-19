@@ -47,6 +47,7 @@ public class Sshj extends SSHClient {
 	private final Prompt prompt;
 	private final boolean pty;
 	private final int retries;
+	private final int filerBuffer;
 	private final long initTimeout;
 
 	public Sshj(@Nonnull Config config, @Nonnull Prompt prompt) throws IOException {
@@ -86,6 +87,7 @@ public class Sshj extends SSHClient {
 
 		pty = config.getBoolean("shell.pty", false);
 		retries = config.getInt("shell.retries", 3);
+		filerBuffer = config.getInt("shell.filer.buffer", 64);
 	}
 
 	public void connect(@Nonnull Login login) throws IOException {
@@ -171,5 +173,9 @@ public class Sshj extends SSHClient {
 
 	public int getRetries() {
 		return retries;
+	}
+
+	public int getFilerBuffer() {
+		return filerBuffer;
 	}
 }

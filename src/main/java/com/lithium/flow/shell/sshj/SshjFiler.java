@@ -54,10 +54,12 @@ public class SshjFiler implements Filer {
 
 	private final URI uri;
 	private final SFTPClient sftp;
+	private final int buffer;
 
 	public SshjFiler(@Nonnull Sshj ssh, @Nonnull URI uri) throws IOException {
 		this.uri = checkNotNull(uri);
 		sftp = checkNotNull(ssh).newSFTPClient();
+		buffer = ssh.getFilerBuffer();
 	}
 
 	@Override
@@ -101,21 +103,21 @@ public class SshjFiler implements Filer {
 	@Nonnull
 	public InputStream readFile(@Nonnull String path) throws IOException {
 		RemoteFile remoteFile = sftp.open(path, READ_MODES);
-		return remoteFile.new ReadAheadRemoteFileInputStream(16);
+		return remoteFile.new ReadAheadRemoteFileInputStream(buffer);
 	}
 
 	@Override
 	@Nonnull
 	public OutputStream writeFile(@Nonnull String path) throws IOException {
 		RemoteFile remoteFile = sftp.open(path, WRITE_MODES);
-		return remoteFile.new RemoteFileOutputStream(0, 16);
+		return remoteFile.new RemoteFileOutputStream(0, buffer);
 	}
 
 	@Override
 	@Nonnull
 	public OutputStream appendFile(@Nonnull String path) throws IOException {
 		RemoteFile remoteFile = sftp.open(path, APPEND_MODES);
-		return remoteFile.new RemoteFileOutputStream(remoteFile.length(), 16);
+		return remoteFile.new RemoteFileOutputStream(remoteFile.length(), buffer);
 	}
 
 	@Override
